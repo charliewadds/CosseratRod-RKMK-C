@@ -8,9 +8,36 @@
 #include <stdio.h>
 int main(void){
 
-    matrix *m = matrix_new(10,11);
-    matrix *m1 = getSection(m, 0,5,0,1);
-    printf("[%d, %d]", matrix_shape(m1)[0], matrix_shape(m1)[1]);
+    matrix *m = matrix_new(3,3);
 
+
+    m->data[0][0] = 1;
+    m->data[0][1] = 2;
+    m->data[0][2] = 3;
+
+    m->data[1][0] = 1;
+    m->data[1][1] = 2;
+    m->data[1][2] = 3;
+
+    m->data[2][0] = 1;
+    m->data[2][1] = 2;
+    m->data[2][2] = 3;
+
+    matrix *m1 = matrix_new(3,1);
+
+
+    m1->data[0][0] = 1;
+    m1->data[1][0] = 2;
+    m1->data[2][0] = 3;
+
+
+
+    printMatrix(m);
+    printf("\n");
+    printMatrix(m1);
+    printf("\n");
+    printMatrix(dot(m, m1));
+    printf("\n");
+    printMatrix(eigenvalues(m, 5));
 }
 

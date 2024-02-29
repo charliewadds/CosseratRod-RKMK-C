@@ -1,5 +1,8 @@
 #include <assert.h>
+#include <math.h>
+#include <printf.h>
 #include "Matrices.h"
+
 
 matrix *matrix_new(uint8_t num_rows, uint8_t num_cols){
 
@@ -170,6 +173,8 @@ matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol
 
 //todo this can be improved with different algorithms, matlab uses strassen's algorithm
 matrix *matMult(matrix *m1, matrix *m2){
+    printf("shape of m1 [%f, %f]\n", m1->numRows, m1->numCols);
+    printf("shape of m1 [%f, %f]\n", m1->numRows, m1->numCols);
     assert(m1->numCols == m2->numRows);
     assert(m1->numRows == m2->numCols);
 
@@ -185,3 +190,82 @@ matrix *matMult(matrix *m1, matrix *m2){
 
     return result;
 }
+
+
+matrix *scalarMatDiv(matrix *m, double scalar){
+    matrix *result = matrix_new(m->numRows, m->numCols);
+    for(int i = 0; i < m->numRows; i++){
+        for(int j = 0; j < m->numCols; j++){
+            result->data[i][j] = m->data[i][j] / scalar;
+        }
+    }
+    return result;
+
+}
+
+//todo is this right?
+double norm(matrix *m){
+    double result = 0;
+
+    for(int i = 0; i < m->numRows; i++){
+        for(int j = 0; j < m->numCols; j++){
+            result += m->data[i][j] * m->data[i][j];
+        }
+    }
+
+    result = sqrt(result);
+    return result;
+}
+
+void printMatrix(matrix *m){
+    for(int i = 0; i < m->numRows; i++){
+        printf("|");
+        for(int j = 0; j < m->numCols; j++){
+            printf("%f ", m->data[i][j]);
+        }
+        printf("|\n");
+    }
+}
+
+//todo, this should be checked
+matrix *eigenvalues(matrix *A, int iterations){
+    int *shape = matrix_shape(A);
+    int n;
+    if(shape[0] > shape[1]){
+        n = shape[0];
+    }else{
+        n = shape[1];
+    }
+
+    double vals[n];
+    matrix *b_k = matrix_new(n, 1);
+    matrix *b_k1;// = matrix_new(n, 1);
+
+
+    b_k->data[0][0] = (double) rand()/RAND_MAX;
+    b_k->data[1][0] = (double) rand()/RAND_MAX;
+    b_k->data[2][0] = (double) rand()/RAND_MAX;
+    double b_k1_norm;
+    //todo implement eigenvalues
+    while(iterations >= 0){
+        b_k1 = dot(A, b_k);
+        printf("b_k1\n");
+        printMatrix(b_k1);
+
+        b_k1_norm = norm(b_k1);
+        printf("b_k1_norm: %f\n", b_k1_norm);
+
+        b_k = scalarMatDiv(b_k1, b_k1_norm);
+        printf("b_k\n");
+        printMatrix(b_k);
+        printf("\n\n\n");
+        iterations--;
+    }
+
+    return b_k;
+    //this is correct, todo implement eigenvalues
+}
+
+
+
+

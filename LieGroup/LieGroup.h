@@ -51,5 +51,10 @@ matrix *adj(SE3 *T);
 // 6x1 column vector -> adjoint operator -> 6x6 matrix in ????
 matrix *adj_R6(matrix *z);
 
+// mapping from so(3) to SO(3)
+SO3 *exp_SO3(matrix *w);
+
+//mapping from se(3) to SE(3)
+SE3 *exp_SE3(matrix *z);
 
 #endif //COSSERATROD_RKMK_C_LIEGROUP_H

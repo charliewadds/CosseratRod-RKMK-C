@@ -53,15 +53,26 @@ matrix *diag(float *d, uint8_t n);
 //multiply two matrices to create a new matrix
 matrix *matMult(matrix *m1, matrix *m2);
 
+
+matrix *matDiv(matrix *m1, matrix *m2);
+
 matrix *zeros(uint8_t num_rows, uint8_t num_cols);
 
 matrix *ones(uint8_t num_rows, uint8_t num_cols);
 
 
+void printMatrix(matrix *m);
+
+double norm(matrix *m);
+
 //set a section of a matrix to another matrix. m is the matrix to be added to and section is the matrix to be added
 void setSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, uint8_t endCol, matrix *section);
 
 matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, uint8_t endCol);
+
+
+
+matrix *eigenvalues(matrix *m, int iterations);
 // Destructor-like
 void matrix_free(matrix *m);
 #endif
