@@ -2,6 +2,8 @@
 // Created by Charlie Wadds on 2024-02-28.
 //
 
+#include <math.h>
+#include <assert.h>
 #include "LieGroup.h"
 
 
@@ -16,7 +18,7 @@ SO3 *new_SO3(matrix *R){
 
 
 SO3 *new_SO3_zeros(){
-    matrix *R = matrix_new(3,3);
+    matrix *R = zeros(3,3);
     SO3 *T = (SO3 *)malloc(sizeof(SO3));
     T->R = R;
     return T;
@@ -31,7 +33,8 @@ void free_SO3(SO3 *T){
 
 SE3 *new_SE3(matrix *R, matrix *P){
     SE3 *T = (SE3 *)malloc(sizeof(SE3));
-    T->R->R = R;
+    T->R = new_SO3(R);
+
     T->P = P;
     T->T = matrix_new(4,4);
     for(int i = 0; i < 3; i++){
@@ -49,6 +52,15 @@ SE3 *new_SE3(matrix *R, matrix *P){
     return T;
 }
 
+
+SE3 *new_SE3_T(matrix *T){
+    SE3 *new = (SE3 *)malloc(sizeof(SE3));
+    new->R = new_SO3_zeros();
+    new->R->R = getSection(T, 0, 2, 0, 2);
+    new->P = getSection(T, 0, 2, 3, 3);
+    new->T = T;
+    return new;
+}
 SE3 *new_SE3_zeros(){
     SO3 *R = new_SO3_zeros();
     matrix *P = matrix_new(3,1);
@@ -120,34 +132,29 @@ matrix *T_from_PR_SO3(SO3 *R, matrix *P){
 //_________________________________________________________________________________________________________
 SO3 *hat_R3(matrix *z){
     SO3 *T = new_SO3_zeros();
-    T->R->data[0][1] = -z->data[2][0];
+    T->R = zeros(3,3);
+    printMatrix(T->R);
+    T->R->data[0][1] = z->data[2][0] * -1;
     T->R->data[0][2] = z->data[1][0];
 
     T->R->data[1][0] = z->data[2][0];
-    T->R->data[1][2] = -z->data[0][0];
+    T->R->data[1][2] = z->data[0][0] * -1;
 
-    T->R->data[2][0] = -z->data[1][0];
+    T->R->data[2][0] = z->data[1][0] * -1;
     T->R->data[2][1] = z->data[0][0];
     return T;
 }
 
 SE3 *hat_R6(matrix *z){
+    assert(z->numRows == 6);
+    assert(z->numCols == 1);
     SE3 *T_hat = new_SE3_zeros();
-    matrix *z_w = matrix_new(3,1);
-    matrix *z_v = matrix_new(3,1);
-
-    //todo there is probably a more elegant way to do this
-    z_w->data[0] = z->data[3];
-    z_w->data[1] = z->data[4];
-    z_w->data[2] = z->data[5];
-
-    z_v->data[0] = z->data[0];
-    z_v->data[1] = z->data[1];
-    z_v->data[2] = z->data[2];
-
-    T_hat->R = hat_R3(z_w);
-    T_hat->P = z_v;//position vector is the same
+    matrix *rotation = getSection(z, 0, 3, 0, 1);
+    matrix *position = getSection(z, 0, 3, 3, 3);
+    T_hat->R = hat_R3(rotation);
+    T_hat->P = position;
     T_hat->T = T_from_PR(T_hat->R->R, T_hat->P);
+
     //bottom row is all zeros for se3^
 
     return T_hat;
@@ -194,19 +201,19 @@ matrix *adj(SE3 *T) {
     setSection(r, 0, 2, 0, 2, T->R->R);
 
     //set top right 3x3
-    setSection(r, 0, 2, 3, 5, matMult(matrix_new(3,3), T->R->R));
+    setSection(r, 0, 2, 1, 3, matMult(matrix_new(3,3), T->R->R));
 
     //set bottom left 3x3, zeros
-    setSection(r, 3, 5, 0, 2, zeros(3,3));
+    setSection(r, 1, 3, 0, 2, zeros(3,3));
 
     //set bottom right 3x3
-    setSection(r, 3, 5, 3, 5, T->R->R);
+    setSection(r, 1, 3, 1, 3, T->R->R);
 
     return r;
 }
 
 matrix *adj_R6(matrix *z){
-    matrix *r = matrix_new(6,6);
+    matrix *r = zeros(6,6);
 
     matrix *gu = getSection(r, 0, 2, 0, 0);
 
@@ -225,15 +232,74 @@ matrix *adj_R6(matrix *z){
 
 //EXPONENTIAL MAP
 //_________________________________________________________________________________________________________
-//
-//SO3 *exp_SO3(SO3 *m){
-//    SO3 *z = new_SO3_zeros();
-//
-//
-//
-//}
+
+SO3 *expm_SO3(SO3 *m){
+
+    //TODO: all sorts of stuff wrong with this, math is probably wrong also should take *result as input and just update it
+    double mag = norm(unhat_SO3(m));
+    if (mag == 0){
+        return (SO3*) eye(3);
+    }
+
+    // Calculate intermediate results
+    double mag_pow_2 = pow( mag, 2);
+    double mag_pow_3 = pow( mag, 3);
+
+    // Gw^2./magGw^3
+    matrix *temp1 = elemDiv( matrixPow(m->R, 2), mag_pow_3);
+
+    // (magGw - sin(magGw))
+    double temp2 = mag = sin(mag);
+
+    // Gw./magGw^2
+    matrix *temp3 = elemDiv(m->R, mag_pow_2);
+
+    // (1 - cos(magGw))
+    double temp4 =  1 - cos(mag);
+
+    // Combine all terms
+    matrix *result = matrix_add(eye(3), temp1);
+    temp1 = matrix_scalar_mul(temp1, temp2);
+    result = matrix_add(result, temp1);
+
+    SO3 *ret = new_SO3(result);
+    return ret;
+}
 
 
+
+SE3 *expm_SE3(SE3 *m) {
+//TODO: all sorts of stuff wrong with this, math is probably wrong also should take *result as input and just update it
+    double mag = norm(m->R->R);
+    if (mag == 0) {
+        return new_SE3_T(eye(4));
+    }
+
+    // Calculate intermediate results
+    double mag_pow_2 = pow(mag, 2);
+    double mag_pow_3 = pow(mag, 3);
+
+    // Gw^2./magGw^3
+    matrix *temp1 = elemDiv(matrixPow(m->R->R,2), mag_pow_3);
+
+    // (magGw - sin(magGw))
+    double temp2 = mag - sin(mag);
+
+    // Gw./magGw^2
+    matrix *temp3 = elemDiv(m->R->R, mag_pow_2);
+
+    // (1 - cos(magGw))
+    double temp4 = 1 - cos(mag);
+
+    // Combine all terms
+    matrix *result_matrix = matrix_add(eye(3), temp1);
+    temp1 = matrix_scalar_mul(temp1, temp2);
+    result_matrix = matrix_add(result_matrix, temp1);
+
+    SE3* ret = new_SE3(result_matrix, m->P);
+    return ret;
+
+}
 
 
 
