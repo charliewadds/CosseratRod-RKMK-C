@@ -38,7 +38,7 @@ rigidKin *actuateRigidJoint(SE3 *g_old, SE3 *g_oldToCur, rigidJoint *joint, matr
                                      g_cur_wrt_prev->T));//todo this is terrible code, I think I need to fix SE3 to be a matrix not a struct or at least be castable there are so many memory leaks
     matrix *eta = matrix_add(matMult(adj(g_act_wrt_prev), eta_old),//todo cant multiply 4x4 adjR6 and 6x6 eta
                              matrix_scalar_mul(joint->twistR6, joint->velocity));
-    matrix *d_eta = matrix_add(matrix_add(matMult(adj(g_act_wrt_prev), d_eta_old), matMult(adj(new_SE3_T(eta)),
+    matrix *d_eta = matrix_add(matrix_add(matMult(adj(g_act_wrt_prev), d_eta_old), matMult(adj_R6(eta),
                                                                                                  matrix_scalar_mul(
                                                                                                          joint->twistR6,
                                                                                                          joint->velocity))),
@@ -46,7 +46,7 @@ rigidKin *actuateRigidJoint(SE3 *g_old, SE3 *g_oldToCur, rigidJoint *joint, matr
     rigidKin *kin = (rigidKin *) malloc(sizeof(rigidKin));
     kin->g_cur = g_cur;
     kin->g_act_wrt_prev = g_act_wrt_prev;
-    kin->eta = new_SE3_T(eta);
+    kin->eta = eta;
     kin->d_eta = new_SE3_T(d_eta);
 
     free_SE3(g_cur_wrt_prev);

@@ -40,13 +40,13 @@ matrix *matrix_new(uint8_t num_rows, uint8_t num_cols){
 
 void matrix_free(matrix *m){
 
-    int i = m->numRows;
+    int i = m->numRows-1;
     for(i; i>=0; i--){
         if(m->data[i] != NULL){
             free(m->data[i]);
             m->data[i] = NULL;
         }else{
-            printf("tried to free null pointer\n");
+            printf("tried to free null pointer\n");//todo could I just break here?
         }
 
 
