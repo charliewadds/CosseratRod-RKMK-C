@@ -92,7 +92,7 @@ void free_SE3(SE3 *T){
 
 
 //combine 3x3 rotation matrix and 3x1 position vector into 4x4 transformation matrix
-matrix *T_from_PR(matrix *R, matrix *P){
+matrix *T_from_PR(matrix* restrict R, matrix* restrict P){
     matrix *T = matrix_new(4,4);
     for(int i = 0; i < 3; i++){
         for(int j = 0; j < 3; j++){
@@ -148,12 +148,14 @@ SO3 *hat_R3(matrix *z){
 SE3 *hat_R6(matrix *z){
     assert(z->numRows == 6);
     assert(z->numCols == 1);
-    SE3 *T_hat = new_SE3_zeros();
-    matrix *rotation = getSection(z, 0, 3, 0, 1);
-    matrix *position = getSection(z, 0, 3, 3, 3);
-    T_hat->R = hat_R3(rotation);
-    T_hat->P = position;
-    T_hat->T = T_from_PR(T_hat->R->R, T_hat->P);
+
+    matrix *T = matrix_new(4,4);
+    setSection(T, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0))->R);
+    setSection(T, 0, 2, 3, 3, getSection(z, 0, 2, 0, 0));
+    setSection(T, 3, 3, 0, 3, zeros(1,4));
+    T->data[3][3] = 1;
+
+    SE3 *T_hat = new_SE3_T(T);
 
     //bottom row is all zeros for se3^
 

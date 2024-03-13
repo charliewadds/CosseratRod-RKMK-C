@@ -69,7 +69,7 @@ void matrix_free(matrix *m){
 }
 
 
-matrix *matrix_add(matrix *m1, matrix *m2){
+matrix *matrix_add(matrix* restrict m1, matrix* restrict m2){
     assert(m1->numRows == m2->numRows);
     assert(m1->numCols == m2->numCols);
     matrix *result = matrix_new(m1->numRows, m1->numCols);
@@ -224,8 +224,8 @@ matrix *ones(uint8_t num_rows, uint8_t num_cols){
 
 
 void setSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, uint8_t endCol, matrix *section){
-    assert(startRow < endRow);
-    assert(startCol < endCol);
+    assert(startRow <= endRow);
+    assert(startCol <= endCol);
     assert(endRow <= m->numRows);
     assert(endCol <= m->numCols);
     assert(section->numRows -1 == (endRow - startRow));
@@ -239,10 +239,11 @@ void setSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, u
 }
 
 matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, uint8_t endCol){
+
     assert(startRow <= endRow);
     assert(startCol <= endCol);
     assert(endRow <= m->numRows);
-    //assert(endCol <= m->numCols);
+    assert(endCol <= m->numCols);
 
     matrix *section = matrix_new((endRow - startRow)+1, (endCol - startCol)+1);//todo is this right? should it add one?
 
