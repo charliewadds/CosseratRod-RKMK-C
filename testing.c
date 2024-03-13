@@ -10,36 +10,28 @@
 #include <stdio.h>
 int main(void){
 
-//    matrix *test = zeros(4,4);
-//    test->data[0][0] = 1;
-//    test->data[0][1] = 2;
-//    test->data[0][2] = 3;
-//    test->data[0][3] = 4;
-//
-//    test->data[1][0] = 5;
-//    test->data[1][1] = 6;
-//    test->data[1][2] = 7;
-//    test->data[1][3] = 8;
-//
-//    test->data[2][0] = 9;
-//    test->data[2][1] = 10;
-//    test->data[2][2] = 11;
-//    test->data[2][3] = 12;
-//
-//    test->data[3][0] = 13;
-//    test->data[3][1] = 14;
-//    test->data[3][2] = 15;
-//    test->data[3][3] = 16;
-//
-//    printMatrix(test);
-//
-//    matrix *section = getSection(test, 0, 2, 0, 2);
-//
-//
-//    setSection(test, 0, 2, 0, 2, zeros(3,3));
-//    printMatrix(test);
+    matrix *test = zeros(4,4);
+    test->data[0][0] = 3;
+    test->data[0][1] = 2;
+    test->data[0][2] = 5;
+    test->data[0][3] = 7;
 
-    printf("Hello, World!\n");
+    test->data[1][0] = 2;
+    test->data[1][1] = 7;
+    test->data[1][2] = 4;
+    test->data[1][3] = 7;
+
+    test->data[2][0] = 4;
+    test->data[2][1] = 1;
+    test->data[2][2] = 4;
+    test->data[2][3] = 8;
+
+    test->data[3][0] = 13;
+    test->data[3][1] = 14;
+    test->data[3][2] = 15;
+    test->data[3][3] = 16;
+
+
     //for this example the rod starts at the origin of the global frame
     rigidBody *rod = malloc(sizeof(rigidBody));
     rod->name = "rod";
@@ -49,7 +41,7 @@ int main(void){
     P->data[0][0] = 0.5;
     P->data[1][0] = 0;
     P->data[2][0] = 0;
-    SE3 *pose = new_SE3(eye(3), P);
+    SE3 *pose = new_SE3_T(test);
     P->data[0][0] = 1;
     matrix *CoM = zeros(6,1);
 
@@ -70,16 +62,19 @@ int main(void){
     joint->parent = NULL;
     joint->child = rod;
 
-    SE3 *g_old = new_SE3_zeros();
-    g_old->T = eye(4);
-    SE3 *g_oldToCur = new_SE3_zeros();
-    g_oldToCur->T = eye(4);
+
+    SE3 *g_old = new_SE3_T(test);
+    printMatrix(test);
+    printf("the det of test is: %f\n",Det(test));
+    SE3 *g_oldToCur = new_SE3_T(test);
+
+    printf(jointToJson(joint));
 
     matrix *eta_old = zeros(6,1);
     matrix *d_eta_old = zeros(6,1);
     rigidKin *kin = actuateRigidJoint(g_old, g_oldToCur, joint, eta_old, d_eta_old);
-
-    printf("rigidKin output: \n");
+    joint->position = 3;
+    printf("\nrigidKin output: \n");
     printf("g_cur: \n");
     printMatrix(kin->g_cur->T);
     printf("g_act_wrt_prev: \n");
@@ -88,6 +83,8 @@ int main(void){
     printMatrix(kin->eta);
     printf("d_eta: \n");
     printMatrix(kin->d_eta);
+
+
     return 0;
 
 

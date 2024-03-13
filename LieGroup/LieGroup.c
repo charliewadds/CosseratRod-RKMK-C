@@ -133,7 +133,7 @@ matrix *T_from_PR_SO3(SO3 *R, matrix *P){
 SO3 *hat_R3(matrix *z){
     SO3 *T = new_SO3_zeros();
     T->R = zeros(3,3);
-    printMatrix(T->R);
+    //printMatrix(T->R);
     T->R->data[0][1] = z->data[2][0] * -1;
     T->R->data[0][2] = z->data[1][0];
 

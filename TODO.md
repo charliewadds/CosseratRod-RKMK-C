@@ -1,5 +1,6 @@
 # THINGS TO FIX
-- [ ] Determinant keeps trying to free null pointers, not sure why
+- [x] Determinant keeps trying to free null pointers, not sure why
+- [ ] Probably should make some kind of union for SE3 and matrix or something so I dont have to create a new one every time I want to convert
 
 
 # OPTIMIZATIONS

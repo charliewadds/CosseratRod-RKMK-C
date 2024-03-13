@@ -3,7 +3,7 @@
 //
 
 #include "RobotLib.h"
-
+#include <stdio.h>
 
 rigidKin *actuateRigidJoint(SE3 *g_old, SE3 *g_oldToCur, rigidJoint *joint, matrix *eta_old, matrix *d_eta_old) {
     /*
@@ -36,7 +36,7 @@ rigidKin *actuateRigidJoint(SE3 *g_old, SE3 *g_oldToCur, rigidJoint *joint, matr
                                                              matrix_scalar_mul(hat_R6(joint->twistR6)->T, -1),
                                                              joint->position)))->T,
                                      g_cur_wrt_prev->T));//todo this is terrible code, I think I need to fix SE3 to be a matrix not a struct or at least be castable there are so many memory leaks
-    matrix *eta = matrix_add(matMult(adj(g_act_wrt_prev), eta_old),//todo cant multiply 4x4 adjR6 and 6x6 eta
+    matrix *eta = matrix_add(matMult(adj(g_act_wrt_prev), eta_old),
                              matrix_scalar_mul(joint->twistR6, joint->velocity));
     matrix *d_eta = matrix_add(matrix_add(matMult(adj(g_act_wrt_prev), d_eta_old), matMult(adj_R6(eta),
                                                                                                  matrix_scalar_mul(
@@ -56,4 +56,14 @@ rigidKin *actuateRigidJoint(SE3 *g_old, SE3 *g_oldToCur, rigidJoint *joint, matr
     //matrix_free(d_eta);
 
     return kin;
+}
+
+//
+char *jointToJson(rigidJoint *joint) {
+    char *output = malloc(sizeof(char) * 100);
+    sprintf(output, "{\"name\":\"%s\",\"twistR6\":[%f,%f,%f,%f,%f,%f],\"position\":%d,\"velocity\":%d,\"acceleration\":%d,\"limits\":[%f,%f],\"homepos\":%d}",
+            joint->name, joint->twistR6->data[0][0], joint->twistR6->data[1][0], joint->twistR6->data[2][0],
+            joint->twistR6->data[3][0], joint->twistR6->data[4][0], joint->twistR6->data[5][0], joint->position,
+            joint->velocity, joint->acceleration, joint->limits[0], joint->limits[1], joint->homepos);
+    return output;
 }
