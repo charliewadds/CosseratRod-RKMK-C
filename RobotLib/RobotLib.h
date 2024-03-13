@@ -57,8 +57,7 @@ typedef struct rigidKin_s{//todo this might not be the best way to do this
 }rigidKin;
 
 //this is the kinematic equations to solve for velocities
-//todo should g_old and g_oldToCur be column vectors in R6 or matrices in SE3
-rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint, SE3 *eta_old, SE3 *d_eta_old);
+rigidKin *actuateRigidJoint(SE3 *g_old, SE3 *g_oldToCur, rigidJoint *joint, matrix *eta_old, matrix *d_eta_old);
 
 typedef struct flexJoint_s {//todo this is not implemented yet in the cosserat rod code
 }flexJoint;

@@ -70,8 +70,14 @@ int main(void){
     joint->parent = NULL;
     joint->child = rod;
 
+    SE3 *g_old = new_SE3_zeros();
+    g_old->T = eye(4);
+    SE3 *g_oldToCur = new_SE3_zeros();
+    g_oldToCur->T = eye(4);
 
-    rigidKin *kin = actuateRigidJoint(rod->CoM, zeros(6,1), joint, new_SE3(eye(3), zeros(3,1)), new_SE3(eye(3), zeros(3,1)));
+    matrix *eta_old = zeros(6,1);
+    matrix *d_eta_old = zeros(6,1);
+    rigidKin *kin = actuateRigidJoint(g_old, g_oldToCur, joint, eta_old, d_eta_old);
 
     printf("rigidKin output: \n");
     printf("g_cur: \n");
