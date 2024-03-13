@@ -47,13 +47,13 @@ rigidKin *actuateRigidJoint(SE3 *g_old, SE3 *g_oldToCur, rigidJoint *joint, matr
     kin->g_cur = g_cur;
     kin->g_act_wrt_prev = g_act_wrt_prev;
     kin->eta = eta;
-    kin->d_eta = new_SE3_T(d_eta);
+    kin->d_eta = d_eta;
 
     free_SE3(g_cur_wrt_prev);
-    free_SE3(g_cur);
-    free_SE3(g_act_wrt_prev);
-    matrix_free(eta);
-    matrix_free(d_eta);
+    //free_SE3(g_cur);
+    //free_SE3(g_act_wrt_prev);
+    //matrix_free(eta);
+    //matrix_free(d_eta);
 
     return kin;
 }

@@ -85,9 +85,9 @@ int main(void){
     printf("g_act_wrt_prev: \n");
     printMatrix(kin->g_act_wrt_prev->T);
     printf("eta: \n");
-    printMatrix(kin->eta->T);
+    printMatrix(kin->eta);
     printf("d_eta: \n");
-    printMatrix(kin->d_eta->T);
+    printMatrix(kin->d_eta);
     return 0;
 
 

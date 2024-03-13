@@ -50,10 +50,10 @@ typedef struct rigidKin_s{//todo this might not be the best way to do this
     //todo also I have no Idea what any of this means
     SE3 *g_cur;//transformation from base frame to ith body CoM in RRC (robot refrence configuration)
     SE3 *g_act_wrt_prev;// transformation from the ith body CoM BCF to the i-1th body Com bcf in RAC (Robot Actuated Configuration)
-    SE3 *eta;//twist for bdy velocity of ith CoM expressed in the ith CoM BCF (Body coordinate frame)
+    matrix *eta;//twist for bdy velocity of ith CoM expressed in the ith CoM BCF (Body coordinate frame)
 
     // todo is this not just acceleration? time rate of change of velocity
-    SE3 *d_eta;//time-rate fo cahge of body velocity twists of the ith CoM expressed in the ith CoM BCF (Body coordinate frame about ith CoM)
+    matrix *d_eta;//time-rate fo cahge of body velocity twists of the ith CoM expressed in the ith CoM BCF (Body coordinate frame about ith CoM)
 }rigidKin;
 
 //this is the kinematic equations to solve for velocities
