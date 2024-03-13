@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdint.h>
 
 #ifndef _MATRICES_H_
 #define _MARTRICES_H_
