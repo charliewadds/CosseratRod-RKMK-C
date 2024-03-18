@@ -6,6 +6,9 @@
 
 
 
+
+
+
 //Define a matrix of doubles
 //max number of rows or columns is 255
 typedef struct matrix_double_s {

@@ -4,6 +4,7 @@
 
 #include <math.h>
 #include <assert.h>
+#include <printf.h>
 #include "LieGroup.h"
 
 
@@ -153,8 +154,10 @@ SE3 *hat_R6(matrix *z){
     setSection(T, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0))->R);
     setSection(T, 0, 2, 3, 3, getSection(z, 0, 2, 0, 0));
     setSection(T, 3, 3, 0, 3, zeros(1,4));
-    T->data[3][3] = 1;
+    //T->data[3][3] = 1;//todo this is not in matlab, dont I need it?
 
+
+    printMatrix(z);
     SE3 *T_hat = new_SE3_T(T);
 
     //bottom row is all zeros for se3^
@@ -235,72 +238,41 @@ matrix *adj_R6(matrix *z){
 //EXPONENTIAL MAP
 //_________________________________________________________________________________________________________
 
-SO3 *expm_SO3(SO3 *m){
+SO3 *expm_SO3(SO3 *m) {
 
-    //TODO: all sorts of stuff wrong with this, math is probably wrong also should take *result as input and just update it
     double mag = norm(unhat_SO3(m));
-    if (mag == 0){
-        return (SO3*) eye(3);
+    if (mag == 0) {
+        return new_SO3(eye(3));
+    } else {
+        return new_SO3(matrix_add(matrix_add(eye(3),
+                                             matrix_scalar_mul(elemDiv(m->R, mag), sin(mag))),
+                                  matrix_scalar_mul(elemDiv(matrixPow(m->R, 2.0), pow(mag, 2.0)),
+                                                    (1 - cos(mag)))));
+
+
     }
-
-    // Calculate intermediate results
-    double mag_pow_2 = pow( mag, 2);
-    double mag_pow_3 = pow( mag, 3);
-
-    // Gw^2./magGw^3
-    matrix *temp1 = elemDiv( matrixPow(m->R, 2), mag_pow_3);
-
-    // (magGw - sin(magGw))
-    double temp2 = mag = sin(mag);
-
-    // Gw./magGw^2
-    matrix *temp3 = elemDiv(m->R, mag_pow_2);
-
-    // (1 - cos(magGw))
-    double temp4 =  1 - cos(mag);
-
-    // Combine all terms
-    matrix *result = matrix_add(eye(3), temp1);
-    temp1 = matrix_scalar_mul(temp1, temp2);
-    result = matrix_add(result, temp1);
-
-    SO3 *ret = new_SO3(result);
-    return ret;
 }
 
 
 
 SE3 *expm_SE3(SE3 *m) {
-//TODO: all sorts of stuff wrong with this, math is probably wrong also should take *result as input and just update it
-    double mag = norm(m->R->R);
-    if (mag == 0) {
-        return new_SE3_T(eye(4));
+    SO3 *gW = new_SO3(getSection(m->T, 0, 2, 0, 2));
+    matrix *gU = getSection(m->T, 0, 2, 3, 3);
+
+    double mag = norm(unhat_SO3(gW));
+    matrix *A = eye(3);
+    if(mag != 0){
+
+        matrix *k = matrix_scalar_mul(elemDiv(matrixPow(gW->R, 2), ((double) pow(mag,3.0))) , (mag - (double) sin(mag)));
+        matrix *f = matrix_scalar_mul(elemDiv(gW->R, pow(mag,2.0)) , (1-cos(mag)));
+        A = matrix_add(A,matrix_add(k,f));
     }
-
-    // Calculate intermediate results
-    double mag_pow_2 = pow(mag, 2);
-    double mag_pow_3 = pow(mag, 3);
-
-    // Gw^2./magGw^3
-    matrix *temp1 = elemDiv(matrixPow(m->R->R,2), mag_pow_3);
-
-    // (magGw - sin(magGw))
-    double temp2 = mag - sin(mag);
-
-    // Gw./magGw^2
-    matrix *temp3 = elemDiv(m->R->R, mag_pow_2);
-
-    // (1 - cos(magGw))
-    double temp4 = 1 - cos(mag);
-
-    // Combine all terms
-    matrix *result_matrix = matrix_add(eye(3), temp1);
-    temp1 = matrix_scalar_mul(temp1, temp2);
-    result_matrix = matrix_add(result_matrix, temp1);
-
-    SE3* ret = new_SE3(result_matrix, m->P);
-    return ret;
-
+    SE3 *result = new_SE3_zeros();
+    setSection(result->T, 0, 2, 0, 2, expm_SO3(gW)->R);
+    setSection(result->T, 0, 2, 3, 3, matMult(A, gU));
+    setSection(result->T , 3, 3, 0, 3, zeros(1,4));
+    result->T->data[3][3] = 1;
+    return result;
 }
 
 

@@ -4,6 +4,8 @@
 #include "Matrices.h"
 
 
+
+
 matrix *matrix_new(uint8_t num_rows, uint8_t num_cols){
 
 
@@ -247,8 +249,8 @@ matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol
 
     matrix *section = matrix_new((endRow - startRow)+1, (endCol - startCol)+1);//todo is this right? should it add one?
 
-    for(int i = startRow; i < endRow; i++){
-        for(int j = startCol; j < endCol; j++){
+    for(int i = startRow; i <= endRow; i++){
+        for(int j = startCol; j <= endCol; j++){
             section->data[i - startRow][j - startCol] = m->data[i][j];
         }
     }
@@ -315,7 +317,7 @@ double norm(matrix *m){
 }
 
 void printMatrix(matrix *m){
-    for(int i = 0; i < m->numRows; i++){
+   for(int i = 0; i < m->numRows; i++){
         printf("|");
         for(int j = 0; j < m->numCols; j++){
             printf("%f ", m->data[i][j]);
@@ -327,12 +329,14 @@ void printMatrix(matrix *m){
 matrix *matrixPow(matrix *m, int power){
     assert(m->square == 1);
     matrix *result = matrix_new(m->numRows, m->numCols);
-    for(int i = 0; i < m->numRows; i++){
-        for(int j = 0; j < m->numCols; j++){
-            result->data[i][j] = m->data[i][j];
-        }
-    }
-    for(int i = 0; i < power; i++){
+    result->data = m->data;
+    result->square = 1;
+//    for(int i = 0; i < m->numRows; i++){
+//        for(int j = 0; j < m->numCols; j++){
+//            result->data[i][j] = m->data[i][j];
+//        }
+//    }
+    for(int i = 0; i < power-1; i++){
         result = matMult(result, m);
     }
     return result;
@@ -445,4 +449,5 @@ double eigenvalue(matrix *A, int iterations){
     matrix_free(vTv);
     return result;
 }
+
 

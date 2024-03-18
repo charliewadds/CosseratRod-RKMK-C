@@ -6,6 +6,7 @@
 #ifndef COSSERATROD_RKMK_C_LIEGROUP_H
 #define COSSERATROD_RKMK_C_LIEGROUP_H
 #include "Matrices.h"
+#define PI 3.1415926535
 //todo could define R3 column vector if it is used a lot
 
 //todo could get rid of SO3 and SE3 and just use matrix if that is faster, this is more readable, shouldnt significanty affect speed just marginally more memory

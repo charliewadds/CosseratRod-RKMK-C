@@ -58,12 +58,70 @@ rigidKin *actuateRigidJoint(SE3 *g_old, SE3 *g_oldToCur, rigidJoint *joint, matr
     return kin;
 }
 
+
+rigidBody *newRigidBody(char *name, matrix *mass, matrix *Transform, matrix *CoM) {
+    rigidBody *body = (rigidBody *) malloc(sizeof(rigidBody));
+    body->name = name;
+    body->mass = mass;
+    body->Transform = Transform;
+    body->CoM = CoM;
+    return body;
+}
+
+rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, int velocity, int acceleration, float *limits,
+                          double homepos, rigidBody *parent, rigidBody *child) {
+    rigidJoint *joint = (rigidJoint *) malloc(sizeof(rigidJoint));
+    joint->name = name;
+    joint->twistR6 = twistR6;
+    joint->position = position;
+    joint->velocity = velocity;
+    joint->acceleration = acceleration;
+    joint->limits = limits;
+    joint->homepos = homepos;
+    joint->parent = parent;
+    joint->child = child;
+    return joint;
+}
+
+matrix *plotRobotConfig(Robot *robot, double *theta, double numStep) {
+    matrix *POS = zeros(3,11);//todo this is a hack, I need to make this dynamic
+    matrix *g = eye(4);
+    int iii = 2;//num points plotted
+    int i_R = 1;
+
+    Object *currObj = (Object *) malloc(sizeof(Object));
+    for(int i = 0; i < (robot->numObjects - 3)/2; i++){
+        currObj->joint =  robot->objects[(i*2)+1].joint;
+        if(1){//todo check for rigid, add flex when implemented
+
+
+            g = matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta[i]))))->T);
+            printMatrix(g);
+            printf("\n\n\n");
+            setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
+            iii++;
+
+
+            //g = g * expm3(hat(ROBOT{2*i}.Child.Transform));
+            g = matMult(g, expm_SE3(hat_R6(currObj->joint->child->Transform))->T);
+
+            setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
+            iii++;
+
+       }
+    }
+
+    return POS;
+
+}
+
+
 //
 char *jointToJson(rigidJoint *joint) {
     char *output = malloc(sizeof(char) * 100);
     sprintf(output, "{\"name\":\"%s\",\"twistR6\":[%f,%f,%f,%f,%f,%f],\"position\":%d,\"velocity\":%d,\"acceleration\":%d,\"limits\":[%f,%f],\"homepos\":%d}",
-            joint->name, joint->twistR6->data[0][0], joint->twistR6->data[1][0], joint->twistR6->data[2][0],
-            joint->twistR6->data[3][0], joint->twistR6->data[4][0], joint->twistR6->data[5][0], joint->position,
+            joint->name, joint->twistR6->data[0][0], joint->twistR6->data[0][1], joint->twistR6->data[0][2],
+            joint->twistR6->data[0][3], joint->twistR6->data[0][4], joint->twistR6->data[0][5], joint->position,
             joint->velocity, joint->acceleration, joint->limits[0], joint->limits[1], joint->homepos);
     return output;
 }
