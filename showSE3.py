@@ -1,60 +1,53 @@
-import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib import animation
 from mpl_toolkits.mplot3d import Axes3D
-import numpy as np
-data_str = """
--0.480456 -0.169381 0.633550 -0.055375
--0.131922 0.143322 -0.151466 0.123779
-0.311075 -0.029316 -0.457655 0.201954
-0.112378 0.026059 0.017915 -0.068404
-"""
-def rotationToVect(transformationMatrix):
-    vect = np.array([0.0, 0.0, 0.0])
-    vect[0] = transformationMatrix[0][3]
-    vect[1] = transformationMatrix[1][3]
-    vect[2] = transformationMatrix[2][3]
+import matplotlib.pyplot as plt
+import csv
 
-    rotation = np.array([
-        [transformationMatrix[0][0], transformationMatrix[0][1], transformationMatrix[0][2]],
-        [transformationMatrix[1][0], transformationMatrix[1][1], transformationMatrix[1][2]],
-        [transformationMatrix[2][0], transformationMatrix[2][1], transformationMatrix[2][2]]
-    ])
+mpl.rcParams['legend.fontsize'] = 10
 
-    return np.dot(vect,rotation)
-# Split the string into lines and then split each line into values
-rows = [[float(val) for val in line.split()] for line in data_str.strip().split('\n')]
-
-# Convert the list of lists into a NumPy array
-array = np.array(rows)
-
-# Define the vector
-vector = rotationToVect(np.array(array))
-print(array)
-print(vector)
-# Create a figure and a 3D axis
 fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+ax = fig.add_subplot(projection='3d', autoscale_on=False)
 
-# Plot the vector
-ax.quiver(0, 0, 0, vector[0], vector[1], vector[2], color='r')
-ax.quiver(1, 0, 0, vector[0], vector[1], vector[2], color='g')
+# Read data from CSV
+data = []
+with open('testData/posData.csv', 'r') as file:
+    reader = csv.reader(file)
+    #next(reader)  # Skip header
+    for row in reader:
+        row_data = []
+        for entry in row:
+            if entry.strip():  # Skip empty strings
+                try:
+                    row_data.append(float(entry))
+                except ValueError:
+                    pass
+        if row_data:
+            data.append(row_data)
 
-# Set the limits for the axes
-ax.set_xlim([-5, 5])
-ax.set_ylim([-5, 5])
-ax.set_zlim([-5, 5])
+def animate(i, data):
+    # Extract x, y, z for current animation step
+    start_index = 3 * i
+    end_index = start_index + 3
+    x = data[i*3]
+    y = data[(i*3)+1]
+    z = data[(i*3)+2]
 
-# Set labels
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
 
-# Show the plot
+
+    ax.clear()
+    ax.plot(x, y, z, label='parametric curve')
+    ax.scatter(x, y, z, color='red')  # Plot circles at each point
+    ax.set_xlim(-2, 2)
+    ax.set_ylim(-2, 2)
+    ax.set_zlim(-2, 2)
+
+ani = animation.FuncAnimation(fig, animate, fargs=(data,), frames=len(data) // 3, interval=100)
+
+ax.autoscale(False)
+ax.set_xlim(-2, 2)
+ax.set_ylim(-2, 2)
+ax.set_zlim(-2, 2)
+
+
 plt.show()
-
-
-#this takes a matrix transformation in SE3 and returns the vector
-
-
-
-
-

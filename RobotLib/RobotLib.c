@@ -86,11 +86,11 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, int velo
 matrix *plotRobotConfig(Robot *robot, double *theta, double numStep) {
     matrix *POS = zeros(3,11);//todo this is a hack, I need to make this dynamic
     matrix *g = eye(4);
-    int iii = 2;//num points plotted
+    int iii = 1;//num points plotted
     int i_R = 1;
 
     Object *currObj = (Object *) malloc(sizeof(Object));
-    for(int i = 0; i < (robot->numObjects - 3)/2; i++){
+    for(int i = 0; i < (robot->numObjects - 2)/2; i++){
         currObj->joint =  robot->objects[(i*2)+1].joint;
         if(1){//todo check for rigid, add flex when implemented
 

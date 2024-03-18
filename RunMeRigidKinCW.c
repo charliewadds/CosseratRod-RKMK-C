@@ -16,7 +16,7 @@ Robot *defRigidKin(double *theta, double theta_dot, double theta_ddot){
     linkTwist->data[2][0] = 1;
     linkTwist = matrix_scalar_mul(linkTwist, linkLen);
 
-    matrix *linkTwist_SE3 = linkTwist;
+
 
     matrix *linkCoM = elemDiv(linkTwist, 2);
 
@@ -31,13 +31,13 @@ Robot *defRigidKin(double *theta, double theta_dot, double theta_ddot){
     SE3 *Z_SE3 = new_SE3_zeros();
 
     //todo find a better way to do this, maybe json or something
-    rigidBody *base = (Object *) newRigidBody("base", matrix_scalar_mul(eye(6), DBL_MAX), Z, Z);//todo dbl max to replace inf
-    rigidBody *Body_1 = (Object *) newRigidBody("Body_1", M,  linkTwist_SE3, linkCoM);
-    rigidBody *Body_2 = (Object *) newRigidBody("Body_2", M,  linkTwist_SE3, linkCoM);
-    rigidBody *Body_3 = (Object *) newRigidBody("Body_3", M,  linkTwist_SE3, linkCoM);
-    rigidBody *Body_4 = (Object *) newRigidBody("Body_4", M,  linkTwist_SE3, linkCoM);
-    rigidBody *Body_5 = (Object *) newRigidBody("Body_5", M,  linkTwist_SE3, linkCoM);
-    rigidBody *EE = (Object *) newRigidBody("EE", zeros(6,6),  Z, Z);
+    rigidBody *base = newRigidBody("base", matrix_scalar_mul(eye(6), DBL_MAX), Z, Z);//todo dbl max to replace inf
+    rigidBody *Body_1 =  newRigidBody("Body_1", M,  linkTwist, linkCoM);
+    rigidBody *Body_2 =  newRigidBody("Body_2", M,  linkTwist, linkCoM);
+    rigidBody *Body_3 =  newRigidBody("Body_3", M,  linkTwist, linkCoM);
+    rigidBody *Body_4 =  newRigidBody("Body_4", M,  linkTwist, linkCoM);
+    rigidBody *Body_5 =  newRigidBody("Body_5", elemDiv(M,2), elemDiv(linkTwist,2), elemDiv(linkCoM,2));
+    rigidBody *EE = newRigidBody("EE", zeros(6,6),  Z, Z);
 
 
     matrix *r6_2 = zeros(6,1);
@@ -52,7 +52,7 @@ Robot *defRigidKin(double *theta, double theta_dot, double theta_ddot){
     matrix *r6_5 = zeros(6,1);
     r6_5->data[5][0] = 1;
 
-    double *lims = malloc(sizeof(double) * 2);
+    float *lims = malloc(sizeof(double) * 2);
     lims[0] = -PI;
     lims[1] = PI;
 
@@ -65,7 +65,8 @@ Robot *defRigidKin(double *theta, double theta_dot, double theta_ddot){
     rigidJoint *Joint_4 = newRigidJoint("Joint_4", r6_3, theta[3], theta_dot, theta_ddot, lims, 0, Body_3, Body_4);
     rigidJoint *Joint_5 = newRigidJoint("Joint_5", r6_2, theta[4], theta_dot, theta_ddot, lims, 0, Body_4, Body_5);
 
-    rigidJoint *joint_EE = (Object *) newRigidJoint("joint_EE", zeros(6,1), 0, 0, 0, zeros(1,2), 0, NULL, EE);
+    double zero[2] = {0,0};
+    rigidJoint *joint_EE =  newRigidJoint("joint_EE", zeros(6,1), 0, 0, 0, zero, 0, NULL, EE);
     Robot *newRobot = malloc(sizeof(Robot));
     newRobot->name = "RigidRandy";
 
@@ -93,11 +94,30 @@ Robot *defRigidKin(double *theta, double theta_dot, double theta_ddot){
 
     return newRobot;
 }
+
+void matrixToFile(matrix *m, char *filename){
+    FILE *f = fopen(filename, "a");
+    if (f == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+
+    for (int i = 0; i < m->numRows; i++){
+        for (int j = 0; j < m->numCols; j++){
+            fprintf(f, "%f, ", m->data[i][j]);
+        }
+        fprintf(f, "\n");
+    }
+    fclose(f);
+}
 int main(void){
-    double theta[5] = {0,0,0,0,0};
+    double theta[6] = {0,0,0,0,0,0};
     double theta_dot = 0;
     double theta_ddot = 0;
     Robot *rigidRandy = defRigidKin(theta, theta_dot, theta_ddot);
     printMatrix(plotRobotConfig(rigidRandy, theta, 100));
+    for
+    matrixToFile(plotRobotConfig(rigidRandy, theta, 100), "RigidRandyPlot.csv");
     return 0;
 }
