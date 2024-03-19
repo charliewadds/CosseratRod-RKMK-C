@@ -25,6 +25,8 @@ with open('testData/posData.csv', 'r') as file:
         if row_data:
             data.append(row_data)
 
+
+# Animation function
 def animate(i, data):
     # Extract x, y, z for current animation step
     start_index = 3 * i
@@ -33,14 +35,13 @@ def animate(i, data):
     y = data[(i*3)+1]
     z = data[(i*3)+2]
 
-
-
     ax.clear()
     ax.plot(x, y, z, label='parametric curve')
     ax.scatter(x, y, z, color='red')  # Plot circles at each point
     ax.set_xlim(-2, 2)
     ax.set_ylim(-2, 2)
     ax.set_zlim(-2, 2)
+
 
 ani = animation.FuncAnimation(fig, animate, fargs=(data,), frames=len(data) // 3, interval=100)
 

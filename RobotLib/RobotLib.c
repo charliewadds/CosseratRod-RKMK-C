@@ -115,7 +115,65 @@ matrix *plotRobotConfig(Robot *robot, double *theta, double numStep) {
 
 }
 
+matrix *linear_intrpl(matrix **y, float mu){
 
+    return matrix_scalar_mul(matrix_add(y[0], matrix_sub(y[1], y[0])), mu);
+}
+
+matrix *COSS_ODE_Dsc(matrix *y, matrix *y_h, matrix *f_sh, flexBody *Body, float c0, matrix *F_dst){
+
+
+    matrix *f = getSection(y, 0, 5, 0, Body->N - 1);
+    matrix *eta = getSection(y, 6,11, 0, Body->N - 1);
+
+    matrix *f_h = getSection(y_h, 0, 5, 0, Body->N - 1);
+    matrix *eta_h = getSection(y_h, 6,11, 0, Body->N - 1);
+
+
+    matrix *f_t = matrix_add(f, matrix_scalar_mul(f_sh, c0));
+    matrix *eta_t = matrix_add(eta, matrix_scalar_mul(eta_h, c0));
+
+    matrix *f_s = matrix_add(f, matrix_scalar_mul(Body->damping, c0)) +
+            matrix_sub(matrix_add((matMult(Body->mass, eta_t),
+            matrix_sub((matMult(matMult(matrix_transpose(adj_R6(f)),Body->mass), eta)),
+                       matrix_add(matMult(Body->damping, f_sh),
+            matMult(matrix_transpose(adj_R6(f)), (matrix_add(matMult(Body->stiff, matrix_sub(f,Body->F_0->T)), matMult(Body->damping, f_t)) ) ), F_dst)))));
+}
+flexDyn *flex_dyn(SE3 *g_base, matrix *F_dst, matrix F_base, flexBody *body, matrix *eta_base, matrix **eta_prev, matrix **f_prev, float dt, int LA_SemiDsc, char *LA_ODE, char *LG_ODE, char *Intrp_Fcn){
+
+
+    matrix **eta = (matrix **)malloc(sizeof(matrix *) * body->N);
+    matrix **f = (matrix **)malloc(sizeof(matrix *) * body->N);
+    matrix **g = (matrix **)malloc(sizeof(matrix *) * body->N);
+
+    matrix *eta_h = zeros(6, body->N);
+    matrix *f_h = zeros(6, body->N);
+    for(int i = 0; i < body->N; i++){
+        eta[i] = zeros(6,1);
+        f[i] = zeros(6,1);
+        g[i] = zeros(4,4);
+
+
+
+    }
+
+    int offset_sd = 0;
+
+    matrix *c_sd = SD_Load(LA_SemiDsc, dt, &offset_sd);
+    //eta_prev is 6x1xbody->Nx?
+
+
+    for(int i = 1+offset_sd; i < c_sd->numCols; i++){
+        //todo this is a mess very slow, only works if eta has 6x1 matrices and there is a solid chance it doesent even work then
+        //eta_h = matrix_add(getSection(matrix_transpose(eta_h), 0,5,i,i), getSection(matrix_transpose(eta_prev[i - offset_sd]),0,5,i,i));
+        eta_h = matrix_add(eta_h, matrix_scalar_mul(getSection(matrix_transpose(eta_prev[i - offset_sd]),0,5,0,body->N -1), c_sd->data[0][i]));
+        f_h = matrix_add(f_h, matrix_scalar_mul(getSection(matrix_transpose(f_prev[i - offset_sd]),0,5,0,body->N -1), c_sd->data[0][i]));
+    }
+
+
+
+
+}
 //
 char *jointToJson(rigidJoint *joint) {
     char *output = malloc(sizeof(char) * 100);
