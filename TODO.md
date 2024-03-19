@@ -1,4 +1,6 @@
 # TO DO
+- [ ] multiply fixed size matrices using NEON instructions
+  - https://developer.arm.com/documentation/102467/0201/Example---matrix-multiplication
 - [ ] add shape and math descriptions to variables
 - [ ] There is probably a way to make getSection just return a pointer to the 'top left corner' of the section so it doesn't have to create a new matrix
 - [ ] It is probably best to use a premade matrix library because it can use SIMD and other optimizations
