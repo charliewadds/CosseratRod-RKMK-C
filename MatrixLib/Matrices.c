@@ -83,7 +83,7 @@ matrix *matrix_add(matrix* restrict m1, matrix* restrict m2){
     return result;
 }
 
-matrix *matrix_scalar_mul(matrix *m, float scalar){
+matrix *matrix_scalar_mul(matrix *m, double scalar){
     matrix *result = matrix_new(m->numRows, m->numCols);
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){

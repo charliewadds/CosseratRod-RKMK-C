@@ -157,7 +157,7 @@ SE3 *hat_R6(matrix *z){
     //T->data[3][3] = 1;//todo this is not in matlab, dont I need it?
 
 
-    printMatrix(z);
+    //printMatrix(z);
     SE3 *T_hat = new_SE3_T(T);
 
     //bottom row is all zeros for se3^

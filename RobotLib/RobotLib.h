@@ -11,13 +11,6 @@
 #include "LieGroup.h"
 #include "FDM.h"
 
-
-
-
-
-
-
-
 typedef struct rigidBody_s{
     char *name;
     matrix *mass;
@@ -43,10 +36,10 @@ typedef struct rigidJoint_s{
     char *name;
     matrix *twistR6;//twist axis to define the joint column vector R6
     double position; //magnitude of the joint position (is this not basically just an angle? also why is it not just baked into the twist?)
-    int velocity;//magnitude of the joint velocity
-    int acceleration;//magnitude of the joint acceleration
-    float *limits;//joint limits
-    float homepos;//todo this is an angle right? or a magnitude of a twist axis like position?
+    double velocity;//magnitude of the joint velocity
+    double acceleration;//magnitude of the joint acceleration
+    double  *limits;//joint limits
+    double homepos;//todo this is an angle right? or a magnitude of a twist axis like position?
     rigidBody *parent;//todo make a union for rigid and flex bodies
     rigidBody *child;
 
@@ -74,7 +67,7 @@ typedef struct flexDyn_s{
 rigidKin *actuateRigidJoint(SE3 *g_old, SE3 *g_oldToCur, rigidJoint *joint, matrix *eta_old, matrix *d_eta_old);
 
 rigidBody *newRigidBody(char *name, matrix *mass, matrix *Transform, matrix *CoM);
-rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, int velocity, int acceleration, float *limits, double homepos, rigidBody *parent, rigidBody *child);
+rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double velocity, double acceleration, double *limits, double homepos, rigidBody *parent, rigidBody *child);
 flexBody *newFlexBody(char *name, double mass, matrix *stiff, matrix *damping, SE3 *F_0, int N, int L);
 
 typedef matrix* (*Interp_function)(matrix**, float);
@@ -144,7 +137,7 @@ typedef struct robot_s {
 
 }Robot;
 
-matrix *plotRobotConfig(Robot *robot, double *theta, double numStep);
+matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep);
 
 char *jointToJson(rigidJoint *joint);
 typedef struct flexJoint_s {//todo this is not implemented yet in the cosserat rod code

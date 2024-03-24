@@ -49,7 +49,7 @@ matrix *matrix_add(matrix *m1, matrix *m2);
 matrix *matrix_sub(matrix *m1, matrix *m2);
 
 // Scalar multiplication
-matrix *matrix_scalar_mul(matrix *m, float scalar);
+matrix *matrix_scalar_mul(matrix *m, double scalar);
 
 // Identity matrix of size nxn
 matrix *eye(uint8_t n);

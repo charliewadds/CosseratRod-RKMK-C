@@ -1,4 +1,5 @@
 # TO DO
+- [ ] one joint is upside down or someting in the rigid Kin
 - [ ] multiply fixed size matrices using NEON instructions
   - https://developer.arm.com/documentation/102467/0201/Example---matrix-multiplication
 - [ ] add shape and math descriptions to variables

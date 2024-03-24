@@ -103,12 +103,7 @@ int main(void){
     clock_t start_neon, end_neon, start_reg, end_reg;
     double time_taken_neon, time_taken_reg;
 
-    // Measure time for matrix_multiply_4x4_neon
-    start_neon = clock();
-    matrix_multiply_4x4_neon(A, B, C);
-    end_neon = clock();
-    time_taken_neon = ((double)(end_neon - start_neon)) / CLOCKS_PER_SEC;
-    printf("Time taken by NEON function: %f seconds\n", time_taken_neon);
+
 
     // Measure time for matrix_multiply_4x4
     start_reg = clock();
@@ -116,6 +111,12 @@ int main(void){
     end_reg = clock();
     time_taken_reg = ((double)(end_reg - start_reg)) / CLOCKS_PER_SEC;
     printf("Time taken by regular function: %f seconds\n", time_taken_reg);
+    // Measure time for matrix_multiply_4x4_neon
+    start_neon = clock();
+    matrix_multiply_4x4_neon(A, B, C);
+    end_neon = clock();
+    time_taken_neon = ((double)(end_neon - start_neon)) / CLOCKS_PER_SEC;
+    printf("Time taken by NEON function: %f seconds\n", time_taken_neon);
 
     // Print the resulting matrices
     printf("Matrix C (NEON):\n");

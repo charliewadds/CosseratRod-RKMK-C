@@ -22,8 +22,7 @@ rigidKin *actuateRigidJoint(SE3 *g_old, SE3 *g_oldToCur, rigidJoint *joint, matr
      - BCF:            Body Coordinate Frame
      */
     joint->twistR6 = matMult(
-            adj(expm_SE3(new_SE3_T(matrix_scalar_mul(hat_R6(joint->child->CoM)->T,
-                                                     -1)))),//transform from joint axis to ith body CoM
+            adj(expm_SE3(new_SE3_T(matrix_scalar_mul(hat_R6(joint->child->CoM)->T,-1)))),//transform from joint axis to ith body CoM
             joint->twistR6);//redefine joint to now be about child CoM
 
 
@@ -68,7 +67,7 @@ rigidBody *newRigidBody(char *name, matrix *mass, matrix *Transform, matrix *CoM
     return body;
 }
 
-rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, int velocity, int acceleration, float *limits,
+rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double velocity, double acceleration, double *limits,
                           double homepos, rigidBody *parent, rigidBody *child) {
     rigidJoint *joint = (rigidJoint *) malloc(sizeof(rigidJoint));
     joint->name = name;
@@ -83,7 +82,7 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, int velo
     return joint;
 }
 
-matrix *plotRobotConfig(Robot *robot, double *theta, double numStep) {
+matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
     matrix *POS = zeros(3,11);//todo this is a hack, I need to make this dynamic
     matrix *g = eye(4);
     int iii = 1;//num points plotted
@@ -95,9 +94,10 @@ matrix *plotRobotConfig(Robot *robot, double *theta, double numStep) {
         if(1){//todo check for rigid, add flex when implemented
 
 
-            g = matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta[i]))))->T);
-            printMatrix(g);
-            printf("\n\n\n");
+            g = matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[i][0]))))->T);
+            //printMatrix(g);
+            //
+            // printf("\n\n\n");
             setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
             iii++;
 
@@ -115,10 +115,10 @@ matrix *plotRobotConfig(Robot *robot, double *theta, double numStep) {
 
 }
 
-matrix *linear_intrpl(matrix **y, float mu){
-
-    return matrix_scalar_mul(matrix_add(y[0], matrix_sub(y[1], y[0])), mu);
-}
+//matrix *linear_intrpl(matrix **y, float mu){
+//
+//    return matrix_scalar_mul(matrix_add(y[0], matrix_sub(y[1], y[0])), mu);
+//}
 
 matrix *COSS_ODE_Dsc(matrix *y, matrix *y_h, matrix *f_sh, flexBody *Body, float c0, matrix *F_dst){
 
@@ -133,11 +133,11 @@ matrix *COSS_ODE_Dsc(matrix *y, matrix *y_h, matrix *f_sh, flexBody *Body, float
     matrix *f_t = matrix_add(f, matrix_scalar_mul(f_sh, c0));
     matrix *eta_t = matrix_add(eta, matrix_scalar_mul(eta_h, c0));
 
-    matrix *f_s = matrix_add(f, matrix_scalar_mul(Body->damping, c0)) +
-            matrix_sub(matrix_add((matMult(Body->mass, eta_t),
-            matrix_sub((matMult(matMult(matrix_transpose(adj_R6(f)),Body->mass), eta)),
-                       matrix_add(matMult(Body->damping, f_sh),
-            matMult(matrix_transpose(adj_R6(f)), (matrix_add(matMult(Body->stiff, matrix_sub(f,Body->F_0->T)), matMult(Body->damping, f_t)) ) ), F_dst)))));
+//    matrix *f_s = matrix_add(f, matrix_scalar_mul(Body->damping, c0)) +
+//            matrix_sub(matrix_add((matMult(Body->mass, eta_t),
+//            matrix_sub((matMult(matMult(matrix_transpose(adj_R6(f)),Body->mass), eta)),
+//                       matrix_add(matMult(Body->damping, f_sh),
+//            matMult(matrix_transpose(adj_R6(f)), (matrix_add(matMult(Body->stiff, matrix_sub(f,Body->F_0->T)), matMult(Body->damping, f_t)) ) ), F_dst)))));
 }
 flexDyn *flex_dyn(SE3 *g_base, matrix *F_dst, matrix F_base, flexBody *body, matrix *eta_base, matrix **eta_prev, matrix **f_prev, float dt, int LA_SemiDsc, char *LA_ODE, char *LG_ODE, char *Intrp_Fcn){
 

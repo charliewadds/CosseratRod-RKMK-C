@@ -30,6 +30,6 @@ matrix *bdf1(double h_SD);
 
 matrix *SD_Load(int Discretization, double h_SD, int *offset_sd_return);
 
-matrix *step_RK_E_h(matrix *y0, matrix **Y_h, float t0, float h, Interp_function Intrpl, ODE_function odefcn_h, matrix *a, matrix *b, matrix *c, flexBody *body);
+//matrix *step_RK_E_h(matrix *y0, matrix **Y_h, float t0, float h, Interp_function Intrpl, ODE_function odefcn_h, matrix *a, matrix *b, matrix *c, flexBody *body);
 
 #endif //COSSERATROD_RKMK_C_FDM_H

@@ -19,6 +19,6 @@ matrix *step_RK_E_h(matrix *y0, matrix **Y_h, float t0, float h, Interp_function
             matrix_add(temp, matrix_scalar_mul(k[j], a->data[i][j]));
         }
 
-        k[i] = odefcn_h((t0+ c->data[i][0]*h), matrix_add(y0, temp),y, y_intrpl);
+        //k[i] = odefcn_h((t0+ c->data[i][0]*h), matrix_add(y0, temp),y, y_intrpl);
     }
 }

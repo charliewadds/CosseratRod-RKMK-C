@@ -5,8 +5,10 @@
 #include "testMatrix.h"
 #include <stdio.h>
 
+int testEigenVector(char *filename){
 
 
+}
 
 int testMatrixLib(){
 

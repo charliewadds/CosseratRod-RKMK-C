@@ -7,4 +7,7 @@
 
 
 int testMatrixLib();
+
+
+int testEigenVector(char *filename);
 #endif //COSSERATROD_RKMK_C_TESTMATRIX_H
