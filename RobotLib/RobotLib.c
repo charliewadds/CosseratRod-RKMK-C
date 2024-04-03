@@ -436,13 +436,52 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Thet
     }
 
     // ALGORITHM FOR LAST ELASTIC BODY TO END OF MANIPULATOR FOR BC LOADS
+    for(int i = BC_End + 1; i< numBody +2; i++){
+
+        CoM2CoM = matMult(matMult(
+                expm_SE3( hat_R6(matrix_sub(curr_joint->object->joint->parent->Transform, curr_joint->object->joint->parent->CoM)))->T,
+                expm_SE3( hat_R6(matrix_scalar_mul(curr_joint->object->joint->twistR6, curr_joint->object->joint->homepos)))->T),
+                          expm_SE3( hat_R6(curr_joint->object->joint->child->CoM))->T);
 
 
+        //% Use Rigid-Body Kinematic Equations to find Velocities, Accelerations and Transformations
+        //        [g_ref(:,:,i),g_act_wrt_prev(:,:,i),eta(:,i),d_eta(:,i)] = Rigid_Kin(g_ref(:,:,i-1), CoM2CoM, ROBOT{2*(i-1)}, eta(:,i-1), d_eta(:,i-1));
+        kin = actuateRigidJoint(new_SE3_T(g_ref[i - 1]), new_SE3_T(CoM2CoM), curr_joint->object->joint, getSection(eta, 0,5,0,0), getSection(d_eta, 0,5,0,0));
+    }
+
+    setSection(F, 0,5,F->numCols,F->numCols, F_ext);
+
+    matrix *bodyMass = malloc(sizeof(matrix));
+    for(int i = BC_End +1; i> numBody +1; i--){
+        //F(:,i-1) = transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i) + ...
+        //            ROBOT{2*i-1}.Mass*d_eta(:,i) - transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i);     %[N;Nm]     Applied Wrench at i_th CoM  !!EQN FOR RIGID ONLY!!
+        //    end                                         %[]         End of {SECTION III} Algorithm
+        if(curr_body->type == 1){//flex
+            bodyMass = curr_body->object->flex->mass;
+        }else if(curr_body->type == 0){//rigid
+            bodyMass = curr_body->object->rigid->mass;
+        }
+
+        //todo got distracted halfway through this so it could be wrong
+        setSection(F,0,5,i-1,i-1,
+                   matrix_sub(
+                   matrix_add(
+                   matMult(
+                   matrix_transpose(adj(new_SE3_T(g_act_wrt_prev[i+1]))),
+                   getSection(F,0,5,i,i)
+                   ),
+                   matMult(bodyMass, getSection(d_eta,0,5,i,i))),
+                   matMult(matMult(matrix_transpose(adj_R6(getSection(eta,0,5,i,i))), bodyMass), getSection(eta,0,5,i,i))
+                   ));
+
+
+    }
+    free(bodyMass);
 
     free(dyn);
     free(kin);//todo make sure this is right and addresses are not referenced elsewhere
 
-    return 0;
+    return matrix_sub(F_temp, getSection(F,0,5,BC_End,BC_End));
 
 }
 
