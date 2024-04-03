@@ -220,21 +220,6 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
         g[i] = zeros(4,4);
     }
 
-
-
-
-
-    //todo cosserat rod modle uses different integration functions
-    //matrix *c_sd = SD_Load(LA_SemiDsc, dt, &offset_sd);
-
-    /*
-     *   Initialize States
-     *   f(:,1) = BODY.Stiff \ F_base + BODY.F_0;        %[se(3)]    Assign Initial Strain Twist @ Base of Body
-     *   eta(:,1) = eta_base;                            %[se(3)]    Assign Initial Velocity Twist @ Base of Body
-     *   g(:,:,1) = g_base;                              %[SE(3)]    Assign Configuration @ Base of Body wrt to Reference Frame
-     *   ds = BODY.L / (BODY.N - 1);                     %[m]        Spatial Step Size assumed in Numerical Integration
-     */
-
     setSection(f, 0, 5, 0, 0, matrix_add(matrix_solve(body->stiff,F_base), body->F_0->T));
     setSection(eta, 0, 5, 0, 0, eta_base);
     g[0] = g_base;
@@ -261,17 +246,34 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
                         f_sh, body->stiff, body->damping, body->mass, c0, body->F_0->T,
                         getSection(F_dist, 0,5,i,i));
 
+        /*
+         * f(:,i+1) = f(:,i) + f_s*ds;                     %[se(3)]    Assuming Euler Integration
+         * eta(:,i+1) = eta(:,i) + eta_s*ds;               %[se(3)]    Assuming Euler Integration
+         * g(:,:,i+1) = g(:,:,i) * expm(hat(f(:,i))*ds);   %[SE(3)]    Assuming Lie-Euler Geometric Integration
+         */
         setSection(f,0,5,i+1,i+1,
                    (matrix_add(getSection(f,0,5,i,i), matrix_scalar_mul(ode.f_s,ds))));
 
+        setSection(eta,0,5,i+1,i+1,
+                   (matrix_add(getSection(eta,0,5,i,i), matrix_scalar_mul(ode.eta_s,ds)))
+        );
+
+        g[i+1] = matMult(g[i], expm_SE3(new_SE3_T(matrix_scalar_mul(hat_R6(getSection(f,0,5,i,i))->T, ds)))->T);
+
 
     }
+    flexDyn *out = (flexDyn *) malloc(sizeof(flexDyn));
+    out->g_end = g[body->N-1];
+    //d_eta_end = c0*eta(:,end) + eta_h(:,end);
+    out->d_eta_end = matrix_add(
+            matrix_scalar_mul(getSection(eta, 0,5,body->N, body->N), c0),
+            getSection(eta_h, 0,5,body->N, body->N)
+    );
+    out->f = f;
+    out->eta = eta;
 
 
-
-
-
-    return NULL;
+    return out;
 }
 
 
@@ -381,10 +383,11 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Thet
     matrix *F_dist = zeros(6,1);
 
     rigidKin *kin = malloc(sizeof(rigidKin));
+    flexDyn *dyn = malloc(sizeof(flexDyn));
     for(int i = 0; i< BC_End, i++;){
 
         curr_joint = &(robot->objects[2 * (i - 1)]);
-        curr_joint = &(robot->objects[2 * i - 1]);
+        curr_body = &(robot->objects[2 * i - 1]);
         CoM2CoM = matMult(matMult(
         expm_SE3( hat_R6(matrix_sub(curr_joint->object->joint->parent->Transform, curr_joint->object->joint->parent->CoM)))->T,
         expm_SE3( hat_R6(matrix_scalar_mul(curr_joint->object->joint->twistR6, curr_joint->object->joint->homepos)))->T),
@@ -409,25 +412,36 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Thet
             }
             F_dist = zeros(6, curr_body->object->flex->N);
 
+            //[g_ref(:,:,i),f_cur,eta_cur,d_eta(:,i)] = Flex_Dyn( g_ref(:,:,i), F_dist, F(:,i), ROBOT{2*i-1}, eta(:,i), c0, c1, c2);
+            //todo fix this memory leak and also the one in kin
+            dyn = flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i), curr_body->object->flex,
+                     getSection(eta, 0, 5, i, i), c0, c1, c2);
+
+            F_temp = matMult(curr_body->object->flex->stiff, matrix_sub(getSection(dyn->f,0,5,dyn->f->numCols-1,dyn->f->numCols-1), curr_body->object->flex->F_0->T));
+            setSection(eta,0,5,eta->numCols, eta->numCols, getSection(dyn->eta,0,5,dyn->eta->numCols, dyn->eta->numCols));
 
 
+        }else if(i>BC_Start) {//rigid bodies
+            setSection(F,0,5,i,i, F_temp);// [N;Nm] Save Wrench Between i,i-1_th Body @ CoM Expressed in BCF
 
-
-        }else if(i>BC_Start) {
-            setSection(F,0,5,i,i, F_temp);//todo this else is not done
-
-
+            /*
+             * F_temp = F(:,i) + transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i)- ROBOT{2*i-1}.Mass*d_eta(:,i);
+             */
+            F_temp = matrix_sub(matrix_add(
+                    getSection(F, 0,5,i,i),
+                    matMult(matrix_transpose(adj_R6(getSection(eta,0,5,i,i))), matMult(curr_body->object->rigid->mass,getSection(eta,0,5,i,i)))
+                    ),matMult(curr_body->object->rigid->mass,getSection(eta,0,5,i,i))
+            );
         }
-
-
-
-
-        }
-
     }
 
+    // ALGORITHM FOR LAST ELASTIC BODY TO END OF MANIPULATOR FOR BC LOADS
 
+
+
+    free(dyn);
     free(kin);//todo make sure this is right and addresses are not referenced elsewhere
+
     return 0;
 
 }

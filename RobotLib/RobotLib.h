@@ -59,12 +59,12 @@ typedef struct rigidKin_s{
     matrix *d_eta;//time-rate fo cahge of body velocity twists of the ith CoM expressed in the ith CoM BCF (Body coordinate frame about ith CoM)
 }rigidKin;
 
-
+//[g_end,f,eta,d_eta_end]
 typedef struct flexDyn_s{
-    matrix *g;
+    matrix *g_end;
     matrix *f;
     matrix *eta;
-    matrix *d_eta;
+    matrix *d_eta_end;
 
 }flexDyn;
 //this is the kinematic equations to solve for velocities
