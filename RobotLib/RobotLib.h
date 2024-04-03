@@ -14,7 +14,7 @@
 typedef struct rigidBody_s{
     char *name;
     matrix *mass;
-    matrix *Transform;//transform from start to end
+    matrix *Transform;//transform from start to end, se3 (6x1)
 
     //in R6?
     matrix *CoM;//transformation start to COM todo is start J or I?
@@ -30,6 +30,10 @@ typedef struct flexBody_s{
     SE3 *F_0;//free strain of the continuum under no applied load todo what?
     int N;//number of elements to discretize the continuum todo some of these ints could be uint_8 or 16 to save memory
     int L;//length of the continuum
+    matrix *eta_prev;
+    matrix *eta_pprev;
+    matrix *f_prev;
+    matrix *f_pprev;
 }flexBody;
 
 typedef struct rigidJoint_s{
@@ -91,13 +95,38 @@ typedef matrix* (*step_RK_E_h_type)(matrix*, matrix**, float, float, ODE_type, m
 % Written by BD Bhai
  */
 typedef matrix* (*COSS_ODE_Dsc_type)(matrix*, matrix*, matrix*, flexBody*, float, matrix*);
+
+/*Time Stepper for the Runge Kutta Method using an Explicit Integration Scheme
+ * DETERMINE:    Spatial Derivative of Velocity and Strain Twists
+% GIVEN:        Velocity, Strain Twists & Stiffness & Mass & Free Strain & Applied Loading
+%
+%     - y1:         Final State
+%     - y0:         Initial State
+%     - Y_h:        History Terms from Semi-Discretization
+%     - y_h:        Interpolation for History Terms Evaluated at a Point
+%     - t0:         Initial Time (or whatever you're integrating with respect to really)
+%     - h:          Temporal Step Size (or whatever you're integrating with respect to really)
+%     - odefcn_h:   ODE function with arguments (time, states, state_h)
+%     - odefcn:     ODE function with arguments (time, states)
+%     - a:          Weights for RK Integrator
+%     - b:          Weights for RK Integrator
+%     - c:          Weights for RK Integrator
+ step_RK_E_h(y0,Y_h,t0,h,Intrpl,odefcn_h,a,b,c)
+*/
 typedef union ODE_u {
     ODE_type ode;
     step_RK_E_h_type step_RK_E_h;
     COSS_ODE_Dsc_type COSS_ODE_Dsc;
 } ODE_function;
+
 matrix *odeFunction(matrix *elem1, matrix *elem2);
+
 matrix *COSS_ODE_Dsc(matrix *y, matrix *y_h, matrix *f_sh, flexBody *Body, float c0, matrix *F_dst);
+
+typedef struct COSS_ODE_OUT_s{
+    matrix *eta_s;
+    matrix *f_s;
+}COSS_ODE_OUT;
 /*Time Stepper for the Runge Kutta Method using an Explicit Integration Scheme
  * DETERMINE:    Spatial Derivative of Velocity and Strain Twists
 % GIVEN:        Velocity, Strain Twists & Stiffness & Mass & Free Strain & Applied Loading
@@ -118,29 +147,88 @@ matrix *COSS_ODE_Dsc(matrix *y, matrix *y_h, matrix *f_sh, flexBody *Body, float
 matrix *step_RK_E_h(matrix *y0, matrix **Y_h, float t0, float h, Interp_function Intrpl, ODE_function odefcn_h, matrix *a, matrix *b, matrix *c, flexBody *body);
 ODE_type getODEfunction(matrix *elem1, matrix *elem2);
 // eta_prev and f_prev are supposed to be column matrices in R6 x the number of bodies x 2 but I got rid of the 1x so they are 3d
-flexDyn *flex_dyn(SE3 *g_base, matrix *F_dst, matrix F_base, flexBody *body, matrix *eta_base, matrix **eta_prev, matrix **f_prev, float dt, int LA_SemiDsc, char *LA_ODE, char *LG_ODE, char *Intrp_Fcn);
+
+/*
+ * Integrate the Cosserat PDE for a Flexible Body to return the states and transformation at its end.
+ *
+ * DETERMINE:    Configuration, Acceleration @ End & Velocity, Strain over Body
+ * GIVEN:        Transformation, Velocity, Wrench BC @ Base, FDM Coeff, Body Definition, Applied Loads
+ *
+ *     - g_base:     Transformation to the Base Frame of the Body wrt to Reference Frame
+ *     - F_dist:     Applied Distributed Wrench on the Body (expressed in Body Frame)
+ *     - F_base:     Twist for Body velocity of i_th CoM expressed in i_th CoM BCF
+ *     - BODY:       Body Object with Relevant Informaiton
+ *     - eta_base:   Velocity Twist of Base Frame
+ *     - c0:         FDM Coeff - Current Time Step
+ *     - c1:         FDM Coeff - Previous Time Step
+ *     - c2:         FDM Coeff - PrePrevious Time Step
+ *     - d_eta:      Body Acceleration Twists
+ *     - eta(_h):    Body Velocity Twists (Finite Difference Approximation using previous values)
+ *     - f(_h):      Body Strain Twists   (Finite Difference Approximation using previous values)
+ *     - eta_s:      Velocity Spatial Rate Twists
+ *     - f_s:        Strain Spatial Rate Twists
+ *     - f_sh:       Strain Spatial Rate Twist (Finite Difference Approximation using previous values)
+ *
+ * Written by BD Bhai
+ * function [g_end,f,eta,d_eta_end] = Flex_Dyn(g_base, F_dist, F_base, BODY, eta_base, c0, c1, c2)
+ */
+flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *BODY, matrix *eta_base, float c0, float c1, float c2);
 
 
 
-typedef union object_u {
-    char *name;
+union object_u {
+    char *name;//todo can you have this in a union?
     rigidBody *rigid;
     flexBody *flex;
     rigidJoint *joint;
+};
+
+typedef struct object_s {
+    uint8_t type;//0 for rigidBody, 1 for flexBody, 2 for rigidJoint
+    union object_u *object;
 }Object;
+
+
 
 typedef struct robot_s {
     char *name;
     int numObjects;
     Object *objects;
-
-
 }Robot;
+
+int firstFlex(Robot *robot);
 
 matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep);
 
 char *jointToJson(rigidJoint *joint);
 typedef struct flexJoint_s {//todo this is not implemented yet in the cosserat rod code
 }flexJoint;
+
+
+typedef struct IDM_MB_RE_OUT_t{
+
+    //<6x7> matrix in the example code, should be actuation forces
+    matrix *F;
+
+    //<1x4> matrix in example code, should be constraint
+    matrix *C;
+
+    //<6x7> matrix in example code, should be body velocities
+    matrix *v;
+
+    //robot copy with updated joint positions todo should this just update the robot?
+    Robot *robot_new;
+
+}IDM_MB_RE_OUT;
+
+
+//inline docs working?
+IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *InitGuess);
+
+/*
+ * function Error = Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, THETA_DDOT, F_ext, c0, c1, c2)
+ */
+matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
+
 
 #endif //COSSERATROD_RKMK_C_MATHLIB_H

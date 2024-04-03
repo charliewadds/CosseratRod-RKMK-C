@@ -108,6 +108,17 @@ int *matrix_shape(matrix *m){
 }
 
 
+
+
+matrix *matrix_solve(matrix *A, matrix *b){
+    assert(A->numRows == b->numRows);
+    assert(A->numCols == A->numRows);
+    matrix *result = matrix_new(A->numRows, 1);
+    matrix *A_inv = matrix_inverse(A);
+    result = dot(A_inv, b);
+    return result;
+}
+
 matrix *matrix_inverse(matrix *m){
     assert(m->square == 1);
     matrix *result = matrix_new(m->numRows, m->numCols);

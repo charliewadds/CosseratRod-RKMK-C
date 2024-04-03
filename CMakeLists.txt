@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 3.23)
 set(CMAKE_C_STANDARD 11)
 project(CosseratRod_RKMK_C C)
 # Set optimization flags for C compiler
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 # Set architectures for macOS
 #if(APPLE)
-set(CMAKE_OSX_ARCHITECTURES "arm64") # Add any other architectures you need, separated by semicolons
-set(CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE "arm64")
+#set(CMAKE_OSX_ARCHITECTURES "arm64") # Add any other architectures you need, separated by semicolons
+#set(CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE "arm64")
 #endif()
 
 
@@ -26,7 +26,7 @@ set(TEST_SOURCE Tests/testMatrix.c)
 set(FDM_SOURCE FDM/Discretization.c FDM/FDM.c)
 
 # Create libraries
-add_library(LieGroup STATIC ${LIE_GROUP_SOURCES})
+add_library(LieGroup SHARED ${LIE_GROUP_SOURCES})
 add_library(MatrixLib STATIC ${MATRIX_LIB_SOURCES})
 add_library(RobotLib STATIC ${ROBOT_LIB_SOURCES})
 add_library(TestLib STATIC ${TEST_SOURCE})

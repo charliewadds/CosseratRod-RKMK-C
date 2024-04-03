@@ -35,6 +35,8 @@ void free_SE3(SE3 *T);
 SE3 *new_SE3_zeros();
 SE3 *new_SE3_T(matrix *T);
 
+
+
 // 3x1 column vector -> hat operator -> 3x3 matrix in so(3)
 SO3 *hat_R3(matrix *z);
 // 6x1 column vector e.g. [p;p;p;r;r;r] -> hat operator -> 4x4 matrix in se(3)
@@ -55,5 +57,7 @@ SO3 *expm_SO3(SO3 *w);
 
 //mapping from se(3) to SE(3)
 SE3 *expm_SE3(SE3 *z);
+
+
 
 #endif //COSSERATROD_RKMK_C_LIEGROUP_H

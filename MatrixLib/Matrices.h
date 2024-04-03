@@ -23,6 +23,7 @@ typedef struct matrix_double_s {
 } matrix;
 
 
+matrix *matrix_solve(matrix *A, matrix *b);
 // Constructor-like 
 // Allocates memory for a new matrix
 // All elements in the matrix are 0.0

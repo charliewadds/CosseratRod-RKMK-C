@@ -1,5 +1,6 @@
 # TO DO
-- [ ] one joint is upside down or someting in the rigid Kin
+- [ ] I think getting rid of SO3 and SE3 is going to be best in the long run
+- [x] one joint is upside down or someting in the rigid Kin
 - [ ] multiply fixed size matrices using NEON instructions
   - https://developer.arm.com/documentation/102467/0201/Example---matrix-multiplication
 - [ ] add shape and math descriptions to variables
@@ -8,6 +9,7 @@
   - or I could learn how to use those things but that is a bit of a can of worms
 - [ ] if eta_prev or f_prev is ever more than 1x6xnx? it will break the soft sim
 - [ ] does matrix add work with 3d matrices?
+  - no, this needs to be implemented
 - [ ] Create python 3d visualization of the rotation matrices
 - [ ] Create comments to explain the math behind the functions
 - [ ] Add tests (could I use original matlab code to test?)
