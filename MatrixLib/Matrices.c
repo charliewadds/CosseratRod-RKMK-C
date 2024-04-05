@@ -352,7 +352,18 @@ matrix *matrixPow(matrix *m, int power){
     }
     return result;
 }
+matrix *matrix_sub(matrix *m1, matrix *m2){
 
+    assert(m1->numRows == m2->numRows);
+    assert(m1->numCols == m2->numCols);
+    matrix *result = matrix_new(m1->numRows, m1->numCols);
+    for(int i = 0; i < m1->numRows; i++){
+        for(int j = 0; j < m1->numCols; j++){
+            result->data[i][j] = m1->data[i][j] - m2->data[i][j];
+        }
+    }
+    return result;
+}
 double Det(matrix *m){
     assert(m->square == 1);
     matrix *sub = matrix_new(m->numRows - 1, m->numCols - 1);

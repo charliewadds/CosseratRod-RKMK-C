@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.22)
 set(CMAKE_C_STANDARD 11)
 project(CosseratRod_RKMK_C C)
 # Set optimization flags for C compiler
@@ -10,7 +10,7 @@ project(CosseratRod_RKMK_C C)
 #set(CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE "arm64")
 #endif()
 
-find_package(GSL REQUIRED)
+#find_package(GSL REQUIRED)
 # Include directories
 include_directories(LieGroup)
 include_directories(MatrixLib)
