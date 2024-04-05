@@ -10,13 +10,16 @@ project(CosseratRod_RKMK_C C)
 #set(CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE "arm64")
 #endif()
 
-
+find_package(GSL REQUIRED)
 # Include directories
 include_directories(LieGroup)
 include_directories(MatrixLib)
 include_directories(RobotLib)
 include_directories(FDM)
 include_directories(Tests)
+
+#link_directories("/opt/homebrew/lib")
+#include_directories("/opt/homebrew/include")
 
 # Source files for libraries
 set(LIE_GROUP_SOURCES LieGroup/LieGroup.c)
@@ -37,7 +40,7 @@ add_executable(runTests runTests.c)
 add_executable(rigidKin RunMeRigidKinCW.c)
 add_executable(playground playground.c)
 # Link libraries to the executable
-target_link_libraries(CosseratRod_RKMK_C MatrixLib LieGroup RobotLib FDM -lm)
-target_link_libraries(runTests TestLib MatrixLib LieGroup RobotLib FDM -lm)
-target_link_libraries(rigidKin TestLib MatrixLib LieGroup RobotLib FDM -lm)
-target_link_libraries(playground -lm)
+target_link_libraries(CosseratRod_RKMK_C MatrixLib LieGroup RobotLib FDM -lm -lgsl -lgslcblas)
+target_link_libraries(runTests TestLib MatrixLib LieGroup RobotLib FDM -lm -lgsl -lgslcblas)
+target_link_libraries(rigidKin TestLib MatrixLib LieGroup RobotLib FDM -lm -lgsl -lgslcblas )
+target_link_libraries(playground -lm -lgsl -lgslcblas)

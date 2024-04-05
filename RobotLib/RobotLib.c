@@ -375,7 +375,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Thet
     //eta(:,1) = zeros(6,1);           //[se(3)]    Base Frame Stationary so Twist zero todo this does nothing right??
     //d_eta(:,1) = zeros(6,1);         //[se(3)]    Base Frame Stationary so Twist Rate zero todo same here
     matrix *F_temp = zeros(6,1);
-
+    
     //recursive definition of dynamics using Euler-pointcare EOM
     Object *curr_joint = malloc(sizeof(union object_u));
     Object *curr_body = malloc(sizeof(union object_u));
@@ -543,8 +543,9 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     double c2 = .5/dt;
     //options = optimset('Display','OFF','TolFun',1e-9);
     //todo need to pass function pointer to fsolve, right now it always uses Flex_MB_BCS
-    matrix *InitGuess = fsolve(@(InitGuess)Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, ...
-    THETA_DDOT, F_ext, c0, c1, c2),InitGuess,options);
+    //todo does this need to find ALL roots or just the one 'nearest' to the initial guess?
+    //matrix *InitGuess = fsolve(@(InitGuess)Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, ...
+    //THETA_DDOT, F_ext, c0, c1, c2),InitGuess,options);
 
 
 
@@ -560,7 +561,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 //
 char *jointToJson(rigidJoint *joint) {
     char *output = malloc(sizeof(char) * 100);
-    sprintf(output, "{\"name\":\"%s\",\"twistR6\":[%f,%f,%f,%f,%f,%f],\"position\":%d,\"velocity\":%d,\"acceleration\":%d,\"limits\":[%f,%f],\"homepos\":%d}",
+    sprintf(output, "{\"name\":\"%s\",\"twistR6\":[%%f%f,%f,%f,%f,%f],\"position\":%d,\"velocity\":%d,\"acceleration\":%d,\"limits\":[%f,%f],\"homepos\":%d}",
             joint->name, joint->twistR6->data[0][0], joint->twistR6->data[0][1], joint->twistR6->data[0][2],
             joint->twistR6->data[0][3], joint->twistR6->data[0][4], joint->twistR6->data[0][5], joint->position,
             joint->velocity, joint->acceleration, joint->limits[0], joint->limits[1], joint->homepos);

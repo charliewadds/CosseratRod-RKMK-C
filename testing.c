@@ -59,7 +59,7 @@ ____________\n
     matrix *transform = eye(4);
     transform->data[2][0] = 0.25;
 
-    child->Transform = new_SE3_T(transform);
+    child->Transform = transform;
     child->CoM = elemDiv(Trans, 2);
 
     rigidJoint *joint = (rigidJoint *)malloc(sizeof(rigidJoint));

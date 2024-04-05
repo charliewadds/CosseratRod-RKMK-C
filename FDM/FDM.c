@@ -27,6 +27,6 @@ matrix *step_RK_E_h(matrix *y0, matrix **Y_h, float t0, float h, Interp_function
         //y_h = (y_intrpl = Intrpl(Y_h, c(i));)
         //c0 = t0 + c(i)*h
         //y = y0 + temp(progress from initial state)
-        k[i] = odefcn_h();
+        //k[i] = odefcn_h();
     }
 }

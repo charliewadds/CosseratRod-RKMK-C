@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+
 #ifndef _MATRICES_H_
 #define _MARTRICES_H_
 
@@ -21,6 +22,8 @@ typedef struct matrix_double_s {
 
 
 } matrix;
+
+
 
 
 matrix *matrix_solve(matrix *A, matrix *b);

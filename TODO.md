@@ -23,6 +23,7 @@
   - also add scalar version
 
 
+- laurine chalmers for access
 # THINGS TO FIX
 - [x] Determinant keeps trying to free null pointers, not sure why
   - fixed, added check for null pointers with print, but I don't know what actually caused it.

@@ -75,19 +75,19 @@ Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
     //{base, Joint_1, Body_1, Joint_2, Body_2, Joint_3, Body_3, Joint_4, Body_4, Joint_5, Body_5, joint_EE, EE};
     Object *robotList = malloc(sizeof(Object) * 13);
-    robotList[0].rigid = base;
-    robotList[1].joint = Joint_1;
-    robotList[2].rigid = Body_1;
-    robotList[3].joint = Joint_2;
-    robotList[4].rigid = Body_2;
-    robotList[5].joint = Joint_3;
-    robotList[6].rigid = Body_3;
-    robotList[7].joint = Joint_4;
-    robotList[8].rigid = Body_4;
-    robotList[9].joint = Joint_5;
-    robotList[10].rigid = Body_5;
-    robotList[11].joint = joint_EE;
-    robotList[12].rigid = EE;
+    robotList[0].object->rigid = base;
+    robotList[1].object->joint = Joint_1;
+    robotList[2].object->rigid = Body_1;
+    robotList[3].object->joint = Joint_2;
+    robotList[4].object->rigid = Body_2;
+    robotList[5].object->joint = Joint_3;
+    robotList[6].object->rigid = Body_3;
+    robotList[7].object->joint = Joint_4;
+    robotList[8].object->rigid = Body_4;
+    robotList[9].object->joint = Joint_5;
+    robotList[10].object->rigid = Body_5;
+    robotList[11].object->joint = joint_EE;
+    robotList[12].object->rigid = EE;
 
 
     newRobot->objects = robotList;
