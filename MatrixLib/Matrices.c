@@ -249,6 +249,8 @@ void setSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, u
             m->data[i][j] = section->data[i - startRow][j - startCol];
         }
     }
+
+
 }
 
 matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, uint8_t endCol){
@@ -265,6 +267,8 @@ matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol
             section->data[i - startRow][j - startCol] = m->data[i][j];
         }
     }
+    section->numRows = (endRow - startRow)+1;
+    section->numCols = (endCol - startCol)+1;
 
     return section;
 }

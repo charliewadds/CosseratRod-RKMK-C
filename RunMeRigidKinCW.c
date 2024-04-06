@@ -34,13 +34,20 @@ Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     SE3 *Z_SE3 = new_SE3_zeros();
 
     //todo find a better way to do this, maybe json or something
-    rigidBody *base = newRigidBody("base", matrix_scalar_mul(eye(6), DBL_MAX), Z, Z);//todo dbl max to replace inf
-    rigidBody *Body_1 =  newRigidBody("Body_1", M,  linkTwist, linkCoM);
-    rigidBody *Body_2 =  newRigidBody("Body_2", M,  linkTwist, linkCoM);
-    rigidBody *Body_3 =  newRigidBody("Body_3", M,  linkTwist, linkCoM);
-    rigidBody *Body_4 =  newRigidBody("Body_4", M,  linkTwist, linkCoM);
-    rigidBody *Body_5 =  newRigidBody("Body_5", elemDiv(M,2), elemDiv(linkTwist,2), elemDiv(linkCoM,2));
-    rigidBody *EE = newRigidBody("EE", zeros(6,6),  Z, Z);
+    union object_u *base =    malloc(sizeof(union object_u));
+    base->rigid = newRigidBody("base", matrix_scalar_mul(eye(6), DBL_MAX), Z, Z);//todo dbl max to replace inf
+    union object_u *Body_1 =  malloc(sizeof(union object_u));
+    Body_1->rigid = newRigidBody("Body_1", M,  linkTwist, linkCoM);
+    union object_u *Body_2 =  malloc(sizeof(union object_u));
+    Body_2->rigid = newRigidBody("Body_2", M,  linkTwist, linkCoM);
+    union object_u *Body_3 =  malloc(sizeof(union object_u));
+    Body_3->rigid = newRigidBody("Body_3", M,  linkTwist, linkCoM);
+    union object_u *Body_4 =  malloc(sizeof(union object_u));
+    Body_4->rigid = newRigidBody("Body_4", M,  linkTwist, linkCoM);
+    union object_u *Body_5 =  malloc(sizeof(union object_u));
+    Body_5->rigid = newRigidBody("Body_5", elemDiv(M,2), elemDiv(linkTwist,2), elemDiv(linkCoM,2));
+    union object_u *EE =      malloc(sizeof(union object_u));
+    EE->rigid = newRigidBody("EE", zeros(6,6),  Z, Z);
 
 
     matrix *r6_2 = zeros(6,1);
@@ -62,32 +69,41 @@ Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
     double pihalf = M_PI/2;
 
-    rigidJoint *Joint_1 = newRigidJoint("Joint_1", r6_5, theta->data[0][0], theta_dot->data[0][0], theta_ddot->data[0][0], lims, 0, base, Body_1);
-    rigidJoint *Joint_2 = newRigidJoint("Joint_2", r6_3, theta->data[1][0], theta_dot->data[1][0], theta_ddot->data[1][0], lims, pihalf, Body_1, Body_2);
-    rigidJoint *Joint_3 = newRigidJoint("Joint_3", r6_4, theta->data[2][0], theta_dot->data[2][0], theta_ddot->data[2][0], lims, 0, Body_2, Body_3);
-    rigidJoint *Joint_4 = newRigidJoint("Joint_4", r6_3, theta->data[3][0], theta_dot->data[3][0], theta_ddot->data[3][0], lims, 0, Body_3, Body_4);
-    rigidJoint *Joint_5 = newRigidJoint("Joint_5", r6_2, theta->data[4][0], theta_dot->data[4][0], theta_ddot->data[4][0], lims, 0, Body_4, Body_5);
+
+    //todo this should be in a function like createObject or something
+    union object_u *Joint_1 = malloc(sizeof(union object_u));
+    Joint_1->joint = newRigidJoint("Joint_1", r6_5, theta->data[0][0], theta_dot->data[0][0], theta_ddot->data[0][0], lims, 0, base->rigid, Body_1->rigid);
+    union object_u *Joint_2 = malloc(sizeof(union object_u));
+    Joint_2->joint = newRigidJoint("Joint_2", r6_3, theta->data[1][0], theta_dot->data[1][0], theta_ddot->data[1][0], lims, pihalf, Body_1->rigid, Body_2->rigid);
+    union object_u *Joint_3= malloc(sizeof(union object_u));
+    Joint_3->joint = newRigidJoint("Joint_3", r6_4, theta->data[2][0], theta_dot->data[2][0], theta_ddot->data[2][0], lims, 0, Body_2->rigid, Body_3->rigid);
+    union object_u *Joint_4= malloc(sizeof(union object_u));
+    Joint_4->joint = newRigidJoint("Joint_4", r6_3, theta->data[3][0], theta_dot->data[3][0], theta_ddot->data[3][0], lims, 0, Body_3->rigid, Body_4->rigid);
+    union object_u *Joint_5= malloc(sizeof(union object_u));
+    Joint_5->joint = newRigidJoint("Joint_5", r6_2, theta->data[4][0], theta_dot->data[4][0], theta_ddot->data[4][0], lims, 0, Body_4->rigid, Body_5->rigid);
 
     double zero[2] = {0,0};
-    rigidJoint *joint_EE =  newRigidJoint("joint_EE", zeros(6,1), 0, 0, 0, zero, 0, NULL, EE);
+    union object_u *joint_EE = malloc(sizeof(union object_u));
+    joint_EE->joint =  newRigidJoint("joint_EE", zeros(6,1), 0, 0, 0, zero, 0, NULL, EE->rigid);
     Robot *newRobot = malloc(sizeof(Robot));
     newRobot->name = "RigidRandy";
 
-    //{base, Joint_1, Body_1, Joint_2, Body_2, Joint_3, Body_3, Joint_4, Body_4, Joint_5, Body_5, joint_EE, EE};
+    //{base, Joint_1, Body_1, Jxoint_2, Body_2, Joint_3, Body_3, Joint_4, Body_4, Joint_5, Body_5, joint_EE, EE};
     Object *robotList = malloc(sizeof(Object) * 13);
-    robotList[0].object->rigid = base;
-    robotList[1].object->joint = Joint_1;
-    robotList[2].object->rigid = Body_1;
-    robotList[3].object->joint = Joint_2;
-    robotList[4].object->rigid = Body_2;
-    robotList[5].object->joint = Joint_3;
-    robotList[6].object->rigid = Body_3;
-    robotList[7].object->joint = Joint_4;
-    robotList[8].object->rigid = Body_4;
-    robotList[9].object->joint = Joint_5;
-    robotList[10].object->rigid = Body_5;
-    robotList[11].object->joint = joint_EE;
-    robotList[12].object->rigid = EE;
+    robotList[0].object = base;
+    robotList[1].object = Joint_1;
+
+    robotList[2].object = Body_1;
+    robotList[3].object = Joint_2;
+    robotList[4].object = Body_2;
+    robotList[5].object = Joint_3;
+    robotList[6].object = Body_3;
+    robotList[7].object = Joint_4;
+    robotList[8].object = Body_4;
+    robotList[9].object = Joint_5;
+    robotList[10].object = Body_5;
+    robotList[11].object = joint_EE;
+    robotList[12].object = EE;
 
 
     newRobot->objects = robotList;
