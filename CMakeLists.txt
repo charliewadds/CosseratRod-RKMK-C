@@ -9,7 +9,7 @@ project(CosseratRod_RKMK_C C)
 #set(CMAKE_OSX_ARCHITECTURES "arm64") # Add any other architectures you need, separated by semicolons
 #set(CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE "arm64")
 #endif()
-
+set(CMAKE_PREFIX_PATH "/opt/homebrew")
 #find_package(GSL REQUIRED)
 # Include directories
 include_directories(LieGroup)
