@@ -114,6 +114,8 @@ Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     return newRobot;
 }
 
+
+
 void matrixToFile(matrix *m, char *filename){
     FILE *f = fopen(filename, "a");
     if (f == NULL)

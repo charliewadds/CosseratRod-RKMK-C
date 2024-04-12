@@ -6,6 +6,27 @@
 
 
 
+
+gsl_matrix *matrix_to_gsl(matrix *matrix){
+    gsl_matrix *m = gsl_matrix_alloc(matrix->numRows, matrix->numCols);
+    for(int i = 0; i < matrix->numRows; i++){
+        for(int j = 0; j < matrix->numCols; j++){
+            gsl_matrix_set(m, i, j, matrix->data[i][j]);
+        }
+    }
+    return m;
+}
+
+matrix *gsl_to_matrix(gsl_matrix *gsl_matrix){
+    matrix *m = matrix_new(gsl_matrix->size1, gsl_matrix->size2);
+    for(int i = 0; i < m->numRows; i++){
+        for(int j = 0; j < m->numCols; j++){
+            m->data[i][j] = gsl_matrix_get(gsl_matrix, i, j);
+        }
+    }
+    return m;
+}
+
 matrix *matrix_new(uint8_t num_rows, uint8_t num_cols){
 
 
@@ -204,14 +225,15 @@ matrix *eye(uint8_t n){
     return m;
 }
 
-//todo implement this
-//matrix *diag(matrix *A, uint8_t n) {
-//    matrix *m = matrix_new(n, n);
-//
-//    matMult()
-//    return m;
-//
-//}
+matrix *matrix_diag(matrix *A){//todo this is wrong
+    assert(A->numRows == A->numCols);
+    matrix *m = matrix_new(A->numRows, 1);
+    for(int i = 0; i < A->numRows; i++){
+        m->data[i][0] = A->data[i][i];
+    }
+    return m;
+
+}
 
 
 

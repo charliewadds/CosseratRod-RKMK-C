@@ -5,7 +5,42 @@
 #include "RobotLib.h"
 #include <stdio.h>
 
-rigidKin *actuateRigidJoint(SE3 *g_old, SE3 *g_oldToCur, rigidJoint *joint, matrix *eta_old, matrix *d_eta_old) {
+
+
+
+void getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
+    matrix *parentCoM = malloc(sizeof(matrix));
+    matrix *childCoM = malloc(sizeof(matrix));
+
+    if(joint->parent->type == 0){
+        parentCoM = joint->parent->body->rigid->CoM;
+    }else if(joint->parent->type == 1){
+        parentCoM = joint->parent->body->flex->transform;
+    }else{
+        printf("Invalid Body Type (Flex_MB_BCS)\n");
+        ///return zeros(6,1);
+    }
+
+    if(joint->child->type == 0){
+        childCoM = joint->child->body->rigid->CoM;
+    }else if(joint->child->type == 1){
+        childCoM = joint->child->body->flex->transform;
+    }else{
+        printf("Invalid Body Type (Flex_MB_BCS)\n");
+        //return zeros(6,1);
+    }
+
+    CoM2CoM = matMult(matMult(
+                              //curr_obj
+                              expm_SE3( hat_R6(matrix_sub(joint->parent->body->rigid->Transform, parentCoM)))->T,
+                              expm_SE3( hat_R6(matrix_scalar_mul(joint->twistR6, joint->homepos)))->T),
+                      expm_SE3( hat_R6(childCoM))->T);
+    free(parentCoM);
+    free(childCoM);
+}
+
+
+rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint, matrix *eta_old, matrix *d_eta_old) {
     /*
      - g_cur:          Transformation from Base Frame to i_th Body CoM BCF in RRC (SE3)
      - g_act_wrt_prev: Transformation from i_th Body CoM BCF to i-1_th Body CoM BCF in RAC (SE3
@@ -21,13 +56,35 @@ rigidKin *actuateRigidJoint(SE3 *g_old, SE3 *g_oldToCur, rigidJoint *joint, matr
      - RAC:            Robot Actuated Configuration
      - BCF:            Body Coordinate Frame
      */
+
+    matrix *parentCoM = malloc(sizeof(matrix));
+    matrix *childCoM = malloc(sizeof(matrix));
+
+    if(joint->parent->type == 0){
+
+        parentCoM = joint->parent->body->rigid->CoM;
+    }else if(joint->parent->type == 1){
+
+        parentCoM = joint->parent->body->flex->transform;
+
+    }
+
+    if(joint->child->type == 0){
+
+        childCoM = joint->child->body->rigid->CoM;
+    }else if(joint->child->type == 1){
+
+        childCoM = joint->child->body->flex->transform;
+
+    }
+
     joint->twistR6 = matMult(
-            adj(expm_SE3(new_SE3_T(matrix_scalar_mul(hat_R6(joint->child->CoM)->T,-1)))),//transform from joint axis to ith body CoM
+            adj(expm_SE3(new_SE3_T(matrix_scalar_mul(hat_R6(childCoM)->T,-1)))),//transform from joint axis to ith body CoM
             joint->twistR6);//redefine joint to now be about child CoM
 
 
-    SE3 *g_cur = new_SE3_T(matMult_elem(g_old->T, g_oldToCur->T));
-    SE3 *g_cur_wrt_prev = new_SE3_T(matrix_inverse(g_oldToCur->T));
+    SE3 *g_cur = new_SE3_T(matMult_elem(g_old, g_oldToCur));
+    SE3 *g_cur_wrt_prev = new_SE3_T(matrix_inverse(g_oldToCur));
 
     SE3 *g_act_wrt_prev = new_SE3_T(matMult(expm_SE3(
                                              new_SE3_T(
@@ -53,7 +110,8 @@ rigidKin *actuateRigidJoint(SE3 *g_old, SE3 *g_oldToCur, rigidJoint *joint, matr
     //free_SE3(g_act_wrt_prev);
     //matrix_free(eta);
     //matrix_free(d_eta);
-
+    free(parentCoM);
+    free(childCoM);
     return kin;
 }
 
@@ -67,8 +125,26 @@ rigidBody *newRigidBody(char *name, matrix *mass, matrix *Transform, matrix *CoM
     return body;
 }
 
+flexBody *newFlexBody(char *name, matrix *mass, matrix *stiff, matrix *damping, matrix *F_0, int N, double L){
+    flexBody *body = (flexBody *) malloc(sizeof(flexBody));
+    body->name = name;
+    body->mass = mass;
+    body->transform = zeros(6,1);
+    body->stiff = stiff;
+    body->damping = damping;
+    body->F_0 = F_0;
+    body->N = N;
+    body->L = L;
+    body->CoM = zeros(6,1);
+    body->eta_prev = zeros(6,1);
+    body->eta_pprev = zeros(6,1);
+    body->f_prev = zeros(6,1);
+    body->f_pprev = zeros(6,1);
+    return body;
+}
+
 rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double velocity, double acceleration, double *limits,
-                          double homepos, rigidBody *parent, rigidBody *child) {
+                          double homepos, Object *parent, Object *child) {
     rigidJoint *joint = (rigidJoint *) malloc(sizeof(rigidJoint));
     joint->name = name;
     joint->twistR6 = twistR6;
@@ -77,10 +153,31 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double v
     joint->acceleration = acceleration;
     joint->limits = limits;
     joint->homepos = homepos;
-    joint->parent = parent;
-    joint->child = child;
+
+    //todo this whole body union thing is a mess it needs to be redone
+    if(parent == NULL) {
+        joint->parent = NULL;
+    }
+    else if(parent->type == 0) {
+        joint->parent = malloc(sizeof(struct object_s));
+        joint->parent->body = malloc(sizeof(union object_u));
+        joint->parent->body->rigid =  parent->object->rigid;
+        joint->child = malloc(sizeof(struct object_s));
+        joint->child->body = malloc(sizeof(union object_u));
+        joint->child->body->rigid = child->object->rigid;
+    }else if(parent->type == 1){
+        joint->parent = malloc(sizeof(struct object_s));
+        joint->parent->body = malloc(sizeof(union object_u));
+        joint->parent->body->flex = parent->object->flex;
+        joint->child = malloc(sizeof(struct object_s));
+        joint->child->body = malloc(sizeof(union object_u));
+        joint->child->body->flex = child->object->flex;//todo not sure if this casting will work
+    }
+
+
     return joint;
 }
+
 
 matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
     matrix *POS = zeros(3,11);//todo this is a hack, I need to make this dynamic
@@ -93,7 +190,6 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
         currObj =  robot->objects[(i*2)+1].object;
         if(1){//todo check for rigid, add flex when implemented
 
-
             g = matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[i][0]))))->T);
             //printMatrix(g);
             //
@@ -103,7 +199,7 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
 
             //g = g * expm3(hat(ROBOT{2*i}.Child.Transform));
-            g = matMult(g, expm_SE3(hat_R6(currObj->joint->child->Transform))->T);
+            g = matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->rigid->Transform))->T);
 
             setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
             iii++;
@@ -111,6 +207,7 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
        }
     }
 
+    free(currObj);
     return POS;
 
 }
@@ -205,6 +302,11 @@ COSS_ODE_OUT COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matrix
     return *out;
 }
 
+void freeCOSS_ODE_OUT(COSS_ODE_OUT *out){
+    free(out->eta_s);
+    free(out->f_s);
+    free(out);
+}
 flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body, matrix *eta_base, float c0, float c1, float c2){
 
 
@@ -220,7 +322,7 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
         g[i] = zeros(4,4);
     }
 
-    setSection(f, 0, 5, 0, 0, matrix_add(matrix_solve(body->stiff,F_base), body->F_0->T));
+    setSection(f, 0, 5, 0, 0, matrix_add(matrix_solve(body->stiff,F_base), body->F_0));
     setSection(eta, 0, 5, 0, 0, eta_base);
     g[0] = g_base;
     double ds = ((double) body->L) / (body->N - 1);
@@ -243,7 +345,7 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
         //[f_s,eta_s] = Coss_ODE(eta(:,i), f(:,i), eta_h(:,i), f_h(:,i), f_sh,BODY.Stiff,BODY.Damp,BODY.Mass,c0,BODY.F_0,F_dist(:,i));
         ode = COSS_ODE(getSection(eta,0,5,i,i), getSection(f,0,5,i,i),
                         getSection(eta_h,0,5,i,i), getSection(f_h, 0,5,i,i),
-                        f_sh, body->stiff, body->damping, body->mass, c0, body->F_0->T,
+                        f_sh, body->stiff, body->damping, body->mass, c0, body->F_0,
                         getSection(F_dist, 0,5,i,i));
 
         /*
@@ -262,6 +364,7 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
 
 
     }
+    //freeCOSS_ODE_OUT(&ode);
     flexDyn *out = (flexDyn *) malloc(sizeof(flexDyn));
     out->g_end = g[body->N-1];
     //d_eta_end = c0*eta(:,end) + eta_h(:,end);
@@ -384,17 +487,17 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Thet
 
     rigidKin *kin = malloc(sizeof(rigidKin));
     flexDyn *dyn = malloc(sizeof(flexDyn));
+
+    matrix *parentCoM = malloc(sizeof(matrix));
+    matrix *childCoM = malloc(sizeof(matrix));
     for(int i = 0; i< BC_End, i++;){
 
         curr_joint = &(robot->objects[2 * (i - 1)]);
         curr_body = &(robot->objects[2 * i - 1]);
-        CoM2CoM = matMult(matMult(
-        expm_SE3( hat_R6(matrix_sub(curr_joint->object->joint->parent->Transform, curr_joint->object->joint->parent->CoM)))->T,
-        expm_SE3( hat_R6(matrix_scalar_mul(curr_joint->object->joint->twistR6, curr_joint->object->joint->homepos)))->T),
-        expm_SE3( hat_R6(curr_joint->object->joint->child->CoM))->T);
+        getCoM2CoM(curr_joint->object->joint, CoM2CoM);
 
         //todo double check matrix sizes
-        kin = actuateRigidJoint(new_SE3_T(g_ref[i - 1]), new_SE3_T(CoM2CoM), curr_joint->object->joint, getSection(eta, 0,5,0,0), getSection(d_eta, 0,5,0,0));
+        kin = actuateRigidJoint(g_ref[i - 1], CoM2CoM, curr_joint->object->joint, getSection(eta, 0,5,0,0), getSection(d_eta, 0,5,0,0));
         g_ref[i] = kin->g_cur->T;
         g_act_wrt_prev[i] = kin->g_act_wrt_prev->T;
         setSection(eta, 0,5,i,i, kin->eta);
@@ -406,7 +509,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Thet
             if(i == BC_Start) {
                 //ROBOT{2*i-1}.Stiff * (InitGuess - ROBOT{2*i-1}.F_0);
                 setSection(F, 0, 5, i, i, matMult(curr_body->object->flex->stiff,
-                                                  matrix_sub(InitGuess, curr_body->object->flex->F_0->T)));
+                                                  matrix_sub(InitGuess, curr_body->object->flex->F_0)));
             } else{
                 setSection(F,0,5,i,i, F_temp);
             }
@@ -417,7 +520,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Thet
             dyn = flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i), curr_body->object->flex,
                      getSection(eta, 0, 5, i, i), c0, c1, c2);
 
-            F_temp = matMult(curr_body->object->flex->stiff, matrix_sub(getSection(dyn->f,0,5,dyn->f->numCols-1,dyn->f->numCols-1), curr_body->object->flex->F_0->T));
+            F_temp = matMult(curr_body->object->flex->stiff, matrix_sub(getSection(dyn->f,0,5,dyn->f->numCols-1,dyn->f->numCols-1), curr_body->object->flex->F_0));
             setSection(eta,0,5,eta->numCols, eta->numCols, getSection(dyn->eta,0,5,dyn->eta->numCols, dyn->eta->numCols));
 
 
@@ -435,18 +538,39 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Thet
         }
     }
 
+
+
+
+
     // ALGORITHM FOR LAST ELASTIC BODY TO END OF MANIPULATOR FOR BC LOADS
     for(int i = BC_End + 1; i< numBody +2; i++){
 
-        CoM2CoM = matMult(matMult(
-                expm_SE3( hat_R6(matrix_sub(curr_joint->object->joint->parent->Transform, curr_joint->object->joint->parent->CoM)))->T,
-                expm_SE3( hat_R6(matrix_scalar_mul(curr_joint->object->joint->twistR6, curr_joint->object->joint->homepos)))->T),
-                          expm_SE3( hat_R6(curr_joint->object->joint->child->CoM))->T);
+
+        //todo this section is repeated, there has to be a better way to do this
+        if(curr_joint->object->joint->parent->type == 0){
+            parentCoM = curr_joint->object->joint->parent->body->rigid->CoM;
+        }else if(curr_joint->object->joint->parent->type == 1){
+            parentCoM = curr_joint->object->joint->parent->body->flex->transform;
+        }else{
+            printf("Invalid Body Type (Flex_MB_BCS)\n");
+            return zeros(6,1);
+        }
+
+        if(curr_joint->object->joint->child->type == 0){
+            childCoM = curr_joint->object->joint->child->body->rigid->CoM;
+        }else if(curr_joint->object->joint->child->type == 1){
+            childCoM = curr_joint->object->joint->child->body->flex->transform;
+        }else{
+            printf("Invalid Body Type (Flex_MB_BCS)\n");
+            return zeros(6,1);
+        }
+
+        getCoM2CoM(curr_joint->object->joint, CoM2CoM);
 
 
         //% Use Rigid-Body Kinematic Equations to find Velocities, Accelerations and Transformations
         //        [g_ref(:,:,i),g_act_wrt_prev(:,:,i),eta(:,i),d_eta(:,i)] = Rigid_Kin(g_ref(:,:,i-1), CoM2CoM, ROBOT{2*(i-1)}, eta(:,i-1), d_eta(:,i-1));
-        kin = actuateRigidJoint(new_SE3_T(g_ref[i - 1]), new_SE3_T(CoM2CoM), curr_joint->object->joint, getSection(eta, 0,5,0,0), getSection(d_eta, 0,5,0,0));
+        kin = actuateRigidJoint(g_ref[i - 1], CoM2CoM, curr_joint->object->joint, getSection(eta, 0,5,0,0), getSection(d_eta, 0,5,0,0));
     }
 
     setSection(F, 0,5,F->numCols,F->numCols, F_ext);
@@ -483,6 +607,100 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Thet
 
     return matrix_sub(F_temp, getSection(F,0,5,BC_End,BC_End));
 
+}
+
+
+// Define the function whose roots we want to find
+int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
+    Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
+
+    // Extracting parameters
+    matrix *InitGuess = p->InitGuess;
+    Robot *robot = p->robot;
+    matrix *Theta = p->Theta;
+    matrix *Theta_dot = p->Theta_dot;
+    matrix *Theta_DDot = p->Theta_DDot;
+    matrix *F_ext = p->F_ext;
+    double c0 = p->c0;
+    double c1 = p->c1;
+    double c2 = p->c2;
+
+    // Extracting the elements of x
+    double x_arr[6];
+    for (int i = 0; i < 6; ++i) {
+        x_arr[i] = gsl_vector_get(x, i);
+    }
+
+    // Convert x to matrix format
+    matrix *x_matrix = zeros(1, 6);
+    x_matrix->data[0][0] = x_arr[0];
+    x_matrix->data[1][0] = x_arr[1];
+    x_matrix->data[2][0] = x_arr[2];
+    x_matrix->data[3][0] = x_arr[3];
+    x_matrix->data[4][0] = x_arr[4];
+    x_matrix->data[5][0] = x_arr[5];
+
+    // Call Flex_MB_BCS function
+    matrix *result = Flex_MB_BCS(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+
+    // Fill f with the residuals
+    for (int i = 0; i < 6; ++i) {
+        gsl_vector_set(f, i, result->data[i][0]  - InitGuess->data[i][0]);
+    }
+
+    // Free memory
+    matrix_free(x_matrix);
+    matrix_free(result);
+
+    return GSL_SUCCESS;//todo is this right?
+}
+
+
+matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2) {
+    const gsl_multiroot_fsolver_type *T;
+    gsl_multiroot_fsolver *s;
+
+    T = gsl_multiroot_fsolver_hybrids;
+    //s = gsl_multiroot_fsolver_alloc(T, 6);
+    int status;
+    size_t iter = 0;
+
+    const size_t n = 6; // Number of variables
+
+    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, NULL};
+
+    // Set parameters
+    Flex_MB_BCS_params params = {InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
+    f.params = &params;
+
+    // Define initial guess
+    double x_init[6];
+    // You need to define your initial guess here, e.g., initialize all to 0
+    for (int i = 0; i < 6; ++i) {
+        x_init[i] = InitGuess->data[i][0];
+    }
+
+    gsl_vector_view x_vec = gsl_vector_view_array(x_init, n);
+    s = gsl_multiroot_fsolver_alloc(T, n);
+    gsl_multiroot_fsolver_set(s, &f, &x_vec.vector);
+
+    do {
+        iter++;
+        status = gsl_multiroot_fsolver_iterate(s);
+
+        if (status) break;
+
+        status = gsl_multiroot_test_residual(s->f, 1e-7);
+    } while (status == GSL_CONTINUE && iter < 1000);
+
+    // Extract solution
+    matrix *solution = zeros(1, 6);
+    for (int i = 0; i < 6; ++i) {
+        solution->data[i][0] = gsl_vector_get(s->x, i);
+    }
+
+    gsl_multiroot_fsolver_free(s);
+    return solution;
 }
 
 /*
@@ -526,7 +744,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     for(int i = 0; i < numBody+2; i++){
         g_ref[i] = zeros(4,4);
     }
-    matrix *g_act_wrt_prev = malloc(sizeof(matrix) * (numBody+2));  //[SE(3) X N+2]  Transformation to i-1_th C-BCF from/in i_th BCF for RAC
+    matrix **g_act_wrt_prev = malloc(sizeof(matrix) * (numBody+2));  //[SE(3) X N+2]  Transformation to i-1_th C-BCF from/in i_th BCF for RAC
     for(int i = 0; i < numBody+2; i++){
         g_ref[i] = zeros(4,4);
     }
@@ -536,7 +754,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     matrix *F = zeros(6,numBody + 1);                 //[se(3) X N+1]  Wrench for each Joint + EE in BCF
     matrix *C = zeros(1,numBody);                     //[se(3) X N]    Actuated Control for each Joint in BCF
 
-
+    matrix *CoM2CoM = zeros(6,1);
     //[]     FDM Coefficients for BDF-2
     double c0 = 1.5/dt;
     double c1 = -2/dt;
@@ -546,12 +764,112 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     //todo does this need to find ALL roots or just the one 'nearest' to the initial guess?
     //matrix *InitGuess = fsolve(@(InitGuess)Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, ...
     //THETA_DDOT, F_ext, c0, c1, c2),InitGuess,options);
+    InitGuess = find_roots(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+
+    g_ref[0] = eye(4);
+    g_act_wrt_prev[0] = eye(4);
+    setSection(eta, 0,5,0,0, zeros(6,1));
+    setSection(d_eta, 0,5,0,0, zeros(6,1));
+
+    matrix *F_temp = zeros(6,1);
+    Theta = zeros(1, numBody);
+    setSection(Theta, 0,numBody - 1,0,0, Theta);
+
+    rigidKin *kin = malloc(sizeof(rigidKin));
+    matrix *F_dist = malloc(sizeof(matrix));
+    flexDyn *dyn = malloc(sizeof(flexDyn));
+
+    for(int i = 2; i < numBody +2; i++) {
+
+
+        getCoM2CoM(robot->objects[2 * i - 1].object->joint, CoM2CoM);
+
+        kin = actuateRigidJoint(g_ref[i - 1], CoM2CoM, robot->objects[2 * i - 1].object->joint,
+                                getSection(eta, 0, 5, i - 1, i - 1), getSection(d_eta, 0, 5, i - 1, i - 1));
+        g_act_wrt_prev[i] = kin->g_act_wrt_prev->T;
+        g_ref[i] = kin->g_cur->T;
+        setSection(eta, 0, 5, i, i, kin->eta);
+        setSection(d_eta, 0, 5, i, i, kin->d_eta);
+
+        F_temp = matMult(matrix_transpose(adj(new_SE3_T(g_act_wrt_prev[i]))), F_temp);
+
+        if (robot->objects[2 * i - 1].type == 1) {//flexible body
+            if (i == BC_Start) {
+                setSection(F, 0, 5, i, i, matMult(robot->objects[2 * i - 1].object->flex->stiff,
+                                                  matrix_sub(InitGuess,
+                                                             robot->objects[2 * i - 1].object->flex->F_0)));
+            } else {
+                setSection(F, 0, 5, i, i, F_temp);
+            }
+            F_dist = zeros(6, robot->objects[2 * i - 1].object->flex->N);
+            dyn = flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i), robot->objects[2 * i - 1].object->flex,
+                                    getSection(eta, 0, 5, i, i), c0, c1, c2);
+
+            F_temp = matMult(robot->objects[2 * i - 1].object->flex->stiff,
+                             matrix_sub(getSection(dyn->f, 0, 5, dyn->f->numCols - 1, dyn->f->numCols - 1),
+                                        robot->objects[2 * i - 1].object->flex->F_0));
+            setSection(eta, 0, 5, eta->numCols, eta->numCols,
+                       getSection(dyn->eta, 0, 5, dyn->eta->numCols, dyn->eta->numCols));
+
+        }else if(i>BC_Start) {//rigid bodies
+
+            Object *curr_body = &robot->objects[2 * i - 1];
+
+            setSection(F,0,5,i,i, F_temp);// [N;Nm] Save Wrench Between i,i-1_th Body @ CoM Expressed in BCF
+            if(i < numBody +2){
+                setSection(C, 0,5, i - 1, i - 1, matMult(matrix_transpose(getSection(F, 0,5,i,i)), robot->objects[2*i-2].object->joint->twistR6));
+            }
+
+            if(curr_body->type == 1) {//flex
+                F_temp = matMult(matrix_add(getSection(F, 0, 5, i, i), matrix_transpose(adj_R6(getSection(eta, 0, 5, i, i)))),
+                        matMult(curr_body->object->flex->mass, getSection(eta, 0, 5, i, i)));
+            }else {
+                F_temp = matMult(matrix_add(getSection(F, 0, 5, i, i), matrix_transpose(adj_R6(getSection(eta, 0, 5, i, i)))),
+                                 matMult(curr_body->object->rigid->mass, getSection(eta, 0, 5, i, i)));
+            }
 
 
 
+        }
+
+    }
+
+    if(BC_Start < numBody){
+        matrix *objMass = malloc(sizeof(matrix));
+        matrix *objCoM = malloc(sizeof(matrix));
+
+        for(int i = BC_Start; i >2; i--) {
+            if (robot->objects[2 * i - 1].type == 1) {
+                objMass = robot->objects[2 * i - 1].object->flex->mass;
+                objCoM = robot->objects[2 * i - 1].object->flex->CoM;
+            }
+            else if(robot->objects[2*i-1].type == 0) {
+                objMass = robot->objects[2 * i - 1].object->rigid->mass;
+                objCoM = robot->objects[2*i-1].object->rigid->CoM;
+            }
+            setSection(F,0,5,i-1,i-1,
+
+                       matrix_add(
+                       matMult(matrix_transpose(adj_R6(g_act_wrt_prev[i+1])), getSection(F,0,5,i,i)),
+                       matrix_sub(matMult(objMass, getSection(d_eta,0,5,i,i)), matMult(matrix_transpose(adj_R6(getSection(eta,0,5,i,i))), matMult(objMass, getSection(eta,0,5,i,i))))
+                       ));
+            setSection(C,0,5,i-1,i, matMult(matMult(matrix_transpose(getSection(F,0,5,i-1,i-1)), adj_R6(expm_SE3(new_SE3_T(hat_R6(
+                    matrix_scalar_mul(objCoM, -1))->T))->T)), robot->objects[2*(i-1)].object->joint->twistR6));//todo good chance this is wrong
+        }
+        matrix_free(objMass);
+        matrix_free(objCoM);
+    }
+    C = matrix_transpose(C);
+
+    free(dyn);//todo write free_flexDyn to fully free
+    free(kin);//todo write free_rigidKin to fully free
 
     IDM_MB_RE_OUT *out = (IDM_MB_RE_OUT *)malloc(sizeof(IDM_MB_RE_OUT));
-    //todo add values here
+    out->C = C;
+    out->F = F;
+    out->v = eta;
+    out->robot_new = robot;
+
     return out;
 }
 

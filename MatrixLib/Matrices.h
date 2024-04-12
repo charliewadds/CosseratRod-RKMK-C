@@ -2,10 +2,13 @@
 
 
 #ifndef _MATRICES_H_
-#define _MARTRICES_H_
+#define _MATRICES_H_
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_multiroots.h>
+
 
 
 
@@ -25,6 +28,8 @@ typedef struct matrix_double_s {
 
 
 
+gsl_matrix *matrix_to_gsl(matrix *matrix);
+matrix *gsl_to_matrix(gsl_matrix *gsl_matrix);
 
 matrix *matrix_solve(matrix *A, matrix *b);
 // Constructor-like 
