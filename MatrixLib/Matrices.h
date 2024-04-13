@@ -57,6 +57,9 @@ matrix *matrix_add(matrix *m1, matrix *m2);
 // Subtraction
 matrix *matrix_sub(matrix *m1, matrix *m2);
 
+// subtraction broadcast
+matrix *matrix_sub_broadcast(matrix *m1, matrix *vect);
+
 // Scalar multiplication
 matrix *matrix_scalar_mul(matrix *m, double scalar);
 

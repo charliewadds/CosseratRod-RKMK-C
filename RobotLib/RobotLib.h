@@ -172,6 +172,7 @@ matrix *COSS_ODE_Dsc(matrix *y, matrix *y_h, matrix *f_sh, flexBody *Body, float
 typedef struct COSS_ODE_OUT_s{
     matrix *eta_s;
     matrix *f_s;
+
 }COSS_ODE_OUT;
 
 void freeCOSS_ODE_OUT(COSS_ODE_OUT *out);
@@ -220,7 +221,7 @@ ODE_type getODEfunction(matrix *elem1, matrix *elem2);
  * Written by BD Bhai
  * function [g_end,f,eta,d_eta_end] = Flex_Dyn(g_base, F_dist, F_base, BODY, eta_base, c0, c1, c2)
  */
-flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *BODY, matrix *eta_base, float c0, float c1, float c2);
+flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *BODY, matrix *eta_base, double c0, double c1, double c2);
 
 
 
@@ -230,7 +231,7 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *BODY
 typedef struct robot_s {
     char *name;
     int numObjects;
-    Object *objects;
+    Object **objects;
 }Robot;
 
 int firstFlex(Robot *robot);
@@ -264,7 +265,7 @@ typedef struct IDM_MB_RE_OUT_t{
 
 }IDM_MB_RE_OUT;
 
-void getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM);
+matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM);
 //inline docs working?
 IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
 

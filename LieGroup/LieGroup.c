@@ -201,6 +201,7 @@ matrix *unhat_SE3(SE3 *zhat){
 //ADJOINT
 //_________________________________________________________________________________________________________
 matrix *adj(SE3 *T) {
+
     matrix *r = matrix_new(6,6);
     //set R, top left 3x3
     setSection(r, 0, 2, 0, 2, T->R->R);
@@ -218,6 +219,9 @@ matrix *adj(SE3 *T) {
 }
 
 matrix *adj_R6(matrix *z){
+    assert(z->numRows == 6);
+    assert(z->numCols == 1);
+
     matrix *r = zeros(6,6);
 
     matrix *gu = getSection(r, 0, 2, 0, 0);

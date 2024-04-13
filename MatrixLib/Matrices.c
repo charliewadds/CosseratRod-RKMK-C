@@ -263,8 +263,8 @@ void setSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, u
     assert(startCol <= endCol);
     assert(endRow <= m->numRows);
     assert(endCol <= m->numCols);
-    assert(section->numRows -1 == (endRow - startRow));
-    assert(section->numCols -1 == (endCol - startCol));
+    //assert(section->numRows -1 == (endRow - startRow));
+    //assert(section->numCols -1 == (endCol - startCol));
 
     for(int i = startRow; i <= endRow; i++){
         for(int j = startCol; j <= endCol; j++){
@@ -386,6 +386,18 @@ matrix *matrix_sub(matrix *m1, matrix *m2){
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m1->numCols; j++){
             result->data[i][j] = m1->data[i][j] - m2->data[i][j];
+        }
+    }
+    return result;
+}
+//this only works for column vectors right now
+matrix *matrix_sub_broadcast(matrix *m1, matrix *vect){
+    assert(m1->numRows == vect->numRows);
+    matrix *result = matrix_new(m1->numRows, m1->numCols);
+
+    for(int i = 0; i < m1->numRows; i++){
+        for(int j = 0; j < m1->numCols; j++){
+            result->data[i][j] = m1->data[i][j] - vect->data[i][0];
         }
     }
     return result;
