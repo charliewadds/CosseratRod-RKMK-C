@@ -201,23 +201,23 @@ matrix *unhat_SE3(SE3 *zhat){
 //ADJOINT
 //_________________________________________________________________________________________________________
 matrix *adj(SE3 *T) {
-    matrix *r = matrix_new(6,6);
-    //set R, top left 3x3
-    setSection(r, 0, 2, 0, 2, T->R->R);
 
-    //set top right 3x3
-    setSection(r, 0, 2, 1, 3, matMult(matrix_new(3,3), T->R->R));
+    matrix *r = getSection(T->T, 0, 2, 0, 2);
+    matrix *p = getSection(T->T, 0, 2, 3, 3);
 
-    //set bottom left 3x3, zeros
-    setSection(r, 1, 3, 0, 2, zeros(3,3));
+    matrix *out = zeros(6,6);
+    setSection(out, 0, 2, 0, 2, r);
+    setSection(out, 0, 2, 3, 5, matMult(hat_R3(p)->R, r));
 
-    //set bottom right 3x3
-    setSection(r, 1, 3, 1, 3, T->R->R);
-
-    return r;
+    setSection(out, 3, 5, 3, 5, r);
+    setSection(out, 3, 5, 0, 2, zeros(3,3));
+    return out;
 }
 
 matrix *adj_R6(matrix *z){
+    assert(z->numRows == 6);
+    assert(z->numCols == 1);
+
     matrix *r = zeros(6,6);
 
     matrix *gu = getSection(r, 0, 2, 0, 0);

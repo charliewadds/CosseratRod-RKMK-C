@@ -1,8 +1,19 @@
-#include <stdio.h>
-#include <assert.h>
+//
+// Created by Charlie Wadds on 2024-04-09.
+//
+
+
 #include "RobotLib.h"
-#include "Matrices.h"
-#include "LieGroup.h"
+//
+// Created by Charlie Wadds on 2024-03-17.
+//
+
+#include "RobotLib.h"
+#include <stdio.h>
+#include <math.h>
+//#include <float.h>
+#include <string.h>
+#include <assert.h>
 
 
 Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
@@ -36,7 +47,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     double r = 0.01;
     double E = 2e8;
     double G = E/(2*(1+0.3));
-    double I = M_PI/4*pow(r,2);
+    double I = M_PI/4*pow(r,4);
     double A = M_PI*pow(r,2);
     int N = 21;
 
@@ -60,13 +71,13 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Cse->data[0][0] = 3*A;
     Cse->data[1][1] = A;
     Cse->data[2][2] = A;
-    matrix_scalar_mul(Cse, mu);
+    Cse = matrix_scalar_mul(Cse, mu);
 
     matrix *Cbt = zeros(3,3);
     Cbt->data[0][0] = 2*I;
     Cbt->data[1][1] = I;
     Cbt->data[2][2] = I;
-    matrix_scalar_mul(Cbt, mu);
+    Cbt = matrix_scalar_mul(Cbt, mu);
 
     matrix *K = zeros(6,6);
     setSection(K, 0, 2, 0, 2, Kse);
@@ -99,6 +110,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Body_2->type = 1;
     Body_2->object = malloc(sizeof(union object_u));
     Body_2->object->flex = newFlexBody("Body_2", Mf,  K,C, zeros(6,1), N, L_0);
+    Body_2->object->flex->F_0->data[2][0] = 1;
 
     Object *Body_3 =  malloc(sizeof(union object_u));
     Body_3->type = 0;
@@ -109,6 +121,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Body_4->type = 1;
     Body_4->object = malloc(sizeof(union object_u));
     Body_4->object->flex = newFlexBody("Body_4",Mf,  K,C, zeros(6,1), N, L_0);
+    Body_4->object->flex->F_0->data[2][0] = 1;
 
     Object *Body_5 =  malloc(sizeof(union object_u));
     Body_5->type = 0;
@@ -223,20 +236,115 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     return newRobot;
 }
 
+
+
+void matrixToFile(matrix *m, char *filename){
+    FILE *f = fopen(filename, "a");
+    if (f == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+
+    for (int i = 0; i < m->numRows; i++){
+        for (int j = 0; j < m->numCols; j++){
+            fprintf(f, "%f, ", m->data[i][j]);
+        }
+        fprintf(f, "\n");
+    }
+    fclose(f);
+}
+
+
+
+
 int main() {
-    matrix *theta_ddot = zeros(5,1);
-    theta_ddot->data[0][0] = 0.0126;
-    theta_ddot->data[1][0] = -0.0063;
-    theta_ddot->data[2][0] = 0.0063;
-    theta_ddot->data[3][0] = -0.0088;
-    theta_ddot->data[4][0] = -0.0013;
+    matrix *theta = zeros(5, 1);
+    matrix *theta_dot = zeros(5, 1);
 
-    matrix *init_theta = zeros(6,1);
-    init_theta->data[2][0] = 1;
-    Robot *robot = defPaperSample_2(zeros(5,1), zeros(5,1), zeros(5,1));
+    double dt = 0.025;
+    int timeStep = 100;
+    double restTime = 0;
 
-    matrix *out = find_roots(init_theta, robot, zeros(5,1), zeros(5,1), theta_ddot, zeros(6,1), 60, -80, 20);
-    //matrix *out2 = find_roots_PSO(init_theta, robot, zeros(5,1), zeros(5,1), theta_ddot, zeros(6,1), 60, -80, 20);
-    printMatrix(out);
-    return 0;
+    matrix *t1 = matrix_new(1, timeStep);
+    for (int i = 0; i < timeStep; i++) {
+        t1->data[0][i] = t1->data[0][i-1] + dt;
+
+    }
+
+    matrix *shape = zeros(5, 1);//todo this is the bymber of joints I think, this should come from either the setup file or a config json or something
+    shape->data[0][0] = 0.4;
+    shape->data[1][0] = -0.5 * 0.4;
+    shape->data[2][0] = 0.5 * 0.4;
+    shape->data[3][0] = -0.7 * 0.4;
+    shape->data[4][0] = 0.1 * -0.4;
+
+    matrix *theta_ddot = zeros(5, timeStep);
+
+
+    //todo should be a loop for num bodies
+    theta_ddot->data[0] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep))),*shape->data[0])->data[0];//todo check shapes
+    theta_ddot->data[1] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep))),*shape->data[1])->data[0];
+    theta_ddot->data[2] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep))),*shape->data[2])->data[0];
+    theta_ddot->data[3] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep))),*shape->data[3])->data[0];
+    theta_ddot->data[4] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep))),*shape->data[4])->data[0];
+
+    matrix *F_ext = zeros(6, 1);
+    matrix *F_0 = zeros(6, 1);
+    F_0->data[0][0] = 0.000001;
+    F_0->data[1][0] = 0.000001;
+    F_0->data[2][0] = 0.99999;
+    F_0->data[3][0] = 0.000001;
+    F_0->data[4][0] = 0.000001;
+    F_0->data[5][0] = 0.000001;
+
+
+    Robot *robot = defPaperSample_2(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0));//todo check -1
+
+    int BC_Start = 2;//todo, this should be automated
+    int BC_End = 4;
+
+    matrix *t = zeros(1, timeStep);
+    for(int i = 0; i < timeStep; i++){
+        t->data[0][i] = i*dt;
+    }
+    matrix *C = zeros(5, timeStep);//todo 5 should be num bodies
+    matrix *T_H = zeros(5, timeStep);//todo 5 should be num bodies
+    matrix *Td_H = zeros(5, timeStep);//todo 5 should be num bodies
+
+    matrix *EE_POS = zeros(3, timeStep);
+
+
+    IDM_MB_RE_OUT *idm = malloc(sizeof(IDM_MB_RE_OUT));
+    for(int i = 0; i < timeStep; i++){
+        idm = IDM_MB_RE(robot, theta, theta_dot, getSection(theta_ddot, 0, 4, i, i), F_ext, dt, F_0);
+
+        setSection(C, 0, 4, i, i, idm->C);
+
+        flexBody *flex = robot->objects[2*BC_Start ]->object->flex;
+        flexBody *flexNew = robot->objects[2*BC_Start]->object->flex;
+
+        //prevGuess is always 1, todo add other cases
+        F_0 = getSection(flexNew->f_prev, 0, 5, 0, 0);
+        robot = idm->robot_new;
+
+        setSection(T_H, 0, 4, i, i, theta);
+        setSection(Td_H, 0, 4, i, i, theta_dot);
+
+        theta = matrix_add(theta, matrix_scalar_mul(getSection(theta_dot, 0, 4, 0, 0), dt));
+        theta_dot = matrix_add(theta_dot, matrix_scalar_mul(getSection(getSection(theta_ddot, 0, 4, i, i), 0, 4, 0, 0), dt));
+
+        for(int j = 0; j < 5; j++) {//todo 5 should be num bodies
+            if (robot->objects[j]->type == 3) {
+                robot->objects[j]->object->joint->position = theta->data[j][0];
+                robot->objects[j]->object->joint->velocity = theta_dot->data[j][0];
+                robot->objects[j]->object->joint->acceleration = theta_ddot->data[j][i];
+            }
+        }
+
+        matrixToFile(plotRobotConfig(robot, theta, 100), "RigidRandyPlot.csv");
+    }
+
+    free(idm);
+
 }

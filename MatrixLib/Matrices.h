@@ -2,10 +2,13 @@
 
 
 #ifndef _MATRICES_H_
-#define _MARTRICES_H_
+#define _MATRICES_H_
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_multiroots.h>
+
 
 
 
@@ -25,6 +28,8 @@ typedef struct matrix_double_s {
 
 
 
+gsl_matrix *matrix_to_gsl(matrix *matrix);
+matrix *gsl_to_matrix(gsl_matrix *gsl_matrix);
 
 matrix *matrix_solve(matrix *A, matrix *b);
 // Constructor-like 
@@ -32,6 +37,9 @@ matrix *matrix_solve(matrix *A, matrix *b);
 // All elements in the matrix are 0.0
 matrix *matrix_new(uint8_t num_rows, uint8_t num_cols);
 
+double matrix_sumSelf(matrix *m);
+
+matrix *matrix_rand(uint8_t num_rows, uint8_t num_cols);
 //return list of the number of rows and columns
 int *matrix_shape(matrix *m);
 
@@ -46,11 +54,17 @@ matrix *cross(matrix *m1, matrix *m2);
 // Transpose
 matrix *matrix_transpose(matrix *m);
 
+matrix *matrix_sin(matrix *m);
+
+matrix *matrix_outerProduct(matrix *m1, matrix *m2);
 // Addition
 matrix *matrix_add(matrix *m1, matrix *m2);
 
 // Subtraction
 matrix *matrix_sub(matrix *m1, matrix *m2);
+
+// subtraction broadcast
+matrix *matrix_sub_broadcast(matrix *m1, matrix *vect);
 
 // Scalar multiplication
 matrix *matrix_scalar_mul(matrix *m, double scalar);

@@ -10,7 +10,7 @@
 #define COSSERATROD_RKMK_C_ROBOTLIB_H
 #include "LieGroup.h"
 #include "FDM.h"
-
+#include <gsl/gsl_deriv.h>
 typedef struct rigidBody_s{
     char *name;
     matrix *mass;
@@ -25,17 +25,28 @@ typedef struct rigidBody_s{
 typedef struct flexBody_s{
     char *name;
     matrix *mass;
+    matrix *transform;
     matrix *stiff;
     matrix *damping;
-    SE3 *F_0;//free strain of the continuum under no applied load todo what?
+    matrix *F_0;//free strain of the continuum under no applied load todo what?
     int N;//number of elements to discretize the continuum todo some of these ints could be uint_8 or 16 to save memory
-    int L;//length of the continuum
+    double L;//length of the continuum
     matrix *eta_prev;
     matrix *eta_pprev;
     matrix *f_prev;
     matrix *f_pprev;
+    matrix *CoM;
 }flexBody;
 
+
+union body_u {
+    rigidBody *rigid;
+    flexBody *flex;
+};
+typedef struct body_s {
+    uint8_t type;//0 for rigidBody, 1 for flexBody
+    union body_u *body;
+}Body;
 typedef struct rigidJoint_s{
     char *name;
     matrix *twistR6;//twist axis to define the joint column vector R6
@@ -44,11 +55,27 @@ typedef struct rigidJoint_s{
     double acceleration;//magnitude of the joint acceleration
     double  *limits;//joint limits
     double homepos;//todo this is an angle right? or a magnitude of a twist axis like position?
-    rigidBody *parent;//todo make a union for rigid and flex bodies
-    rigidBody *child;
+    Body *parent;//todo make a union for rigid and flex bodies
+    Body *child;
 
 }rigidJoint;
 
+
+/*
+ * struct to hold the output of the rigid kinematics
+ *
+ *
+ * g_old [SE3]        transformation from base frame to ith body CoM in RRC (robot refrence configuration)
+ *
+ *
+ * g_oldToCur [SE3]   transformation from ith body CoM to i-1th body CoM in RAC (Robot Actuated Configuration)
+ *
+ *
+ * eta [matrix]       old twist for bdy velocity of ith CoM expressed in the ith CoM BCF (Body coordinate frame)
+ *
+ *
+ * d_eta  [matrix]    time-rate fo cahge of body velocity twists of the ith CoM expressed in the ith CoM BCF (Body coordinate frame about ith CoM)
+ */
 typedef struct rigidKin_s{
 
     SE3 *g_cur;//transformation from base frame to ith body CoM in RRC (robot refrence configuration)
@@ -67,17 +94,35 @@ typedef struct flexDyn_s{
     matrix *d_eta_end;
 
 }flexDyn;
+
+union object_u {
+    char *name;//todo can you have this in a union?
+
+    rigidBody *rigid;
+    flexBody *flex;
+    rigidJoint *joint;
+};
+
+typedef struct object_s {
+    uint8_t type;//0 for rigidBody, 1 for flexBody, 2 for rigidJoint
+    union object_u *object;
+}Object;
+
 //this is the kinematic equations to solve for velocities
-rigidKin *actuateRigidJoint(SE3 *g_old, SE3 *g_oldToCur, rigidJoint *joint, matrix *eta_old, matrix *d_eta_old);
+rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint, matrix *eta_old, matrix *d_eta_old);
 
 rigidBody *newRigidBody(char *name, matrix *mass, matrix *Transform, matrix *CoM);
-rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double velocity, double acceleration, double *limits, double homepos, rigidBody *parent, rigidBody *child);
-flexBody *newFlexBody(char *name, double mass, matrix *stiff, matrix *damping, SE3 *F_0, int N, int L);
 
-typedef matrix* (*Interp_function)(matrix**, float);
+
+
+rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double velocity, double acceleration, double *limits, double homepos, Object *parent, Object *child);
+flexBody *newFlexBody(char *name, matrix *mass, matrix *stiff, matrix *damping, matrix *F_0, int N, double L);
+
+typedef matrix* (*Interp_function)(matrix**, double);
 
 typedef matrix* (*ODE_type)(matrix*, matrix*);
 typedef matrix* (*step_RK_E_h_type)(matrix*, matrix**, float, float, ODE_type, matrix*, matrix*, matrix*);
+
 
 /*
  * function [y_s] = Coss_ODE_Dsc(y,y_h,f_sh,Body,c0,F_dst)
@@ -121,12 +166,15 @@ typedef union ODE_u {
 
 matrix *odeFunction(matrix *elem1, matrix *elem2);
 
-matrix *COSS_ODE_Dsc(matrix *y, matrix *y_h, matrix *f_sh, flexBody *Body, float c0, matrix *F_dst);
+matrix *COSS_ODE_Dsc(matrix *y, matrix *y_h, matrix *f_sh, flexBody *Body, double c0, matrix *F_dst);
 
 typedef struct COSS_ODE_OUT_s{
     matrix *eta_s;
     matrix *f_s;
+
 }COSS_ODE_OUT;
+
+void freeCOSS_ODE_OUT(COSS_ODE_OUT *out);
 /*Time Stepper for the Runge Kutta Method using an Explicit Integration Scheme
  * DETERMINE:    Spatial Derivative of Velocity and Strain Twists
 % GIVEN:        Velocity, Strain Twists & Stiffness & Mass & Free Strain & Applied Loading
@@ -144,7 +192,7 @@ typedef struct COSS_ODE_OUT_s{
 %     - c:          Weights for RK Integrator
  step_RK_E_h(y0,Y_h,t0,h,Intrpl,odefcn_h,a,b,c)
  * */
-matrix *step_RK_E_h(matrix *y0, matrix **Y_h, float t0, float h, Interp_function Intrpl, ODE_function odefcn_h, matrix *a, matrix *b, matrix *c, flexBody *body);
+matrix *step_RK_E_h(matrix *y0, matrix **Y_h, double t0, double h, Interp_function Intrpl, ODE_function odefcn_h, matrix *a, matrix *b, matrix *c, flexBody *body);
 ODE_type getODEfunction(matrix *elem1, matrix *elem2);
 // eta_prev and f_prev are supposed to be column matrices in R6 x the number of bodies x 2 but I got rid of the 1x so they are 3d
 
@@ -172,28 +220,17 @@ ODE_type getODEfunction(matrix *elem1, matrix *elem2);
  * Written by BD Bhai
  * function [g_end,f,eta,d_eta_end] = Flex_Dyn(g_base, F_dist, F_base, BODY, eta_base, c0, c1, c2)
  */
-flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *BODY, matrix *eta_base, float c0, float c1, float c2);
+flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *BODY, matrix *eta_base, double c0, double c1, double c2);
 
 
 
-union object_u {
-    char *name;//todo can you have this in a union?
-    rigidBody *rigid;
-    flexBody *flex;
-    rigidJoint *joint;
-};
-
-typedef struct object_s {
-    uint8_t type;//0 for rigidBody, 1 for flexBody, 2 for rigidJoint
-    union object_u *object;
-}Object;
 
 
 
 typedef struct robot_s {
     char *name;
     int numObjects;
-    Object *objects;
+    Object **objects;
 }Robot;
 
 int firstFlex(Robot *robot);
@@ -204,7 +241,13 @@ char *jointToJson(rigidJoint *joint);
 typedef struct flexJoint_s {//todo this is not implemented yet in the cosserat rod code
 }flexJoint;
 
-
+/*
+ *
+ * F matrix is the actuation forces
+ * C matrix is the constraint
+ * v matrix is the body velocities
+ * robot_new is the robot copy with updated joint positions
+ */
 typedef struct IDM_MB_RE_OUT_t{
 
     //<6x7> matrix in the example code, should be actuation forces
@@ -220,15 +263,29 @@ typedef struct IDM_MB_RE_OUT_t{
     Robot *robot_new;
 
 }IDM_MB_RE_OUT;
-
-
+matrix *find_roots_PSO(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
+matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM);
 //inline docs working?
-IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *InitGuess);
+IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
 
+matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
+// Define the structure for the parameters to pass to the function
+typedef struct {
+    matrix *InitGuess;
+    Robot *robot;
+    matrix *Theta;
+    matrix *Theta_dot;
+    matrix *Theta_DDot;
+    matrix *F_ext;
+    double c0;
+    double c1;
+    double c2;
+} Flex_MB_BCS_params;
 /*
  * function Error = Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, THETA_DDOT, F_ext, c0, c1, c2)
  */
-matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
+matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *F_ext, double c0, double c1, double c2);
 
+matrix *fsolve_idm_mb_re(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
 
 #endif //COSSERATROD_RKMK_C_MATHLIB_H
