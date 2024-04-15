@@ -10,8 +10,7 @@
 #define COSSERATROD_RKMK_C_ROBOTLIB_H
 #include "LieGroup.h"
 #include "FDM.h"
-
-
+#include <gsl/gsl_deriv.h>
 typedef struct rigidBody_s{
     char *name;
     matrix *mass;
@@ -119,7 +118,7 @@ rigidBody *newRigidBody(char *name, matrix *mass, matrix *Transform, matrix *CoM
 rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double velocity, double acceleration, double *limits, double homepos, Object *parent, Object *child);
 flexBody *newFlexBody(char *name, matrix *mass, matrix *stiff, matrix *damping, matrix *F_0, int N, double L);
 
-typedef matrix* (*Interp_function)(matrix**, float);
+typedef matrix* (*Interp_function)(matrix**, double);
 
 typedef matrix* (*ODE_type)(matrix*, matrix*);
 typedef matrix* (*step_RK_E_h_type)(matrix*, matrix**, float, float, ODE_type, matrix*, matrix*, matrix*);
@@ -167,7 +166,7 @@ typedef union ODE_u {
 
 matrix *odeFunction(matrix *elem1, matrix *elem2);
 
-matrix *COSS_ODE_Dsc(matrix *y, matrix *y_h, matrix *f_sh, flexBody *Body, float c0, matrix *F_dst);
+matrix *COSS_ODE_Dsc(matrix *y, matrix *y_h, matrix *f_sh, flexBody *Body, double c0, matrix *F_dst);
 
 typedef struct COSS_ODE_OUT_s{
     matrix *eta_s;
@@ -193,7 +192,7 @@ void freeCOSS_ODE_OUT(COSS_ODE_OUT *out);
 %     - c:          Weights for RK Integrator
  step_RK_E_h(y0,Y_h,t0,h,Intrpl,odefcn_h,a,b,c)
  * */
-matrix *step_RK_E_h(matrix *y0, matrix **Y_h, float t0, float h, Interp_function Intrpl, ODE_function odefcn_h, matrix *a, matrix *b, matrix *c, flexBody *body);
+matrix *step_RK_E_h(matrix *y0, matrix **Y_h, double t0, double h, Interp_function Intrpl, ODE_function odefcn_h, matrix *a, matrix *b, matrix *c, flexBody *body);
 ODE_type getODEfunction(matrix *elem1, matrix *elem2);
 // eta_prev and f_prev are supposed to be column matrices in R6 x the number of bodies x 2 but I got rid of the 1x so they are 3d
 
@@ -264,11 +263,12 @@ typedef struct IDM_MB_RE_OUT_t{
     Robot *robot_new;
 
 }IDM_MB_RE_OUT;
-
+matrix *find_roots_PSO(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
 matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM);
 //inline docs working?
 IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
 
+matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
 // Define the structure for the parameters to pass to the function
 typedef struct {
     matrix *InitGuess;
@@ -284,7 +284,7 @@ typedef struct {
 /*
  * function Error = Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, THETA_DDOT, F_ext, c0, c1, c2)
  */
-matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
+matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *F_ext, double c0, double c1, double c2);
 
 matrix *fsolve_idm_mb_re(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
 

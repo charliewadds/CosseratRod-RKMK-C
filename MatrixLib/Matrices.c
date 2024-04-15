@@ -130,7 +130,7 @@ int *matrix_shape(matrix *m){
 
 
 
-
+//this might need a transpose on the inverse
 matrix *matrix_solve(matrix *A, matrix *b){
     assert(A->numRows == b->numRows);
     assert(A->numCols == A->numRows);
@@ -235,8 +235,25 @@ matrix *matrix_diag(matrix *A){//todo this is wrong
 
 }
 
+matrix *matrix_rand(uint8_t num_rows, uint8_t num_cols){
+    matrix *m = matrix_new(num_rows, num_cols);
+    for(int i = 0; i < num_rows; i++){
+        for(int j = 0; j < num_cols; j++){
+            m->data[i][j] = (double)rand() / RAND_MAX;
+        }
+    }
+    return m;
+}
 
-
+double matrix_sumSelf(matrix *m){
+    double result = 0;
+    for(int i = 0; i < m->numRows; i++){
+        for(int j = 0; j < m->numCols; j++){
+            result += m->data[i][j];
+        }
+    }
+    return result;
+}
 matrix *zeros(uint8_t num_rows, uint8_t num_cols){
     matrix *m = matrix_new(num_rows, num_cols);
     for(int i = 0; i < num_rows; i++){
@@ -295,6 +312,16 @@ matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol
     return section;
 }
 
+matrix *matrix_sin(matrix *m){
+    matrix *result = matrix_new(m->numRows, m->numCols);
+    for(int i = 0; i < m->numRows; i++){
+        for(int j = 0; j < m->numCols; j++){
+            result->data[i][j] = sin(m->data[i][j]);
+        }
+    }
+    return result;
+
+}
 //todo this can be improved with different algorithms, matlab uses strassen's algorithm
 matrix *matMult(matrix *m1, matrix *m2){
     //printf("shape of m1 [%f, %f]\n", m1->numRows, m1->numCols);
@@ -313,6 +340,19 @@ matrix *matMult(matrix *m1, matrix *m2){
     }
 
     return result;
+}
+
+matrix *matrix_outerProduct(matrix *m1, matrix *m2){
+    assert(m1->numCols == m2->numRows);
+    assert(m1->numRows == m2->numCols);
+    matrix *result = matrix_new(m1->numRows, m2->numCols);
+    for(int i = 0; i < m1->numRows; i++){
+        for(int j = 0; j < m2->numCols; j++){
+            result->data[i][j] = m1->data[i][j] * m2->data[j][i];
+        }
+    }
+    return result;
+
 }
 
 matrix *matMult_elem(matrix *m1, matrix *m2){
@@ -357,7 +397,7 @@ void printMatrix(matrix *m){
    for(int i = 0; i < m->numRows; i++){
         printf("|");
         for(int j = 0; j < m->numCols; j++){
-            printf("%f ", m->data[i][j]);
+            printf("%.12f ", m->data[i][j]);
         }
         printf("|\n");
     }
