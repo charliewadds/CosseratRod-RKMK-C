@@ -33,21 +33,41 @@ Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
     SE3 *Z_SE3 = new_SE3_zeros();
 
-    //todo find a better way to do this, maybe json or something
-    union object_u *base =    malloc(sizeof(union object_u));
-    base->rigid = newRigidBody("base", matrix_scalar_mul(eye(6), DBL_MAX), Z, Z);//todo dbl max to replace inf
-    union object_u *Body_1 =  malloc(sizeof(union object_u));
-    Body_1->rigid = newRigidBody("Body_1", M,  linkTwist, linkCoM);
-    union object_u *Body_2 =  malloc(sizeof(union object_u));
-    Body_2->rigid = newRigidBody("Body_2", M,  linkTwist, linkCoM);
-    union object_u *Body_3 =  malloc(sizeof(union object_u));
-    Body_3->rigid = newRigidBody("Body_3", M,  linkTwist, linkCoM);
-    union object_u *Body_4 =  malloc(sizeof(union object_u));
-    Body_4->rigid = newRigidBody("Body_4", M,  linkTwist, linkCoM);
-    union object_u *Body_5 =  malloc(sizeof(union object_u));
-    Body_5->rigid = newRigidBody("Body_5", elemDiv(M,2), elemDiv(linkTwist,2), elemDiv(linkCoM,2));
-    union object_u *EE =      malloc(sizeof(union object_u));
-    EE->rigid = newRigidBody("EE", zeros(6,6),  Z, Z);
+    Object *base = malloc(sizeof(union object_u));
+    base->type = 0;
+    base->object = malloc(sizeof(union object_u));
+    base->object->rigid = newRigidBody("base", matrix_scalar_mul(eye(6), DBL_MAX), Z, Z);//todo dbl max to replace inf
+
+    Object *Body_1 =  malloc(sizeof(union object_u));
+    Body_1->type = 0;
+    Body_1->object = malloc(sizeof(union object_u));
+    Body_1->object->rigid = newRigidBody("Body_1", M,  linkTwist, linkCoM);
+
+    Object *Body_2 =  malloc(sizeof(union object_u));
+    Body_2->type = 0;
+    Body_2->object = malloc(sizeof(union object_u));
+    Body_2->object->rigid = newRigidBody("Body_2", M,  linkTwist, linkCoM);
+
+    Object *Body_3 =  malloc(sizeof(union object_u));
+    Body_3->type = 0;
+    Body_3->object = malloc(sizeof(union object_u));
+    Body_3->object->rigid = newRigidBody("Body_3", M,  linkTwist, linkCoM);
+
+    Object *Body_4 =  malloc(sizeof(union object_u));
+    Body_4->type = 0;
+    Body_4->object = malloc(sizeof(union object_u));
+    Body_4->object->rigid = newRigidBody("Body_4", M,  linkTwist, linkCoM);
+
+    Object *Body_5 =  malloc(sizeof(union object_u));
+    Body_5->type = 0;
+    Body_5->object = malloc(sizeof(union object_u));
+    Body_5->object->rigid = newRigidBody("Body_5", elemDiv(M,2), elemDiv(linkTwist,2), elemDiv(linkCoM,2));
+
+    Object *EE =      malloc(sizeof(union object_u));
+    EE->type = 0;
+    EE->object = malloc(sizeof(union object_u));
+    EE->object->rigid = newRigidBody("EE", zeros(6,6),  Z, Z);
+
 
 
     matrix *r6_2 = zeros(6,1);
@@ -70,40 +90,59 @@ Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     double pihalf = M_PI/2;
 
 
-    //todo this should be in a function like createObject or something
-    union object_u *Joint_1 = malloc(sizeof(union object_u));
-    Joint_1->joint = newRigidJoint("Joint_1", r6_5, theta->data[0][0], theta_dot->data[0][0], theta_ddot->data[0][0], lims, 0, base->rigid, Body_1->rigid);
-    union object_u *Joint_2 = malloc(sizeof(union object_u));
-    Joint_2->joint = newRigidJoint("Joint_2", r6_3, theta->data[1][0], theta_dot->data[1][0], theta_ddot->data[1][0], lims, pihalf, Body_1->rigid, Body_2->rigid);
-    union object_u *Joint_3= malloc(sizeof(union object_u));
-    Joint_3->joint = newRigidJoint("Joint_3", r6_4, theta->data[2][0], theta_dot->data[2][0], theta_ddot->data[2][0], lims, 0, Body_2->rigid, Body_3->rigid);
-    union object_u *Joint_4= malloc(sizeof(union object_u));
-    Joint_4->joint = newRigidJoint("Joint_4", r6_3, theta->data[3][0], theta_dot->data[3][0], theta_ddot->data[3][0], lims, 0, Body_3->rigid, Body_4->rigid);
-    union object_u *Joint_5= malloc(sizeof(union object_u));
-    Joint_5->joint = newRigidJoint("Joint_5", r6_2, theta->data[4][0], theta_dot->data[4][0], theta_ddot->data[4][0], lims, 0, Body_4->rigid, Body_5->rigid);
+    Object *Joint_1 = malloc(sizeof(Object));
+    Joint_1->type = 2;
+    Joint_1->object = malloc(sizeof(union object_u));
+
+    Joint_1->object->joint = newRigidJoint("Joint_1", r6_5, theta->data[0][0], theta_dot->data[0][0], theta_ddot->data[0][0], lims, 0, base, Body_1);
+
+    Object *Joint_2 = malloc(sizeof(Object));
+    Joint_2->type = 2;
+    Joint_2->object = malloc(sizeof(union object_u));
+    Joint_2->object->joint = newRigidJoint("Joint_2", r6_3, theta->data[1][0], theta_dot->data[1][0], theta_ddot->data[1][0], lims, pihalf, Body_1, Body_2);
+
+    Object *Joint_3= malloc(sizeof(Object));
+    Joint_3->type = 2;
+    Joint_3->object = malloc(sizeof(union object_u));
+    Joint_3->object->joint = newRigidJoint("Joint_3", r6_4, theta->data[2][0], theta_dot->data[2][0], theta_ddot->data[2][0], lims, 0, Body_2, Body_3);
+
+    Object *Joint_4= malloc(sizeof(Object));
+    Joint_4->type = 2;
+    Joint_4->object = malloc(sizeof(union object_u));
+    Joint_4->object->joint = newRigidJoint("Joint_4", r6_3, theta->data[3][0], theta_dot->data[3][0], theta_ddot->data[3][0], lims, 0, Body_3, Body_4);
+
+    Object *Joint_5= malloc(sizeof(Object));
+    Joint_5->type = 2;
+    Joint_5->object = malloc(sizeof(union object_u));
+    Joint_5->object->joint = newRigidJoint("Joint_5", r6_2, theta->data[4][0], theta_dot->data[4][0], theta_ddot->data[4][0], lims, 0, Body_4, Body_5);
 
     double zero[2] = {0,0};
-    union object_u *joint_EE = malloc(sizeof(union object_u));
-    joint_EE->joint =  newRigidJoint("joint_EE", zeros(6,1), 0, 0, 0, zero, 0, NULL, EE->rigid);
+
+    Object *joint_EE = malloc(sizeof(union object_u));
+    joint_EE->type = 2;
+    joint_EE->object = malloc(sizeof(union object_u));
+    joint_EE->object->joint =  newRigidJoint("joint_EE", zeros(6,1), 0, 0, 0, zero, 0, NULL, EE);
+
+
     Robot *newRobot = malloc(sizeof(Robot));
     newRobot->name = "RigidRandy";
 
     //{base, Joint_1, Body_1, Jxoint_2, Body_2, Joint_3, Body_3, Joint_4, Body_4, Joint_5, Body_5, joint_EE, EE};
-    Object *robotList = malloc(sizeof(Object) * 13);
-    robotList[0].object = base;
-    robotList[1].object = Joint_1;
+    Object **robotList = malloc(sizeof(Object) * 13);
+    robotList[0] = base;
+    robotList[1] = Joint_1;
 
-    robotList[2].object = Body_1;
-    robotList[3].object = Joint_2;
-    robotList[4].object = Body_2;
-    robotList[5].object = Joint_3;
-    robotList[6].object = Body_3;
-    robotList[7].object = Joint_4;
-    robotList[8].object = Body_4;
-    robotList[9].object = Joint_5;
-    robotList[10].object = Body_5;
-    robotList[11].object = joint_EE;
-    robotList[12].object = EE;
+    robotList[2] = Body_1;
+    robotList[3] = Joint_2;
+    robotList[4] = Body_2;
+    robotList[5] = Joint_3;
+    robotList[6] = Body_3;
+    robotList[7] = Joint_4;
+    robotList[8] = Body_4;
+    robotList[9] = Joint_5;
+    robotList[10] = Body_5;
+    robotList[11] = joint_EE;
+    robotList[12] = EE;
 
 
     newRobot->objects = robotList;
@@ -126,7 +165,7 @@ void matrixToFile(matrix *m, char *filename){
 
     for (int i = 0; i < m->numRows; i++){
         for (int j = 0; j < m->numCols; j++){
-            fprintf(f, "%f, ", m->data[i][j]);
+            fprintf(f, "%.12f, ", m->data[i][j]);
         }
         fprintf(f, "\n");
     }

@@ -43,6 +43,7 @@ with open('testData/posData.csv', 'r') as file:
         if row_data:
             data1.append(row_data)
 
+
 print("TOTAL DIFFERENCE")
 print(np.sum(np.subtract(data, data1[0:len(data)])))
 # Animation function

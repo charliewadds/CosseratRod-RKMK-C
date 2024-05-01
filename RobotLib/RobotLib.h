@@ -78,8 +78,8 @@ typedef struct rigidJoint_s{
  */
 typedef struct rigidKin_s{
 
-    SE3 *g_cur;//transformation from base frame to ith body CoM in RRC (robot refrence configuration)
-    SE3 *g_act_wrt_prev;// transformation from the ith body CoM BCF to the i-1th body Com bcf in RAC (Robot Actuated Configuration)
+    matrix *g_cur;//transformation from base frame to ith body CoM in RRC (robot refrence configuration)
+    matrix *g_act_wrt_prev;// transformation from the ith body CoM BCF to the i-1th body Com bcf in RAC (Robot Actuated Configuration)
     matrix *eta;//twist for bdy velocity of ith CoM expressed in the ith CoM BCF (Body coordinate frame) todo column vector??
 
     // todo is this not just acceleration? time rate of change of velocity and why is it a column vector??
@@ -174,6 +174,7 @@ typedef struct COSS_ODE_OUT_s{
 
 }COSS_ODE_OUT;
 
+
 void freeCOSS_ODE_OUT(COSS_ODE_OUT *out);
 /*Time Stepper for the Runge Kutta Method using an Explicit Integration Scheme
  * DETERMINE:    Spatial Derivative of Velocity and Strain Twists
@@ -241,6 +242,8 @@ char *jointToJson(rigidJoint *joint);
 typedef struct flexJoint_s {//todo this is not implemented yet in the cosserat rod code
 }flexJoint;
 
+
+void robotFree(Robot *robot);
 /*
  *
  * F matrix is the actuation forces

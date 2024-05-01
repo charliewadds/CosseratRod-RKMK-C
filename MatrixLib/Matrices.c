@@ -304,6 +304,7 @@ matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol
     for(int i = startRow; i <= endRow; i++){
         for(int j = startCol; j <= endCol; j++){
             section->data[i - startRow][j - startCol] = m->data[i][j];
+            assert(section->data[i - startRow][j - startCol] != NAN);
         }
     }
     section->numRows = (endRow - startRow)+1;
@@ -334,7 +335,9 @@ matrix *matMult(matrix *m1, matrix *m2){
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m2->numCols; j++){
             for(int k = 0; k < m1->numCols; k++){
+
                 result->data[i][j] += m1->data[i][k] * m2->data[k][j];
+                assert(result->data[i][j] != NAN);
             }
         }
     }
@@ -536,7 +539,15 @@ matrix *eigenvector(matrix *A, int iterations) {
     return b_k;
 
 }
-
+void printGSLMatrix(gsl_matrix *m){
+    for(int i = 0; i < m->size1; i++){
+        printf("|");
+        for(int j = 0; j < m->size2; j++){
+            printf("%.12f ", gsl_matrix_get(m, i, j));
+        }
+        printf("|\n");
+    }
+}
 
 double eigenvalue(matrix *A, int iterations){
     matrix *v = eigenvector(A, iterations);
