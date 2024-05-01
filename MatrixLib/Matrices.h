@@ -38,7 +38,7 @@ matrix *matrix_solve(matrix *A, matrix *b);
 matrix *matrix_new(uint8_t num_rows, uint8_t num_cols);
 
 double matrix_sumSelf(matrix *m);
-
+void printGSLMatrix(gsl_matrix *m);
 matrix *matrix_rand(uint8_t num_rows, uint8_t num_cols);
 //return list of the number of rows and columns
 int *matrix_shape(matrix *m);

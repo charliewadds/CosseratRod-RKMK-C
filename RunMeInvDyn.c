@@ -43,9 +43,9 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     matrix F_0 = *zeros(6,1);
     F_0.data[2][0] = 1;
     double rho = 75e1;
-    double mu = 2e4;
-    double r = 0.01;
-    double E = 2e8;
+    double mu = 1e5;
+    double r = 0.1;
+    double E = 1e9;
     double G = E/(2*(1+0.3));
     double I = M_PI/4*pow(r,4);
     double A = M_PI*pow(r,2);
@@ -161,11 +161,11 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 
 
-    Body_2->object->flex->f_prev->data[2] = ones(1,6)->data[0];
-    Body_2->object->flex->f_pprev->data[2] = ones(1,6)->data[0];
+    Body_2->object->flex->f_prev->data[2] = ones(1,N)->data[0];
+    Body_2->object->flex->f_pprev->data[2] = ones(1,N)->data[0];
 
-    Body_4->object->flex->f_prev->data[2] = ones(1,6)->data[0];
-    Body_4->object->flex->f_pprev->data[2] = ones(1,6)->data[0];
+    Body_4->object->flex->f_prev->data[2] = ones(1,N)->data[0];
+    Body_4->object->flex->f_pprev->data[2] = ones(1,N)->data[0];
 
 
 
@@ -195,7 +195,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Joint_4->object = malloc(sizeof(union object_u));
     Joint_4->object->joint = newRigidJoint("Joint_4", r6_3, theta->data[3][0], theta_dot->data[3][0], theta_ddot->data[3][0], lims, 0, Body_3, Body_4);
 
-    Object *Joint_5= malloc(sizeof(Object));
+    Object *Joint_5 = malloc(sizeof(Object));
     Joint_5->type = 2;
     Joint_5->object = malloc(sizeof(union object_u));
     Joint_5->object->joint = newRigidJoint("Joint_5", r6_2, theta->data[4][0], theta_dot->data[4][0], theta_ddot->data[4][0], lims, 0, Body_4, Body_5);
@@ -214,7 +214,6 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Object **robotList = malloc(sizeof(Object) * 13);
     robotList[0] = base;
     robotList[1] = Joint_1;
-
     robotList[2] = Body_1;
     robotList[3] = Joint_2;
     robotList[4] = Body_2;
@@ -291,12 +290,12 @@ int main() {
 
     matrix *F_ext = zeros(6, 1);
     matrix *F_0 = zeros(6, 1);
-    F_0->data[0][0] = 0.000001;
-    F_0->data[1][0] = 0.000001;
-    F_0->data[2][0] = 0.99999;
-    F_0->data[3][0] = 0.000001;
-    F_0->data[4][0] = 0.000001;
-    F_0->data[5][0] = 0.000001;
+    F_0->data[0][0] = 0;
+    F_0->data[1][0] = 0;
+    F_0->data[2][0] = 1;
+    F_0->data[3][0] = 0;
+    F_0->data[4][0] = 0;
+    F_0->data[5][0] = 0;
 
 
     Robot *robot = defPaperSample_2(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0));//todo check -1
@@ -321,7 +320,7 @@ int main() {
 
         setSection(C, 0, 4, i, i, idm->C);
 
-        flexBody *flex = robot->objects[2*BC_Start ]->object->flex;
+        //flexBody *flex = robot->objects[2*BC_Start ]->object->flex;
         flexBody *flexNew = robot->objects[2*BC_Start]->object->flex;
 
         //prevGuess is always 1, todo add other cases
@@ -346,5 +345,5 @@ int main() {
     }
 
     free(idm);
-
+    robotFree(robot);
 }

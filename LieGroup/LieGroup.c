@@ -4,7 +4,6 @@
 
 #include <math.h>
 #include <assert.h>
-#include <printf.h>
 #include "LieGroup.h"
 
 
@@ -20,7 +19,7 @@ SO3 *new_SO3(matrix *R){
 
 SO3 *new_SO3_zeros(){
     matrix *R = zeros(3,3);
-    SO3 *T = (SO3 *)malloc(sizeof(SO3));
+    SO3 *T = (SO3 *) malloc(sizeof(SO3));
     T->R = R;
     return T;
 }
@@ -131,38 +130,34 @@ matrix *T_from_PR_SO3(SO3 *R, matrix *P){
 
 //HAT OPERATORS
 //_________________________________________________________________________________________________________
-SO3 *hat_R3(matrix *z){
-    SO3 *T = new_SO3_zeros();
-    T->R = zeros(3,3);
-    //printMatrix(T->R);
-    T->R->data[0][1] = z->data[2][0] * -1;
-    T->R->data[0][2] = z->data[1][0];
+matrix *hat_R3(matrix *z){
+    assert(z->numRows == 3);
+    assert(z->numCols == 1);
 
-    T->R->data[1][0] = z->data[2][0];
-    T->R->data[1][2] = z->data[0][0] * -1;
+    matrix *T = zeros(3,3);
 
-    T->R->data[2][0] = z->data[1][0] * -1;
-    T->R->data[2][1] = z->data[0][0];
+    T->data[0][1] = z->data[2][0] * -1;
+    T->data[0][2] = z->data[1][0];
+
+    T->data[1][0] = z->data[2][0];
+    T->data[1][2] = z->data[0][0] * -1;
+
+    T->data[2][0] = z->data[1][0] * -1;
+    T->data[2][1] = z->data[0][0];
     return T;
 }
 
-SE3 *hat_R6(matrix *z){
+matrix *hat_R6(matrix *z){
     assert(z->numRows == 6);
     assert(z->numCols == 1);
 
     matrix *T = matrix_new(4,4);
-    setSection(T, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0))->R);
+    setSection(T, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0)));
     setSection(T, 0, 2, 3, 3, getSection(z, 0, 2, 0, 0));
     setSection(T, 3, 3, 0, 3, zeros(1,4));
     //T->data[3][3] = 1;//todo this is not in matlab, dont I need it?
 
-
-    //printMatrix(z);
-    SE3 *T_hat = new_SE3_T(T);
-
-    //bottom row is all zeros for se3^
-
-    return T_hat;
+    return T;
 }
 
 //_________________________________________________________________________________________________________
@@ -171,28 +166,31 @@ SE3 *hat_R6(matrix *z){
 //UNHAT OPERATORS
 //_________________________________________________________________________________________________________
 
-matrix *unhat_SO3(SO3 *zhat){
+matrix *unhat_SO3(matrix *zhat){
+    assert(zhat->numRows == 3);
+    assert(zhat->numCols == 3);
+
     matrix *z = matrix_new(3,1);
 
-    z->data[0] = & zhat->R->data[2][1];
-    z->data[1] = & zhat->R->data[0][2];
-    z->data[2] = & zhat->R->data[1][0];
+    z->data[0] = & zhat->data[2][1];
+    z->data[1] = & zhat->data[0][2];
+    z->data[2] = & zhat->data[1][0];
 
     return z;
 }
 
-matrix *unhat_SE3(SE3 *zhat){
+matrix *unhat_SE3(matrix *zhat){
     matrix *z = matrix_new(6,1);
 
 
-    z->data[0] = zhat->P->data[0];
-    z->data[1] = zhat->P->data[1];
-    z->data[2] = zhat->P->data[2];
+    z->data[0] = zhat->data[0];
+    z->data[1] = zhat->data[1];
+    z->data[2] = zhat->data[2];
 
     //todo this would be cleaner if I used unhat_SO3
-    z->data[3] = & zhat->R->R->data[2][1];
-    z->data[4] = & zhat->R->R->data[0][2];
-    z->data[5] = & zhat->R->R->data[1][0];
+    z->data[3] = & zhat->data[2][1];
+    z->data[4] = & zhat->data[0][2];
+    z->data[5] = & zhat->data[1][0];
 
     return z;
 }
@@ -200,17 +198,21 @@ matrix *unhat_SE3(SE3 *zhat){
 
 //ADJOINT
 //_________________________________________________________________________________________________________
-matrix *adj(SE3 *T) {
+matrix *adj(matrix *T) {
+    assert(T->numRows == 4);
+    assert(T->numCols == 4);
 
-    matrix *r = getSection(T->T, 0, 2, 0, 2);
-    matrix *p = getSection(T->T, 0, 2, 3, 3);
+    matrix *r = getSection(T, 0, 2, 0, 2);
+    matrix *p = getSection(T, 0, 2, 3, 3);
 
     matrix *out = zeros(6,6);
+
     setSection(out, 0, 2, 0, 2, r);
-    setSection(out, 0, 2, 3, 5, matMult(hat_R3(p)->R, r));
+    setSection(out, 0, 2, 3, 5, matMult( r,hat_R3(p)));
 
     setSection(out, 3, 5, 3, 5, r);
-    setSection(out, 3, 5, 0, 2, zeros(3,3));
+    setSection(out, 3, 5, 0, 2, zeros(3,3));//todo does this make sense?
+
     return out;
 }
 
@@ -220,13 +222,13 @@ matrix *adj_R6(matrix *z){
 
     matrix *r = zeros(6,6);
 
-    matrix *gu = getSection(r, 0, 2, 0, 0);
+    //matrix *gu = getSection(r, 0, 2, 0, 0);
 
     //set top left 3x3
-    setSection(r, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0))->R);
+    setSection(r, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0)));
 
     //set top right 3x3
-    setSection(r, 0, 2, 3, 5, hat_R3(getSection(z, 3, 5, 0, 0))->R);
+    setSection(r, 0, 2, 3, 5, hat_R3(getSection(z, 3, 5, 0, 0)));
     return r;
 }
 
@@ -238,16 +240,16 @@ matrix *adj_R6(matrix *z){
 //EXPONENTIAL MAP
 //_________________________________________________________________________________________________________
 
-SO3 *expm_SO3(SO3 *m) {
+matrix *expm_SO3(matrix *m) {
 
     double mag = norm(unhat_SO3(m));
     if (mag == 0) {
-        return new_SO3(eye(3));
+        return eye(3);
     } else {
-        return new_SO3(matrix_add(matrix_add(eye(3),
-                                             matrix_scalar_mul(elemDiv(m->R, mag), sin(mag))),
-                                  matrix_scalar_mul(elemDiv(matrixPow(m->R, 2.0), pow(mag, 2.0)),
-                                                    (1 - cos(mag)))));
+        return matrix_add(matrix_add(eye(3),
+                                             matrix_scalar_mul(elemDiv(m, mag), sin(mag))),
+                                  matrix_scalar_mul(elemDiv(matrixPow(m, 2), pow(mag, 2.0)),
+                                                    (1 - cos(mag))));
 
 
     }
@@ -255,23 +257,26 @@ SO3 *expm_SO3(SO3 *m) {
 
 
 
-SE3 *expm_SE3(SE3 *m) {
-    SO3 *gW = new_SO3(getSection(m->T, 0, 2, 0, 2));
-    matrix *gU = getSection(m->T, 0, 2, 3, 3);
+matrix *expm_SE3(matrix *m) {
+    assert(m->numRows == 4);
+    assert(m->numCols == 4);
+
+    matrix *gW = getSection(m, 0, 2, 0, 2);
+    matrix *gU = getSection(m, 0, 2, 3, 3);
 
     double mag = norm(unhat_SO3(gW));
     matrix *A = eye(3);
     if(mag != 0){
 
-        matrix *k = matrix_scalar_mul(elemDiv(matrixPow(gW->R, 2), ((double) pow(mag,3.0))) , (mag - (double) sin(mag)));
-        matrix *f = matrix_scalar_mul(elemDiv(gW->R, pow(mag,2.0)) , (1-cos(mag)));
+        matrix *k = matrix_scalar_mul(elemDiv(matrixPow(gW, 2), ((double) pow(mag,3.0))) , (mag - (double) sin(mag)));
+        matrix *f = matrix_scalar_mul(elemDiv(gW, pow(mag,2.0)) , (1-cos(mag)));
         A = matrix_add(A,matrix_add(k,f));
     }
-    SE3 *result = new_SE3_zeros();
-    setSection(result->T, 0, 2, 0, 2, expm_SO3(gW)->R);
-    setSection(result->T, 0, 2, 3, 3, matMult(A, gU));
-    setSection(result->T , 3, 3, 0, 3, zeros(1,4));
-    result->T->data[3][3] = 1;
+    matrix *result = zeros(4,4);
+    setSection(result, 0, 2, 0, 2, expm_SO3(gW));
+    setSection(result, 0, 2, 3, 3, matMult(A, gU));
+    setSection(result , 3, 3, 0, 3, zeros(1,4));
+    result->data[3][3] = 1;
     return result;
 }
 

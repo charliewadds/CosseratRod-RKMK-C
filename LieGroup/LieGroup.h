@@ -38,25 +38,25 @@ SE3 *new_SE3_T(matrix *T);
 
 
 // 3x1 column vector -> hat operator -> 3x3 matrix in so(3)
-SO3 *hat_R3(matrix *z);
+matrix *hat_R3(matrix *z);
 // 6x1 column vector e.g. [p;p;p;r;r;r] -> hat operator -> 4x4 matrix in se(3)
-SE3 *hat_R6(matrix *z);
+matrix *hat_R6(matrix *z);
 
 // 3x3 matrix in so(3) -> unhat operator -> 3x1 column vector
-matrix *unhat_SO3(SO3 *zhat);//return a 3x1 vector from a 3x3 SO3 matrix
+matrix *unhat_SO3(matrix *zhat);//return a 3x1 vector from a 3x3 SO3 matrix
 // 4x4 matrix in se(3) -> unhat operator -> 6x1 column vector
-matrix *unhat_SE3(SE3 *zhat);//return a 6x1 vector from a 4x4 SE3 matrix
+matrix *unhat_SE3(matrix *zhat);//return a 6x1 vector from a 4x4 SE3 matrix
 
 // 4x4 matrix in SE3 -> adj operator -> 6x6 matrix in ????
-matrix *adj(SE3 *T);
+matrix *adj(matrix *T);
 // 6x1 column vector -> adjoint operator -> 6x6 matrix in ????
 matrix *adj_R6(matrix *z);
 
 // mapping from so(3) to SO(3)
-SO3 *expm_SO3(SO3 *w);
+matrix *expm_SO3(matrix *w);
 
 //mapping from se(3) to SE(3)
-SE3 *expm_SE3(SE3 *z);
+matrix *expm_SE3(matrix *z);
 
 
 
