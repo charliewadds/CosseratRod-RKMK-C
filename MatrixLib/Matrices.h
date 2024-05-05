@@ -26,7 +26,7 @@ typedef struct matrix_double_s {
 
 } matrix;
 
-
+void matrixToFile(matrix *m, char *filename);
 
 gsl_matrix *matrix_to_gsl(matrix *matrix);
 matrix *gsl_to_matrix(gsl_matrix *gsl_matrix);

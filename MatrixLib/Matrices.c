@@ -406,6 +406,23 @@ void printMatrix(matrix *m){
     }
 }
 
+void matrixToFile(matrix *m, char *filename){
+    FILE *f = fopen(filename, "a");
+    if (f == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+
+    for (int i = 0; i < m->numRows; i++){
+        for (int j = 0; j < m->numCols; j++){
+            fprintf(f, "%.12f, ", m->data[i][j]);
+        }
+        fprintf(f, "\n");
+    }
+    fclose(f);
+}
+
 matrix *matrixPow(matrix *m, int power){
     assert(m->square == 1);
     matrix *result = matrix_new(m->numRows, m->numCols);

@@ -155,22 +155,6 @@ Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 
 
-void matrixToFile(matrix *m, char *filename){
-    FILE *f = fopen(filename, "a");
-    if (f == NULL)
-    {
-        printf("Error opening file!\n");
-        exit(1);
-    }
-
-    for (int i = 0; i < m->numRows; i++){
-        for (int j = 0; j < m->numCols; j++){
-            fprintf(f, "%.12f, ", m->data[i][j]);
-        }
-        fprintf(f, "\n");
-    }
-    fclose(f);
-}
 int main(void){
     matrix *theta = zeros(5,1);
     matrix  *theta_dot = zeros(5,1);
@@ -207,8 +191,8 @@ int main(void){
     Theta_DDot->data[3] = matrix_scalar_mul(math, shape->data[3][0])->data[0];
     Theta_DDot->data[4] = matrix_scalar_mul(math, shape->data[4][0])->data[0];
 
-    printMatrix(Theta_DDot);
-
+    //printMatrix(Theta_DDot);
+    printMatrix(theta);
     //printMatrix(plotRobotConfig(rigidRandy, theta, 100));
 
     //printMatrix(Theta_DDot);
@@ -217,6 +201,14 @@ int main(void){
         //printMatrix(theta);
 //        printf("\nTheta_DDot\n");
         //printMatrix(Theta_DDot);
+        matrix *angles = zeros(20,200);
+        for(int j = 0; j < rigidRandy->numObjects; j++){
+            if(rigidRandy->objects[j]->type == 2){
+                angles->data[j][i] = rigidRandy->objects[j]->object->joint->position;
+
+            }
+        }
+        printMatrix(angles);
         matrixToFile(plotRobotConfig(rigidRandy, theta, 100), "RigidRandyPlot.csv");
         printf("Theta\n");
         printMatrix(theta);

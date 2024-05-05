@@ -9,8 +9,8 @@ mpl.rcParams['legend.fontsize'] = 10
 
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d', autoscale_on=False)
-
-
+fig1 = plt.figure()
+az = fig1.add_subplot()
 # Read data from CSV
 data = []
 with open('cmake-build-debug/RigidRandyPlot.csv', 'r') as file:
@@ -43,9 +43,19 @@ with open('testData/posData.csv', 'r') as file:
         if row_data:
             data1.append(row_data)
 
-
+np.set_printoptions(precision=15)
 print("TOTAL DIFFERENCE")
-print(np.sum(np.subtract(data, data1[0:len(data)])))
+#print(np.sum(np.subtract(data, data1[0:len(data)])))
+
+for i in range(0, len(data)):
+    if(abs(np.sum(np.subtract(data[i], data1[i]))) >= 0.0):
+        np.set_printoptions(precision=50)
+
+        print(np.sum(np.subtract(data[i], data1[i])))
+        az.plot(i, np.sum(np.subtract(data[i], data1[i])), 'ro')
+
+
+
 # Animation function
 def animate(i, data, data1):
     # Extract x, y, z for current animation step

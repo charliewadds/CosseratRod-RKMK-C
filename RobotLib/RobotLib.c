@@ -107,9 +107,7 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
 
     }
 
-    joint->twistR6 = matMult(
-            adj(matrix_scalar_mul(hat_R6(childCoM),-1)),//transform from joint axis to ith body CoM
-            joint->twistR6);//redefine joint to now be about child CoM
+    joint->twistR6 = matMult(adj(expm_SE3(matrix_scalar_mul(hat_R6(childCoM),-1))), joint->twistR6);//redefine joint to now be about child CoM
 
 
     matrix *g_cur = matMult(g_old, g_oldToCur);
@@ -541,13 +539,13 @@ int lastFlex(Robot *robot){
 matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *F_ext, double c0, double c1, double c2){
 
 
-    int BC_Start = firstFlex(robot)-1;//todo these dont work
+    int BC_Start = firstFlex(robot);//todo these dont work
     int BC_End = lastFlex(robot)-2;
     int numBody = robot->numObjects;
 
     if(BC_Start == -1){
         //todo not sure what to do here, it might just work?
-        printf("No Flexible Body Found (Flex_MB_BCS)\n");
+        //printf("No Flexible Body Found (Flex_MB_BCS)\n");
         return zeros(6,1);
     }
 
@@ -1038,28 +1036,20 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     //todo does this need to find ALL roots or just the one 'nearest' to the initial guess?
     //matrix *InitGuess = fsolve(@(InitGuess)Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, ...
     //THETA_DDOT, F_ext, c0, c1, c2),InitGuess,options);
-    printf("INIT_GUESS pre\n");
+    //printf("INIT_GUESS pre\n");
 
-    printMatrix(matrix_sub(ones(6,1),InitGuess));
-    //InitGuess = find_roots(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+    //printMatrix(matrix_sub(ones(6,1),InitGuess));
 
-    Flex_MB_BCS_params *p = malloc(sizeof(Flex_MB_BCS_params));
-    p->InitGuess = InitGuess;
-    p->robot = robot;
-    p->Theta = Theta;
-    p->Theta_dot = Theta_dot;
-    p->Theta_DDot = Theta_DDot;
-    p->F_ext = F_ext;
-    p->c0 = c0;
-    p->c1 = c1;
-    p->c2 = c2;
-    InitGuess =
+    InitGuess = find_roots(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
 
-    printf("\nINIT_GUESS post\n");
+
+    //printf("\nINIT_GUESS post\n");
     //printMatrix(Theta);
-    printMatrix(matrix_sub(ones(6,1), InitGuess));
+    //printMatrix(matrix_sub(ones(6,1), InitGuess));
     //printf("ans");
     //printMatrix(Flex_MB_BCS(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2));
+
+    //TODO JOINT TWIST R6 IS SET TO ZERO IN FIND_ROOTS (PROBABLY IN BCS_MB_FLEX)!!!!!!!!!!!!!!!!!!!!
     g_ref[0] = eye(4);
     g_act_wrt_prev[0] = eye(4);
     setSection(eta, 0, 5, 0, 0, zeros(6, 1));
