@@ -127,7 +127,7 @@ Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Object *joint_EE = malloc(sizeof(union object_u));
     joint_EE->type = 2;
     joint_EE->object = malloc(sizeof(union object_u));
-    joint_EE->object->joint =  newRigidJoint("joint_EE", zeros(6,1), 0, 0, 0, zero, 0, NULL, EE);
+    joint_EE->object->joint =  newRigidJoint("joint_EE", zeros(6,1), 0, 0, 0, zero, 0, Body_5, EE);
 
 
     Robot *newRobot = malloc(sizeof(Robot));
@@ -423,7 +423,7 @@ int main() {
     F_0->data[5][0] = 0;
 
 
-    Robot *robot = defRigidKin(&theta, &theta_dot, getSection(&theta_ddot, 0, theta_ddot.numRows-1, 0, 0));//todo check -1
+    Robot *robot = defPaperSample_2(&theta, &theta_dot, getSection(&theta_ddot, 0, theta_ddot.numRows-1, 0, 0));//todo check -1
 
     int BC_Start = 2;//todo, this should be automated
     int BC_End = 4;
@@ -442,7 +442,7 @@ int main() {
     IDM_MB_RE_OUT *idm = malloc(sizeof(IDM_MB_RE_OUT));
     for(int i = 0; i < timeStep; i++){
         idm = IDM_MB_RE(robot, &theta, &theta_dot, getSection(&theta_ddot, 0, 4, i, i), F_ext, dt, F_0);
-
+        addRobotState(robot, "testRobotOut.json", i);
         setSection(C, 0, 4, i, i, idm->C);
 
         //flexBody *flex = robot->objects[2*BC_Start ]->object->flex;
@@ -473,9 +473,10 @@ int main() {
 
             }
         }
-        //printMatrix(angles);
-        printMatrix(&theta);
-        printf("\n");
+
+
+
+
         matrixToFile(plotRobotConfig(robot, &theta, 100), "RigidRandyPlot.csv");
     }
 

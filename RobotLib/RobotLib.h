@@ -174,6 +174,7 @@ typedef struct COSS_ODE_OUT_s{
 
 }COSS_ODE_OUT;
 
+char* objToJson(Object *obj);
 
 void freeCOSS_ODE_OUT(COSS_ODE_OUT *out);
 /*Time Stepper for the Runge Kutta Method using an Explicit Integration Scheme
@@ -266,6 +267,9 @@ typedef struct IDM_MB_RE_OUT_t{
     Robot *robot_new;
 
 }IDM_MB_RE_OUT;
+
+void robotToFile(Robot *robot, char *filename);
+void addRobotState(Robot *robot, char* filename, int num);
 matrix *find_roots_PSO(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
 matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM);
 //inline docs working?

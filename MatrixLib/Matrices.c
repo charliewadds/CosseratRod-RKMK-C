@@ -2,7 +2,7 @@
 #include <math.h>
 #include <printf.h>
 #include "Matrices.h"
-
+#include <string.h>
 
 
 
@@ -317,7 +317,7 @@ matrix *matrix_sin(matrix *m){
     matrix *result = matrix_new(m->numRows, m->numCols);
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            result->data[i][j] = sin(m->data[i][j]);
+            result->data[i][j] =(double) sinl(m->data[i][j]);
         }
     }
     return result;
@@ -421,6 +421,71 @@ void matrixToFile(matrix *m, char *filename){
         fprintf(f, "\n");
     }
     fclose(f);
+}
+
+char* matrixToJson(matrix *m, char *version){
+
+    char *result = malloc(10000);
+    if(strcmp(version, "matlab") != 0){
+        sprintf(result, "{\n\"rows\": %d,\n\"cols\": %d,\n\"data\": [", m->numRows, m->numCols);
+    }else{
+        sprintf(result, "%s [", result);
+    }
+    for(int i = 0; i < m->numRows; i++){
+        if(m->numRows != 1 && m->numCols != 1) {
+            sprintf(result, "%s[", result);
+        }
+        for(int j = 0; j < m->numCols; j++) {
+            if(m->numRows == 1 || m->numCols == 1) {
+                if(j == m->numCols - 1 && i == m->numRows - 1) {
+
+                    if(m->data[i][j] >99999){
+                        sprintf(result, "%s%.18e", result, m->data[i][j]);
+                    }else {
+                        sprintf(result, "%s%.18f", result, m->data[i][j]);
+                    }
+                }else{
+                    if(m->data[i][j] >99999){
+                        sprintf(result, "%s%.18e,", result, m->data[i][j]);
+                    }else {
+                        sprintf(result, "%s%.18f,", result, m->data[i][j]);
+                    }
+                }
+            } else {
+                if(j == m->numCols - 1) {
+                    if(m->data[i][j] >99999){
+                        sprintf(result, "%s%.18e", result, m->data[i][j]);
+                    }else {
+                        sprintf(result, "%s%.18f", result, m->data[i][j]);
+                    }
+                }else {
+                    if(m->data[i][j] >99999){
+                        sprintf(result, "%s%.18e,", result, m->data[i][j]);
+                    }else {
+                        sprintf(result, "%s%.18f,", result, m->data[i][j]);
+                    }
+                }
+            }
+            sprintf(result, "%s", result);
+        }
+        if(m->numRows != 1 && m->numCols != 1) {
+            if (i == m->numRows - 1)
+                sprintf(result, "%s]", result);
+            else
+                sprintf(result, "%s],\n", result);
+        }
+        //sprintf(result, "%s],\n", result);
+    }
+
+    if(strcmp(version, "matlab") != 0){
+        sprintf(result, "%s]\n}", result);
+    }else{
+        sprintf(result, "%s ]", result);
+    }
+
+    sprintf(result, "%s\n", result);
+
+    return result;
 }
 
 matrix *matrixPow(matrix *m, int power){

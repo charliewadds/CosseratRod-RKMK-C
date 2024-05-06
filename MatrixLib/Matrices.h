@@ -26,6 +26,9 @@ typedef struct matrix_double_s {
 
 } matrix;
 
+//return a json string in regular format or matlab format
+char* matrixToJson(matrix *m, char *version);
+
 void matrixToFile(matrix *m, char *filename);
 
 gsl_matrix *matrix_to_gsl(matrix *matrix);

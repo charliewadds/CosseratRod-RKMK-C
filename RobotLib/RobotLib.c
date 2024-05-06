@@ -107,21 +107,21 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
 
     }
 
-    joint->twistR6 = matMult(adj(expm_SE3(matrix_scalar_mul(hat_R6(childCoM),-1))), joint->twistR6);//redefine joint to now be about child CoM
+    matrix *newTwist = matMult(adj(expm_SE3(matrix_scalar_mul(hat_R6(childCoM),-1))), joint->twistR6);//redefine joint to now be about child CoM
 
 
     matrix *g_cur = matMult(g_old, g_oldToCur);
     matrix *g_cur_wrt_prev = matrix_transpose(matrix_inverse(g_oldToCur));
 
-    matrix *g_act_wrt_prev =matMult(matrix_scalar_mul(matrix_scalar_mul(hat_R6(joint->twistR6), -1), joint->position), g_cur_wrt_prev);
+    matrix *g_act_wrt_prev =matMult(matrix_scalar_mul(matrix_scalar_mul(hat_R6(newTwist), -1), joint->position), g_cur_wrt_prev);
 
     matrix *eta = matrix_add(matMult(adj(g_act_wrt_prev), eta_old),
-                             matrix_scalar_mul(joint->twistR6, joint->velocity));
+                             matrix_scalar_mul(newTwist, joint->velocity));
     matrix *d_eta = matrix_add(matrix_add(matMult(adj(g_act_wrt_prev), d_eta_old), matMult(adj_R6(eta),
                                                                                                  matrix_scalar_mul(
-                                                                                                         joint->twistR6,
+                                                                                                         newTwist,
                                                                                                          joint->velocity))),
-                               matrix_scalar_mul(joint->twistR6, joint->acceleration));
+                               matrix_scalar_mul(newTwist, joint->acceleration));
     rigidKin *kin =  malloc(sizeof(rigidKin));
     kin->g_cur = g_cur;
     kin->g_act_wrt_prev = g_act_wrt_prev;
@@ -390,6 +390,111 @@ COSS_ODE_OUT COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matrix
     return *out;
 }
 
+char* objToJson(Object *obj){
+    char *result = malloc(20000);//todo set this to whatever the upper limit is for bodies
+    if(obj->type == 0){//rigid
+        sprintf(result, "%s{\n\"Name\": \"%s\",\n\"Type\": \"RIGID\",",result, obj->object->rigid->name);
+        sprintf(result, "%s\n\"Mass\": %s,",result, matrixToJson(obj->object->rigid->mass, "matlab"));
+        sprintf(result, "%s\n\"Transform\": %s,",result, matrixToJson(obj->object->rigid->Transform, "matlab"));
+        sprintf(result, "%s\n\"CoM\": %s}",result, matrixToJson(obj->object->rigid->CoM, "matlab"));
+    }else if(obj->type == 1){//flex
+        sprintf(result, "%s{\n\"Name\": \"%s\",\n\"Type\": \"FLEXIBLE\",",result, obj->object->flex->name);
+        sprintf(result, "%s\n\"Mass\": %s,",result, matrixToJson(obj->object->flex->mass, "matlab"));//todo is this a memory leak?
+        sprintf(result, "%s\n\"Transform\": %s,",result, matrixToJson(obj->object->flex->transform, "matlab"));
+        sprintf(result, "%s\n\"Stiff\": %s,",result, matrixToJson(obj->object->flex->stiff, "matlab"));
+        sprintf(result, "%s\n\"Damp\": %s,",result, matrixToJson(obj->object->flex->damping, "matlab"));
+        sprintf(result, "%s\n\"CoM\": %s,",result, matrixToJson(obj->object->flex->CoM, "matlab"));
+        sprintf(result, "%s\n\"F_0\": %s,",result, matrixToJson(obj->object->flex->F_0, "matlab"));
+        sprintf(result, "%s\n\"N\": %d,",result, obj->object->flex->N);
+        sprintf(result, "%s\n\"L\": %.18f,",result, obj->object->flex->L);
+        sprintf(result, "%s\n\"eta_prev\": %s,",result, matrixToJson(obj->object->flex->eta_prev, "matlab"));
+        sprintf(result, "%s\n\"eta_pprev\": %s,",result, matrixToJson(obj->object->flex->eta_pprev, "matlab"));
+        sprintf(result, "%s\n\"f_prev\": %s,",result, matrixToJson(obj->object->flex->f_prev, "matlab"));
+        sprintf(result, "%s\n\"f_pprev\": %s}",result, matrixToJson(obj->object->flex->f_pprev, "matlab"));
+    }else if(obj->type == 2){//jointe
+        sprintf(result, "%s{\n\"Name\": \"%s\",\n\"Type\": \"RIGID\",",result, obj->object->joint->name);
+        sprintf(result, "%s\n\"Twist\": %s,", result, matrixToJson(obj->object->joint->twistR6, "matlab"));
+        sprintf(result, "%s\n\"Position\": %.18f,",result, obj->object->joint->position);
+        sprintf(result, "%s\n\"Vel\": %.18f,",result, obj->object->joint->velocity);
+        sprintf(result, "%s\n\"Accel\": %.18f,",result, obj->object->joint->acceleration);
+        sprintf(result, "%s\n\"Limit\": [%.18f,%.18f],",result, obj->object->joint->limits[0], obj->object->joint->limits[1]);
+        sprintf(result, "%s\n\"HomePos\": %.18f,",result, obj->object->joint->homepos);
+
+
+        //todo parent and child in joint should be changed to object with assert
+        Object *parent = malloc(sizeof(Object));
+        parent->object = malloc(sizeof(union object_u));
+        if(obj->object->joint->parent->type == 0) {
+            parent->type = 0;
+            parent->object->rigid = obj->object->joint->parent->body->rigid;
+        }else if(obj->object->joint->parent->type == 1){
+            parent->type = 1;
+            parent->object->flex = obj->object->joint->parent->body->flex;
+        }else{
+            printf("something is very wrong with the setup got non-body as parent");
+        }
+
+        Object *child = malloc(sizeof(Object));
+        child->object = malloc(sizeof(union object_u));
+        if(obj->object->joint->child->type == 0) {
+            child->type = 0;
+            child->object->rigid = obj->object->joint->child->body->rigid;
+        }else if(obj->object->joint->child->type == 1){
+            child->type = 1;
+            child->object->flex = obj->object->joint->child->body->flex;
+        }else{
+            printf("something is very wrong with the setup got non-body as child");
+        }
+        sprintf(result, "%s\n\"Parent\": %s,",result, objToJson(parent));
+        sprintf(result, "%s\n\"Child\": %s}",result, objToJson(child));
+    }
+
+    sprintf(result, "%s\n", result);
+
+
+    return result;
+
+}
+
+void robotToFile(Robot *robot, char *filename){
+
+
+
+    FILE *f = fopen(filename, "a");
+    if (f == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+    fprintf(f, "[");
+    for(int i = 0; i<robot->numObjects; i++) {
+        if(i == robot->numObjects - 1) {
+            fprintf(f, "%s", objToJson(robot->objects[i]));
+        }else {
+            fprintf(f, "%s,", objToJson(robot->objects[i]));
+        }
+        }
+    fprintf(f, "]");
+
+    fclose(f);
+
+}
+
+
+void addRobotState(Robot *robot, char* filename, int num){
+    FILE *f = fopen(filename, "a");
+    if (f == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+    fprintf(f, ",\n\"%d\":", num);
+    fclose(f);
+    robotToFile(robot, filename);
+
+
+}
+
 void freeCOSS_ODE_OUT(COSS_ODE_OUT *out){
     free(out->eta_s);
     free(out->f_s);
@@ -644,8 +749,8 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *F_ext, double c0, d
 
 
     // ALGORITHM FOR LAST ELASTIC BODY TO END OF MANIPULATOR FOR BC LOADS
-    for(int i = BC_End + 1; i< 5 +2; i++){//todo fix magic number
-        curr_joint = (robot->objects[2 * (i - 1)]);
+    for(int i = 2; i< BC_End-1 ; i++){//todo fix magic number
+        curr_joint = (robot->objects[2 * (i - 1)-1]);
 
 
 
@@ -665,7 +770,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *F_ext, double c0, d
     setSection(F, 0,5,F->numCols,F->numCols, F_ext);
 
     matrix *bodyMass = malloc(sizeof(matrix));
-    for(int i = BC_End +1; i> numBody +1; i--){
+    for(int i = BC_End-2; i> numBody +1; i--){
         //F(:,i-1) = transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i) + ...
         //            ROBOT{2*i-1}.Mass*d_eta(:,i) - transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i);     %[N;Nm]     Applied Wrench at i_th CoM  !!EQN FOR RIGID ONLY!!
         //    end                                         %[]         End of {SECTION III} Algorithm
@@ -694,7 +799,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *F_ext, double c0, d
     //free(dyn);
     //free(kin);//todo make sure this is right and addresses are not referenced elsewhere
 
-    return matrix_sub(F_temp, getSection(F,0,5,BC_End,BC_End));
+    return matrix_sub(F_temp, getSection(F,0,5,BC_End-2,BC_End-2));
 
 }
 
@@ -953,7 +1058,7 @@ matrix *find_roots_deriv(matrix *InitGuess, Robot *robot, matrix *Theta, matrix 
         status = gsl_multiroot_fdfsolver_iterate(s);
 //        printf("Iteration %zu:\n", iter);
 //        for (int i = 0; i < 6; i++) {
-//            printf("x[%d] = %.15f\n", i, gsl_vector_get(s->x, i));
+//            printf("x[%d] = %.18f\n", i, gsl_vector_get(s->x, i));
 //        }
         if (status) {
             printf("STATUS: %s\n", gsl_strerror(status));
