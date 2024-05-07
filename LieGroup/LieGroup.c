@@ -220,15 +220,13 @@ matrix *adj_R6(matrix *z){
     assert(z->numRows == 6);
     assert(z->numCols == 1);
 
+    matrix *gu = getSection(z, 0, 2, 0, 0);
+    matrix *gw = getSection(z, 3, 5, 0, 0);
+
     matrix *r = zeros(6,6);
-
-    //matrix *gu = getSection(r, 0, 2, 0, 0);
-
-    //set top left 3x3
-    setSection(r, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0)));
-
-    //set top right 3x3
-    setSection(r, 0, 2, 3, 5, hat_R3(getSection(z, 3, 5, 0, 0)));
+    setSection(r, 0, 2, 0, 2, hat_R3(gw));
+    setSection(r, 0, 2, 3, 5, hat_R3(gu));
+    setSection(r, 3, 5, 3, 5, hat_R3(gw));
     return r;
 }
 
@@ -241,7 +239,8 @@ matrix *adj_R6(matrix *z){
 //_________________________________________________________________________________________________________
 
 matrix *expm_SO3(matrix *m) {
-
+    assert(m->numRows == 3);
+    assert(m->numCols == 3);
     double mag = norm(unhat_SO3(m));
     if (mag == 0) {
         return eye(3);

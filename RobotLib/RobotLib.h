@@ -243,7 +243,8 @@ char *jointToJson(rigidJoint *joint);
 typedef struct flexJoint_s {//todo this is not implemented yet in the cosserat rod code
 }flexJoint;
 
-
+int getBCStart(Robot *robot);
+int getBCEnd(Robot *robot);
 void robotFree(Robot *robot);
 /*
  *
@@ -291,7 +292,7 @@ typedef struct {
 /*
  * function Error = Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, THETA_DDOT, F_ext, c0, c1, c2)
  */
-matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix *F_ext, double c0, double c1, double c2);
+matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, double c1, double c2);
 
 matrix *fsolve_idm_mb_re(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
 
