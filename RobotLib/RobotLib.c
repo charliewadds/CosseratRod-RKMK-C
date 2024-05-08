@@ -814,7 +814,7 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
     Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
 
     // Extracting parameters
-    matrix *InitGuess = p->InitGuess;
+    //matrix *InitGuess = p->InitGuess;
     Robot *robot = p->robot;
     matrix *F_ext = p->F_ext;
     double c0 = p->c0;
@@ -837,7 +837,7 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
     x_matrix->data[5][0] = x_arr[5];
 
     // Call Flex_MB_BCS function
-    matrix *result = Flex_MB_BCS(InitGuess, robot, *F_ext, c0, c1, c2);
+    matrix *result = Flex_MB_BCS(x_matrix, robot, *F_ext, c0, c1, c2);
 
     // Fill f with the residuals
     for (int i = 0; i < 6; ++i) {
@@ -860,7 +860,7 @@ matrix *Flex_MB_BCS_wrapper_PSO(matrix *x, void *params) {
 
 
     // Extracting parameters
-    matrix *InitGuess = p->InitGuess;
+    //matrix *InitGuess = p->InitGuess;
     Robot *robot = p->robot;
     matrix *F_ext = p->F_ext;
     double c0 = p->c0;
@@ -871,51 +871,51 @@ matrix *Flex_MB_BCS_wrapper_PSO(matrix *x, void *params) {
 
 }
 
-matrix *find_roots_PSO(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2) {
-    int numParticles = 10;
-    matrix **particlePos = malloc(sizeof(matrix *) * numParticles);
-    matrix **particleVect = malloc(sizeof(matrix *) * numParticles);
-    Flex_MB_BCS_params params = {InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
-
-    // Initialize particle positions randomly
-    for (int i = 0; i < numParticles; i++) {
-        particlePos[i] = matrix_rand(6, 1);
-        particleVect[i] = zeros(6, 1);
-    }
-
-
-
-    double stepSize = 0.0000001; // Step size for PSO
-
-    int maxIter = 100; // Maximum number of iterations
-
-    int bestIndex = 0; // Index of the best particle
-    double bestValue = 1000000; // Value of the best particle
-    // PSO iteration loop
-    matrix error;
-    for (int iter = 0; iter < maxIter; iter++) {
-        for (int i = 0; i < numParticles; i++) {
-            error = *Flex_MB_BCS_wrapper_PSO(particlePos[i], &params);
-            if(norm(&error) < bestValue) {
-                bestValue = norm(&error);
-                bestIndex = i;
-                printMatrix(&error);
-                printf("\n");
-            }else{
-                // Update particle position
-                particleVect[i] = matrix_sub(particlePos[bestIndex], particlePos[i]);
-                particlePos[i] = matrix_add(particlePos[i], matrix_scalar_mul(elemDiv(particleVect[i],matrix_sumSelf(matMult_elem(particleVect[i],particleVect[i]))), stepSize));
-
-            }
-
-
-        }
-    }
-
-
-
-    return particlePos[bestIndex]; // Return NULL for now, replace with the best solution found by PSO
-}
+//matrix *find_roots_PSO(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2) {
+//    int numParticles = 10;
+//    matrix **particlePos = malloc(sizeof(matrix *) * numParticles);
+//    matrix **particleVect = malloc(sizeof(matrix *) * numParticles);
+//    Flex_MB_BCS_params params = {InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
+//
+//    // Initialize particle positions randomly
+//    for (int i = 0; i < numParticles; i++) {
+//        particlePos[i] = matrix_rand(6, 1);
+//        particleVect[i] = zeros(6, 1);
+//    }
+//
+//
+//
+//    double stepSize = 0.0000001; // Step size for PSO
+//
+//    int maxIter = 100; // Maximum number of iterations
+//
+//    int bestIndex = 0; // Index of the best particle
+//    double bestValue = 1000000; // Value of the best particle
+//    // PSO iteration loop
+//    matrix error;
+//    for (int iter = 0; iter < maxIter; iter++) {
+//        for (int i = 0; i < numParticles; i++) {
+//            error = *Flex_MB_BCS_wrapper_PSO(particlePos[i], &params);
+//            if(norm(&error) < bestValue) {
+//                bestValue = norm(&error);
+//                bestIndex = i;
+//                printMatrix(&error);
+//                printf("\n");
+//            }else{
+//                // Update particle position
+//                particleVect[i] = matrix_sub(particlePos[bestIndex], particlePos[i]);
+//                particlePos[i] = matrix_add(particlePos[i], matrix_scalar_mul(elemDiv(particleVect[i],matrix_sumSelf(matMult_elem(particleVect[i],particleVect[i]))), stepSize));
+//
+//            }
+//
+//
+//        }
+//    }
+//
+//
+//
+//    return particlePos[bestIndex]; // Return NULL for now, replace with the best solution found by PSO
+//}
 
 
 
@@ -925,7 +925,7 @@ matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta
     const gsl_multiroot_fsolver_type *T;
     gsl_multiroot_fsolver *s;
 
-    T = gsl_multiroot_fsolver_hybrid;
+    T = gsl_multiroot_fsolver_hybrids;
     //s = gsl_multiroot_fsolver_allc(T, 6);
     int status;
     size_t iter = 0;
@@ -935,7 +935,7 @@ matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta
 
 
     // Set parameters
-    Flex_MB_BCS_params params = {InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
+    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
     gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, &params};
     //f.params = &params;
 
@@ -1045,7 +1045,7 @@ matrix *find_roots_deriv(matrix *InitGuess, Robot *robot, matrix *Theta, matrix 
     gsl_vector_view x_vec = gsl_vector_view_array(x_init, n);
 
     gsl_matrix *J = gsl_matrix_alloc(6, 6);
-    Flex_MB_BCS_params params = {InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
+    Flex_MB_BCS_params params = { robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
     jacobian_numerical(&x_vec.vector, &params, J);
     // Set parameters
 //    printf("GSL_JACOBIAN\n");
@@ -1073,7 +1073,7 @@ matrix *find_roots_deriv(matrix *InitGuess, Robot *robot, matrix *Theta, matrix 
 
 
         status = gsl_multiroot_test_residual(s->f, 1e-12);
-    } while (status == GSL_CONTINUE && iter < 1000);
+    } while (status == GSL_CONTINUE && iter < 10);
     printf("done\n");
 
     // Extract solution

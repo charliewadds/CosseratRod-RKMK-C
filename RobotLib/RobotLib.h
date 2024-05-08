@@ -279,7 +279,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
 // Define the structure for the parameters to pass to the function
 typedef struct {
-    matrix *InitGuess;
+
     Robot *robot;
     matrix *Theta;
     matrix *Theta_dot;
