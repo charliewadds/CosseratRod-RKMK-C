@@ -208,7 +208,7 @@ matrix *adj(matrix *T) {
     matrix *out = zeros(6,6);
 
     setSection(out, 0, 2, 0, 2, r);
-    setSection(out, 0, 2, 3, 5, matMult( r,hat_R3(p)));
+    setSection(out, 0, 2, 3, 5, matMult( hat_R3(p),r));
 
     setSection(out, 3, 5, 3, 5, r);
     setSection(out, 3, 5, 0, 2, zeros(3,3));//todo does this make sense?

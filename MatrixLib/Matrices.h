@@ -26,6 +26,10 @@ typedef struct matrix_double_s {
 
 } matrix;
 
+/*
+ * find the exponential mapping of a matrix with pade approximant
+ */
+matrix *expm(matrix *A);
 //return a json string in regular format or matlab format
 char* matrixToJson(matrix *m, char *version);
 

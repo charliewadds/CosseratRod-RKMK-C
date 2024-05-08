@@ -117,6 +117,7 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
 
     matrix *eta = matrix_add(matMult(adj(g_act_wrt_prev), eta_old),
                              matrix_scalar_mul(newTwist, joint->velocity));
+
     matrix *d_eta = matrix_add(matrix_add(matMult(adj(g_act_wrt_prev), d_eta_old), matMult(adj_R6(eta),
                                                                                                  matrix_scalar_mul(
                                                                                                          newTwist,
@@ -559,8 +560,8 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
 
     //d_eta_end = c0*eta(:,end) + eta_h(:,end);
     out->d_eta_end = matrix_add(
-            matrix_scalar_mul(getSection(eta, 0,5,body->N, body->N), c0),
-            getSection(eta_h, 0,5,body->N, body->N)
+            matrix_scalar_mul(getSection(eta, 0,5,eta->numCols - 1, eta->numCols -1), c0),
+            getSection(eta_h, 0,5,eta_h->numCols-1, eta_h->numCols-1)
     );
     out->f = f;
     out->eta = eta;
@@ -682,10 +683,11 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
     //matrix *parentCoM ;
     //matrix *childCoM;
     for(int i = 1; i <= BC_End; i++){
+
         curr_joint = robot->objects[2 * (i - 1)+1];
         curr_body = robot->objects[2 * i ];
 
-
+        //printMatrix(eta);
         CoM2CoM = getCoM2CoM(curr_joint->object->joint, CoM2CoM);
 
         //todo double check matrix sizes
@@ -716,6 +718,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
                      getSection(eta, 0, 5, i, i), c0, c1, c2);
             setSection(d_eta, 0,5,i,i, dyn->d_eta_end);
             g_ref[i] = dyn->g_end;
+            //d_eta[i] = *dyn->d_eta_end;
 
             //            printf("gref");
 //            printMatrix(g_ref[i]);
@@ -723,7 +726,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 
 
             F_temp = *matMult(curr_body->object->flex->stiff, matrix_sub(getSection(dyn->f,0,5,dyn->f->numCols-1,dyn->f->numCols-1), curr_body->object->flex->F_0));
-            setSection(eta,0,5,eta->numCols, eta->numCols, getSection(dyn->eta,0,5,dyn->eta->numCols, dyn->eta->numCols));
+            setSection(eta,0,5,i, i, getSection(dyn->eta,0,5,dyn->eta->numCols-1, dyn->eta->numCols-1));
 
 
         }else if(i>BC_Start) {//rigid bodies
@@ -747,8 +750,8 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 
 
     // ALGORITHM FOR LAST ELASTIC BODY TO END OF MANIPULATOR FOR BC LOADS
-    for(int i = BC_End+1; i > numBody+2; i++){//todo fix magic number
-        curr_joint = (robot->objects[2 * (i - 1)-1]);
+    for(int i = BC_End+1; i < numBody+2; i++){//todo fix magic number
+        curr_joint = robot->objects[2 * (i - 1)+1];
 
 
 
@@ -757,7 +760,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 
         //% Use Rigid-Body Kinematic Equations to find Velocities, Accelerations and Transformations
         //        [g_ref(:,:,i),g_act_wrt_prev(:,:,i),eta(:,i),d_eta(:,i)] = Rigid_Kin(g_ref(:,:,i-1), CoM2CoM, ROBOT{2*(i-1)}, eta(:,i-1), d_eta(:,i-1));
-        kin = actuateRigidJoint(g_ref[i - 1], CoM2CoM, curr_joint->object->joint, getSection(eta, 0,5,0,0), getSection(d_eta, 0,5,0,0));
+        kin = actuateRigidJoint(g_ref[i - 1], CoM2CoM, curr_joint->object->joint, getSection(eta, 0,5,i-1,i-1), getSection(d_eta, 0,5,i-1,i-1));
         g_ref[i] = kin->g_cur;
         g_act_wrt_prev[i] = kin->g_act_wrt_prev;
         setSection(eta, 0,5,i,i, kin->eta);
@@ -770,17 +773,19 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
     //printf("HERE");
     //printMatrix(F);
     matrix *bodyMass = malloc(sizeof(matrix));
-    for(int i = BC_End+1; i > numBody +2; i--){
+    for(int i = BC_End+1; i >= numBody ; i--){
         //F(:,i-1) = transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i) + ...
         //            ROBOT{2*i-1}.Mass*d_eta(:,i) - transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i);     %[N;Nm]     Applied Wrench at i_th CoM  !!EQN FOR RIGID ONLY!!
-        //    end                                         %[]         End of {SECTION III} Algorithm
+        //    end
+        //    %[]         End of {SECTION III} Algorithm
+        curr_body = robot->objects[2 * i ];
         if(curr_body->type == 1){//flex
             bodyMass = curr_body->object->flex->mass;
         }else if(curr_body->type == 0){//rigid
             bodyMass = curr_body->object->rigid->mass;
         }
 
-        //todo got distracted halfway through this so it could be wrong
+        //got distracted halfway through this so it could be wrong (it was)
         setSection(F,0,5,i-1,i-1,
                    matrix_sub(
                    matrix_add(

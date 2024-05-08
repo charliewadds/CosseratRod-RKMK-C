@@ -3,7 +3,7 @@
 #include <printf.h>
 #include "Matrices.h"
 #include <string.h>
-
+#include <gsl/gsl_linalg.h>
 
 
 
@@ -15,6 +15,18 @@ gsl_matrix *matrix_to_gsl(matrix *matrix){
         }
     }
     return m;
+}
+
+matrix *expm(matrix *A){
+    assert(A->square == 1);
+    matrix *result = matrix_new(A->numRows, A->numCols);
+    gsl_matrix *gsl_A = matrix_to_gsl(A);
+    gsl_matrix *gsl_result = gsl_matrix_alloc(A->numRows, A->numCols);
+    gsl_linalg_exponential_ss(gsl_A, gsl_result, GSL_PREC_DOUBLE);
+    result = gsl_to_matrix(gsl_result);
+    gsl_matrix_free(gsl_A);
+    gsl_matrix_free(gsl_result);
+    return result;
 }
 
 matrix *gsl_to_matrix(gsl_matrix *gsl_matrix){
