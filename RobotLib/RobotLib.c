@@ -291,6 +291,19 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
             iii++;
 
        }
+//        else if(robot->objects[(i*2)]->type == 1){
+//            //todo add flex
+//            g = matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[i][0])))));
+//            double ds = currObj->joint->child->body->flex->L / currObj->joint->child->body->flex->N;
+//
+//            for(int j = 0; j < currObj->joint->child->body->flex->N * numStep; j++){
+//                int index = (int)floor(j/numStep)+1;
+//                g = matMult(g, expm_SE3(hat_R6());
+//                setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
+//                iii++;
+//
+//            }
+//        }
     }
 
     //free(currObj);
@@ -767,11 +780,9 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
         setSection(d_eta, 0,5,i,i, kin->d_eta);
         //printMatrix(F);
     }
-    //printMatrix(F);
-    //printMatrix(&F_ext);
-    setSection(F, 0,5,F->numCols,F->numCols, &F_ext); //TODO this needs to be added back in, it is the applied wrench to the end effector
-    //printf("HERE");
-    //printMatrix(F);
+
+    //setSection(F, 0,5,F->numCols,F->numCols, &F_ext); //TODO this needs to be added back in, it is the applied wrench to the end effector
+
     matrix *bodyMass = malloc(sizeof(matrix));
     for(int i = BC_End+1; i >= numBody ; i--){
         //F(:,i-1) = transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i) + ...
@@ -925,7 +936,7 @@ matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta
     const gsl_multiroot_fsolver_type *T;
     gsl_multiroot_fsolver *s;
 
-    T = gsl_multiroot_fsolver_hybrids;
+    T = gsl_multiroot_fsolver_dnewton;
     //s = gsl_multiroot_fsolver_allc(T, 6);
     int status;
     size_t iter = 0;

@@ -152,36 +152,42 @@ matrix *matrix_solve(matrix *A, matrix *b){
     return result;
 }
 
+//matrix *matrix_inverse(matrix *m){
+//    assert(m->square == 1);
+//    matrix *result = matrix_new(m->numRows, m->numCols);
+//    double det = Det(m);
+//    assert(det != 0);
+//    for(int i = 0; i < m->numRows; i++){
+//        for(int j = 0; j < m->numCols; j++){
+//            matrix *sub = matrix_new(m->numRows - 1, m->numCols - 1);
+//            for(int k = 0; k < m->numRows; k++){
+//                for(int l = 0; l < m->numCols; l++){
+//                    if(k < i){
+//                        if(l < j){
+//                            sub->data[k][l] = m->data[k][l];
+//                        }else if(l > j){
+//                            sub->data[k][l-1] = m->data[k][l];
+//                        }
+//                    }else if(k > i){
+//                        if(l < j){
+//                            sub->data[k-1][l] = m->data[k][l];
+//                        }else if(l > j){
+//                            sub->data[k-1][l-1] = m->data[k][l];
+//                        }
+//                    }
+//                }
+//            }
+//            result->data[i][j] = pow(-1, i+j) * Det(sub) / det;
+//            matrix_free(sub);
+//        }
+//    }
+//    return result;
+//}
+
 matrix *matrix_inverse(matrix *m){
-    assert(m->square == 1);
-    matrix *result = matrix_new(m->numRows, m->numCols);
-    double det = Det(m);
-    assert(det != 0);
-    for(int i = 0; i < m->numRows; i++){
-        for(int j = 0; j < m->numCols; j++){
-            matrix *sub = matrix_new(m->numRows - 1, m->numCols - 1);
-            for(int k = 0; k < m->numRows; k++){
-                for(int l = 0; l < m->numCols; l++){
-                    if(k < i){
-                        if(l < j){
-                            sub->data[k][l] = m->data[k][l];
-                        }else if(l > j){
-                            sub->data[k][l-1] = m->data[k][l];
-                        }
-                    }else if(k > i){
-                        if(l < j){
-                            sub->data[k-1][l] = m->data[k][l];
-                        }else if(l > j){
-                            sub->data[k-1][l-1] = m->data[k][l];
-                        }
-                    }
-                }
-            }
-            result->data[i][j] = pow(-1, i+j) * Det(sub) / det;
-            matrix_free(sub);
-        }
-    }
-    return result;
+    gsl_matrix *gsl_m = matrix_to_gsl(m);
+    gsl_linalg_LU_det(gsl_m, 1);
+    return gsl_to_matrix(gsl_m);
 }
 //todo does this need to be dynamically allocated?
 matrix *dot(matrix *m1, matrix *m2){
@@ -539,6 +545,7 @@ matrix *matrix_sub_broadcast(matrix *m1, matrix *vect){
     }
     return result;
 }
+
 double Det(matrix *m){
     assert(m->square == 1);
     matrix *sub = matrix_new(m->numRows - 1, m->numCols - 1);

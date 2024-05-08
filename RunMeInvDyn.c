@@ -441,10 +441,11 @@ int main() {
 
     IDM_MB_RE_OUT *idm = malloc(sizeof(IDM_MB_RE_OUT));
     for(int i = 0; i < timeStep; i++){
+        printf("timestep: %d\n", i);
         //printMatrix(Flex_MB_BCS(F_0, robot,  *F_ext, 60, -80, 20));//todo just for testing
         addRobotState(robot, "testRobotOut.json", i);
         idm = IDM_MB_RE(robot, &theta, &theta_dot, getSection(&theta_ddot, 0, 4, i, i), F_ext, dt, F_0);
-        printf("%f", robot->objects[11]->object->joint->limits[0]);
+        //printf("%f", robot->objects[11]->object->joint->limits[0]);
         setSection(C, 0, 4, i, i, idm->C);
 
         //flexBody *flex = robot->objects[2*BC_Start ]->object->flex;
