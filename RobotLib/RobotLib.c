@@ -979,10 +979,11 @@ matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta
         }
 
 
+
         status = gsl_multiroot_test_residual(s->f, 1e-9);
 
     } while (status == GSL_CONTINUE && iter < 10);//increase this later
-
+    //assert(!isnan(s->f->data[0]));
     // Extract solution
     matrix *solution = zeros(6, 1);
     for (int i = 0; i < 6; ++i) {
@@ -1172,6 +1173,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     //printMatrix(matrix_sub(ones(6,1),InitGuess));
 //printMatrix(Flex_MB_BCS(InitGuess, robot,F_ext, c0,c1,c2 ))
+    assert(!isnan(InitGuess->data[0][0]));
     InitGuess = find_roots(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
 
 
@@ -1195,11 +1197,20 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     matrix *F_dist ;
     flexDyn *dyn ;
 
+
+    matrix **etaPrev = malloc(sizeof(matrix) * (numBody + 2));
+    matrix **etaPPrev = malloc(sizeof(matrix) * (numBody + 2));
+
+    matrix **fPrev = malloc(sizeof(matrix) * (numBody + 2));
+    matrix **fPPrev = malloc(sizeof(matrix) * (numBody + 2));
+
+
     for (int i = 1; i < numBody + 2; i++) {
         rigidJoint *joint = robot->objects[2 * (i - 1) + 1]->object->joint;
         Object *body = robot->objects[2 * i ];
         assert(robot->objects[2 * (i - 1) + 1]->type == 2);
         assert(robot->objects[2 * i - 2]->type == 1 || robot->objects[2 * i - 2]->type == 0);
+
 
         CoM2CoM = getCoM2CoM(joint, CoM2CoM);
 //        printf("CoM2CoM\n");
@@ -1222,9 +1233,14 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         F_temp = matMult(matrix_transpose(adj(g_act_wrt_prev[i])), F_temp);
 
         if (body->type == 1) {//flexible body
-            if (i == BC_Start + 1) {//todo double check this +1
+            if (i == BC_Start) {//todo double check this +1
                 setSection(F, 0, 5, i, i, matMult(body->object->flex->stiff,
                                                   matrix_sub(InitGuess, body->object->flex->F_0)));
+//                for(int ii = 0; ii < F->numRows; ii++){
+//                    for(int j = 0; j < F->numCols; j++) {
+//                        assert(!isnan(F->data[ii][j]));
+//                    }
+//                }
             } else {
                 setSection(F, 0, 5, i, i, F_temp);
             }
@@ -1232,6 +1248,8 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
             //todo F is wrong here because it comes from InitGuess which comes from the solver which does not work
             dyn = flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i), body->object->flex,
                            getSection(eta, 0, 5, i, i), c0, c1, c2);
+
+            setSection(d_eta, 0,5,i,i, dyn->d_eta_end);//added this
 
             g_ref[i] = dyn->g_end;
             F_temp = matMult(body->object->flex->stiff,
@@ -1242,12 +1260,13 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
             setSection(eta, 0, 5, i, i,
                        getSection(dyn->eta, 0, 5, dyn->eta->numCols-1, dyn->eta->numCols-1));
 
-            //printMatrix()
-            body->object->flex->f_pprev = body->object->flex->f_prev;
-            body->object->flex->f_prev = dyn->f;
 
-            body->object->flex->eta_pprev = body->object->flex->eta_prev;//double check this
-            body->object->flex->eta_prev = dyn->eta;
+            //update history terms AFTER calculations
+            fPPrev[i] = body->object->flex->f_prev;
+            fPrev[i] = dyn->f;
+
+            etaPPrev[i] = body->object->flex->eta_prev;//double check this
+            etaPrev[i] = dyn->eta;
 
 
         } else if (i > BC_Start) {//rigid bodies
@@ -1323,6 +1342,19 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         }
 
         C = matrix_transpose(C);
+
+        for (int i = 1; i < numBody + 2; i++) {
+            Object *body = robot->objects[2 * i ];
+            if(body->type == 1) {
+                body->object->flex->eta_prev = etaPrev[i];
+                body->object->flex->eta_pprev = etaPPrev[i];
+
+                body->object->flex->f_prev = fPrev[i];
+                body->object->flex->f_pprev = fPPrev[i];
+
+            }
+
+        }
 
         //free(dyn);//todo write free_flexDyn to fully free
         //free(kin);//todo write free_rigidKin to fully free

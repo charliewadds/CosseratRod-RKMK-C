@@ -11,7 +11,7 @@
 
 
 Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
-    assert(theta->numCols == 1);//todo add asserts like this to all functions with matrix args
+    assert(theta->numCols == 1);
     double linkMass = 12.5;
     double linkLen = 0.5;
 
@@ -180,13 +180,14 @@ int main(void){
     shape->data[3][0] = -0.7*0.4;
     shape->data[4][0] = 0.1*-0.4;
 
-    matrix *Theta_DDot = zeros(5,100);
-    matrix *math = zeros(1,100);
+    matrix *Theta_DDot = zeros(5,100);//todo magic number 5 and 100
+    matrix *math = zeros(1,100);//todo magic number 5 and 100
     for(int i = 0; i < 100; i++){
         math->data[0][i] = (double)sin(M_PI/(double)(dt*100) * t1->data[0][i]);
+
     }
     Theta_DDot->data[0] = matrix_scalar_mul(math, shape->data[0][0])->data[0];//todo get rid of 'magic' 100
-    Theta_DDot->data[1] = matrix_scalar_mul(math, shape->data[1][0])->data[0];
+    Theta_DDot->data[1] = matrix_scalar_mul(math, shape->data[1][0])->data[0];//todo make this a loop
     Theta_DDot->data[2] = matrix_scalar_mul(math, shape->data[2][0])->data[0];
     Theta_DDot->data[3] = matrix_scalar_mul(math, shape->data[3][0])->data[0];
     Theta_DDot->data[4] = matrix_scalar_mul(math, shape->data[4][0])->data[0];

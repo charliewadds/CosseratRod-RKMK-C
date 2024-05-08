@@ -165,6 +165,14 @@ matrix *matrix_inverse(matrix *m){
     matrix *result = gsl_to_matrix(gsl_m);
     gsl_matrix_free(gsl_m);
     gsl_permutation_free(p);
+
+    for(int i = 0; i < result->numRows; i++){
+        for(int j = 0; j < result->numCols; j++){
+            assert(!isnan(result->data[i][j]));
+        }
+    }
+
+
 //    matrix *result = matrix_new(m->numRows, m->numCols);
 //    double det = Det(m);
 //    assert(det != 0);
@@ -192,6 +200,8 @@ matrix *matrix_inverse(matrix *m){
 //            matrix_free(sub);
 //        }
 //    }
+
+
     return result;
 }
 
@@ -600,7 +610,7 @@ double Det(matrix *m) {
     if(isnan(det)){
        det = 0;
     }
-    //assert(det == slowDet(m));
+
     return det;
 }
 
