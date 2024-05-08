@@ -274,7 +274,7 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
     for(int i = 0; i < (robot->numObjects - 2)/2; i++){
         currObj =  robot->objects[(i*2)+1]->object;
         //assert(robot->objects[(i*2)+2]->type == 0 || robot->objects[(i*2)+2]->type == 1);
-        if(1){//todo check for rigid, add flex when implemented
+        if(1){
 
             g = matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[i][0])))));
             //printMatrix(g);
@@ -285,7 +285,12 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
 
             //g = g * expm3(hat(ROBOT{2*i}.Child.Transform));
-            g = matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->rigid->Transform)));
+            if(currObj->joint->child->type == 0) {
+                g = matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->rigid->Transform)));
+            }else if(currObj->joint->child->type == 1){
+                g = matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->flex->transform)));
+            }
+            //g = matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->rigid->Transform)));
 
             setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
             iii++;
@@ -298,7 +303,14 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 //
 //            for(int j = 0; j < currObj->joint->child->body->flex->N * numStep; j++){
 //                int index = (int)floor(j/numStep)+1;
-//                g = matMult(g, expm_SE3(hat_R6());
+//                g = matMult(g,
+//                            expm_SE3(
+//                                    hat_R6(
+//                                            matrix_scalar_mul(getSection(robot->objects[(i*2)]->object->flex->f_prev,0,5, index, index), (ds/numStep))
+//                                            )
+//                                    )
+//                            );
+//
 //                setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
 //                iii++;
 //
@@ -722,11 +734,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
             }
             F_dist = zeros(6, curr_body->object->flex->N);
 
-            //[g_ref(:,:,i),f_cur,eta_cur,d_eta(:,i)] = Flex_Dyn( g_ref(:,:,i), F_dist, F(:,i), ROBOT{2*i-1}, eta(:,i), c0, c1, c2);
-            //todo fix this memory leak and also the one in kin
-//            printf("eta\n");
-//            printMatrix(eta);
-//            printf("\n\n\n\n");
+
             dyn = flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i), curr_body->object->flex,
                      getSection(eta, 0, 5, i, i), c0, c1, c2);
             setSection(d_eta, 0,5,i,i, dyn->d_eta_end);
@@ -971,7 +979,7 @@ matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta
         }
 
 
-        status = gsl_multiroot_test_residual(s->f, 1e-7);
+        status = gsl_multiroot_test_residual(s->f, 1e-9);
 
     } while (status == GSL_CONTINUE && iter < 10);//increase this later
 
@@ -1163,13 +1171,13 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     //printf("INIT_GUESS pre\n");
 
     //printMatrix(matrix_sub(ones(6,1),InitGuess));
-
+//printMatrix(Flex_MB_BCS(InitGuess, robot,F_ext, c0,c1,c2 ))
     InitGuess = find_roots(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
 
 
     //printf("\nINIT_GUESS post\n");
     //printMatrix(Theta);
-    //printMatrix(InitGuess);
+    printMatrix(InitGuess);
     //printf("ans");
     //printMatrix(Flex_MB_BCS(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2));
 
@@ -1231,10 +1239,10 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
                                         body->object->flex->F_0));
 
 
-            setSection(eta, 0, 5, eta->numCols, eta->numCols,
-                       getSection(dyn->eta, 0, 5, dyn->eta->numCols, dyn->eta->numCols));
+            setSection(eta, 0, 5, i, i,
+                       getSection(dyn->eta, 0, 5, dyn->eta->numCols-1, dyn->eta->numCols-1));
 
-
+            //printMatrix()
             body->object->flex->f_pprev = body->object->flex->f_prev;
             body->object->flex->f_prev = dyn->f;
 

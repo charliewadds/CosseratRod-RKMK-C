@@ -152,8 +152,19 @@ matrix *matrix_solve(matrix *A, matrix *b){
     return result;
 }
 
-//matrix *matrix_inverse(matrix *m){
-//    assert(m->square == 1);
+matrix *matrix_inverse(matrix *m){
+    assert(m->square == 1);
+    gsl_matrix *gsl_m = matrix_to_gsl(m);
+    gsl_permutation *p = gsl_permutation_alloc(m->numRows);
+    //gsl_matrix_view m4 = gsl_matrix_vi
+
+    int signum;
+    gsl_linalg_LU_decomp(gsl_m, p, &signum);
+    //gsl_linalg_LU_decomp (a, p, &s);
+    gsl_linalg_LU_invx(gsl_m, p);
+    matrix *result = gsl_to_matrix(gsl_m);
+    gsl_matrix_free(gsl_m);
+    gsl_permutation_free(p);
 //    matrix *result = matrix_new(m->numRows, m->numCols);
 //    double det = Det(m);
 //    assert(det != 0);
@@ -181,14 +192,10 @@ matrix *matrix_solve(matrix *A, matrix *b){
 //            matrix_free(sub);
 //        }
 //    }
-//    return result;
-//}
-
-matrix *matrix_inverse(matrix *m){
-    gsl_matrix *gsl_m = matrix_to_gsl(m);
-    gsl_linalg_LU_det(gsl_m, 1);
-    return gsl_to_matrix(gsl_m);
+    return result;
 }
+
+
 //todo does this need to be dynamically allocated?
 matrix *dot(matrix *m1, matrix *m2){
     assert(m1->numCols == m2->numRows);
@@ -418,7 +425,7 @@ void printMatrix(matrix *m){
    for(int i = 0; i < m->numRows; i++){
         printf("|");
         for(int j = 0; j < m->numCols; j++){
-            printf("%.12f ", m->data[i][j]);
+            printf("%.15f ", m->data[i][j]);
         }
         printf("|\n");
     }
@@ -545,8 +552,7 @@ matrix *matrix_sub_broadcast(matrix *m1, matrix *vect){
     }
     return result;
 }
-
-double Det(matrix *m){
+double slowDet(matrix *m){
     assert(m->square == 1);
     matrix *sub = matrix_new(m->numRows - 1, m->numCols - 1);
     if(m->numRows == 1){
@@ -568,7 +574,7 @@ double Det(matrix *m){
                     }
                 }
             }
-            result += pow(-1, i) * m->data[0][i] * Det(sub);
+            result += pow(-1, i) * m->data[0][i] * slowDet(sub);
 
         }
 
@@ -578,6 +584,27 @@ double Det(matrix *m){
 
 
 }
+
+double Det(matrix *m) {
+    gsl_matrix *gsl_m = matrix_to_gsl(m);
+    gsl_permutation *p = gsl_permutation_alloc(m->numRows);
+    //gsl_matrix_view m4 = gsl_matrix_vi
+
+    int signum;
+    gsl_linalg_LU_decomp(gsl_m, p, &signum);
+    //gsl_linalg_LU_decomp (a, p, &s);
+    double det = gsl_linalg_LU_det (gsl_m, signum);
+    gsl_matrix_free(gsl_m);
+    gsl_permutation_free(p);
+
+    if(isnan(det)){
+       det = 0;
+    }
+    //assert(det == slowDet(m));
+    return det;
+}
+
+
 
 double matrixRatio(matrix *m1, matrix *m2){
     assert(m1->numRows == m2->numRows);

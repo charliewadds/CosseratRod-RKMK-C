@@ -7,23 +7,24 @@ from pytest import approx
 
 
 def compareVals(dict1, dict2, name):
-    if(type(dict1.get(name)) == float  or type(dict1.get(name)) == int):
+    if type(dict1.get(name)) == float or type(dict1.get(name)) == int:
         assert dict1.get(name) == approx(dict2.get(name), abs=1e-15)
-    elif(type(dict1.get(name)) == list):
+    elif type(dict1.get(name)) == list:
 
-
-        if(type(dict1.get(name)[0]) == list):
+        if type(dict1.get(name)[0]) == list:
             print(name)
             for i in range(0, len(dict1.get(name))):
                 for j in range(0, len(dict1.get(name)[i])):
-                    if(dict2.get(name)[i][j] != None and dict1.get(name)[i][j] != None):
-                        assert dict1.get(name)[i][j] == approx(dict2.get(name)[i][j], abs=1e-15), "i: " + str(i) + " j: " + str(j) +"|  | "+ str(dict1.get(name)[i][j]) + " != " + str(dict2.get(name)[i][j])
+                    if dict2.get(name)[i][j] != None and dict1.get(name)[i][j] != None:
+                        assert dict1.get(name)[i][j] == approx(dict2.get(name)[i][j], abs=1e-15), "i: " + str(
+                            i) + " j: " + str(j) + "|  | " + str(dict1.get(name)[i][j]) + " != " + str(
+                            dict2.get(name)[i][j])
         else:
-            if(dict2.get(name) != None and dict1.get(name) != None):
+            if dict2.get(name) is not None and dict1.get(name) is not None:
                 assert dict1.get(name) == approx(dict2.get(name), abs=1e-15)
-    elif(type(dict1.get(name)) == str):
+    elif type(dict1.get(name)) == str:
         assert dict1.get(name).lower() == dict2.get(name).lower()
-    elif(type(dict1.get(name)) == dict):
+    elif type(dict1.get(name)) == dict:
         for i in dict2.get(name).keys():
             compareVals(dict1.get(name), dict2.get(name), i)
         #compareVals(dict1.get(name), dict2.get(name), name)
@@ -31,9 +32,9 @@ def compareVals(dict1, dict2, name):
         print("Unknown type for " + name)
         assert False
 
+
 def test_compareRobot(matlabRobot, robot2):
     # Open the JSON files
-
 
     for i in range(0, len(matlabRobot)):
         print("testing " + matlabRobot[i].get("Name") + " against " + robot2[i].get("Name"))
@@ -55,4 +56,6 @@ def test_testList():
     for i in range(0, len(matlabRobot)):
         #print("testing " + matlabRobot[i].get("Name") + " against " + robot2[i].get("Name"))
         test_compareRobot(matlabRobot.get(str(i)), robot2.get(str(i)))
+
+
 test_testList()

@@ -47,12 +47,12 @@ np.set_printoptions(precision=15)
 print("TOTAL DIFFERENCE")
 #print(np.sum(np.subtract(data, data1[0:len(data)])))
 
-for i in range(0, len(data)):
-    if(abs(np.sum(np.subtract(data[i], data1[i]))) >= 0.0):
-        np.set_printoptions(precision=50)
-
-        print(np.sum(np.subtract(data[i], data1[i])))
-        az.plot(i, np.sum(np.subtract(data[i], data1[i])), 'ro')
+# for i in range(0, len(data)):
+#     if(abs(np.sum(np.subtract(data[i], data1[i]))) >= 0.0):
+#         np.set_printoptions(precision=50)
+#
+#         print(np.sum(np.subtract(data[i], data1[i])))
+#         az.plot(i, np.sum(np.subtract(data[i], data1[i])), 'ro')
 
 
 
@@ -75,9 +75,10 @@ def animate(i, data, data1):
 
     ax.scatter(x, y, z, color='red')  # Plot circles at each point
     ax.scatter(x1, y1, z1, color='green')  # Plot circles at each point
-    ax.set_xlim(-2, 2)
-    ax.set_ylim(-2, 2)
-    ax.set_zlim(-2, 2)
+    ax.autoscale(False)
+    # ax.set_xlim(-2, 2)
+    # ax.set_ylim(-2, 2)
+    # ax.set_zlim(-2, 2)
 
 
 
@@ -85,9 +86,9 @@ def animate(i, data, data1):
 ani = animation.FuncAnimation(fig, animate, fargs=(data, data1), frames=len(data) // 3, interval=100)
 
 ax.autoscale(False)
-ax.set_xlim(-2, 2)
-ax.set_ylim(-2, 2)
-ax.set_zlim(-2, 2)
+# ax.set_xlim(-2, 2)
+# ax.set_ylim(-2, 2)
+# ax.set_zlim(-2, 2)
 
 
 plt.show()

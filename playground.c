@@ -3,7 +3,98 @@
 #include "RobotLib.h"
 #include "Matrices.h"
 #include "LieGroup.h"
+for (int i = 1; i < numBody + 2; i++) {
+rigidJoint *joint = robot->objects[2 * (i - 1) + 1]->object->joint;
+Object *body = robot->objects[2 * i ];
+assert(robot->objects[2 * (i - 1) + 1]->type == 2);
+assert(robot->objects[2 * i - 2]->type == 1 || robot->objects[2 * i - 2]->type == 0);
 
+CoM2CoM = getCoM2CoM(joint, CoM2CoM);
+//        printf("CoM2CoM\n");
+//        printMatrix(CoM2CoM);
+//        printf("g_ref[i - 1]");
+//        printMatrix(g_ref[i - 1]);
+kin = actuateRigidJoint(g_ref[i - 1], CoM2CoM, joint,
+                        getSection(eta, 0, 5, i - 1, i - 1), getSection(d_eta, 0, 5, i - 1, i - 1));
+g_act_wrt_prev[i] = kin->g_act_wrt_prev;
+g_ref[i] = kin->g_cur;
+
+setSection(eta, 0, 5, i, i, kin->eta);
+setSection(d_eta, 0, 5, i, i, kin->d_eta);
+
+//        printf("gref-1\n");
+//        printMatrix(g_ref[i-1]);
+//
+//        printf("gref\n");
+//        printMatrix(g_ref[i]);
+F_temp = matMult(matrix_transpose(adj(g_act_wrt_prev[i])), F_temp);
+
+if (body->type == 1) {//flexible body
+if (i == BC_Start + 1) {//todo double check this +1
+setSection(F, 0, 5, i, i, matMult(body->object->flex->stiff,
+matrix_sub(InitGuess, body->object->flex->F_0)));
+} else {
+setSection(F, 0, 5, i, i, F_temp);
+}
+F_dist = zeros(6, body->object->flex->N);
+//todo F is wrong here because it comes from InitGuess which comes from the solver which does not work
+dyn = flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i), body->object->flex,
+               getSection(eta, 0, 5, i, i), c0, c1, c2);
+
+g_ref[i] = dyn->g_end;
+F_temp = matMult(body->object->flex->stiff,
+                 matrix_sub(getSection(dyn->f, 0, 5, dyn->f->numCols - 1, dyn->f->numCols - 1),
+                            body->object->flex->F_0));
+
+
+setSection(eta, 0, 5, eta->numCols, eta->numCols,
+getSection(dyn->eta, 0, 5, dyn->eta->numCols, dyn->eta->numCols));
+
+
+body->object->flex->f_pprev = body->object->flex->f_prev;
+body->object->flex->f_prev = dyn->f;
+
+body->object->flex->eta_pprev = body->object->flex->eta_prev;//double check this
+body->object->flex->eta_prev = dyn->eta;
+
+
+} else if (i > BC_Start) {//rigid bodies
+
+
+
+setSection(F, 0, 5, i-1, i-1, F_temp);// [N;Nm] Save Wrench Between i,i-1_th Body @ CoM Expressed in BCF
+
+if (i < numBody + 2) {
+
+//setSection(C, 0,5, i - 1, i - 1, matMult(matrix_transpose(getSection(F, 0,5,i,i)), robot->objects[2*i-2]->object->joint->twistR6));
+for (int j = 0; j < C->numRows; j++) {
+
+setSection(C, 0, C->numRows - 1, i - 1, i - 1,
+matrix_outerProduct(  matrix_transpose(getSection(F, 0, 5, i, i)),joint->twistR6));
+
+}
+}
+
+if (body->type == 1) {//flex
+F_temp = matrix_sub(matrix_add(getSection(F, 0, 5, i, i),
+                               matMult(matMult(matrix_transpose(adj_R6(getSection(eta, 0, 5, i, i))),
+                                               body->object->flex->mass), getSection(eta, 0, 5, i, i))),
+                    matMult(body->object->flex->mass, getSection(eta, 0, 5, i, i)));
+
+//                F_temp = matMult(matrix_add(getSection(F, 0, 5, i, i), matrix_transpose(adj_R6(getSection(eta, 0, 5, i, i)))),
+//                        matMult(curr_body->object->flex->mass, getSection(eta, 0, 5, i, i)));
+} else {
+F_temp = matrix_sub(matrix_add(getSection(F, 0, 5, i, i),
+                               matMult(matMult(matrix_transpose(adj_R6(getSection(eta, 0, 5, i, i))),
+                                               body->object->rigid->mass), getSection(eta, 0, 5, i, i))),
+                    matMult(body->object->rigid->mass, getSection(eta, 0, 5, i, i)));
+
+
+}
+
+}
+
+}
 
 Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     assert(theta->numCols == 1);//todo add asserts like this to all functions with matrix args
@@ -238,5 +329,105 @@ int main() {
     matrix *out = find_roots(init_theta, robot, zeros(5,1), zeros(5,1), theta_ddot, zeros(6,1), 60, -80, 20);
     //matrix *out2 = find_roots_PSO(init_theta, robot, zeros(5,1), zeros(5,1), theta_ddot, zeros(6,1), 60, -80, 20);
     printMatrix(out);
+
+
+
+
+
+    for (int i = 1; i < numBody + 2; i++) {
+        rigidJoint *joint = robot->objects[2 * (i - 1) + 1]->object->joint;
+        Object *body = robot->objects[2 * i ];
+        assert(robot->objects[2 * (i - 1) + 1]->type == 2);
+        assert(robot->objects[2 * i - 2]->type == 1 || robot->objects[2 * i - 2]->type == 0);
+
+        CoM2CoM = getCoM2CoM(joint, CoM2CoM);
+//        printf("CoM2CoM\n");
+//        printMatrix(CoM2CoM);
+//        printf("g_ref[i - 1]");
+//        printMatrix(g_ref[i - 1]);
+        kin = actuateRigidJoint(g_ref[i - 1], CoM2CoM, joint,
+                                getSection(eta, 0, 5, i - 1, i - 1), getSection(d_eta, 0, 5, i - 1, i - 1));
+        g_act_wrt_prev[i] = kin->g_act_wrt_prev;
+        g_ref[i] = kin->g_cur;
+
+        setSection(eta, 0, 5, i, i, kin->eta);
+        setSection(d_eta, 0, 5, i, i, kin->d_eta);
+
+//        printf("gref-1\n");
+//        printMatrix(g_ref[i-1]);
+//
+//        printf("gref\n");
+//        printMatrix(g_ref[i]);
+        F_temp = matMult(matrix_transpose(adj(g_act_wrt_prev[i])), F_temp);
+
+        if (body->type == 1) {//flexible body
+            if (i == BC_Start + 1) {//todo double check this +1
+                setSection(F, 0, 5, i, i, matMult(body->object->flex->stiff,
+                                                  matrix_sub(InitGuess, body->object->flex->F_0)));
+            } else {
+                setSection(F, 0, 5, i, i, F_temp);
+            }
+            F_dist = zeros(6, body->object->flex->N);
+            //todo F is wrong here because it comes from InitGuess which comes from the solver which does not work
+            dyn = flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i), body->object->flex,
+                           getSection(eta, 0, 5, i, i), c0, c1, c2);
+
+            g_ref[i] = dyn->g_end;
+            F_temp = matMult(body->object->flex->stiff,
+                             matrix_sub(getSection(dyn->f, 0, 5, dyn->f->numCols - 1, dyn->f->numCols - 1),
+                                        body->object->flex->F_0));
+
+
+            setSection(eta, 0, 5, eta->numCols, eta->numCols,
+                       getSection(dyn->eta, 0, 5, dyn->eta->numCols, dyn->eta->numCols));
+
+
+            body->object->flex->f_pprev = body->object->flex->f_prev;
+            body->object->flex->f_prev = dyn->f;
+
+            body->object->flex->eta_pprev = body->object->flex->eta_prev;//double check this
+            body->object->flex->eta_prev = dyn->eta;
+
+
+        } else if (i > BC_Start) {//rigid bodies
+
+
+
+            setSection(F, 0, 5, i-1, i-1, F_temp);// [N;Nm] Save Wrench Between i,i-1_th Body @ CoM Expressed in BCF
+
+            if (i < numBody + 2) {
+
+                //setSection(C, 0,5, i - 1, i - 1, matMult(matrix_transpose(getSection(F, 0,5,i,i)), robot->objects[2*i-2]->object->joint->twistR6));
+                for (int j = 0; j < C->numRows; j++) {
+
+                    setSection(C, 0, C->numRows - 1, i - 1, i - 1,
+                               matrix_outerProduct(  matrix_transpose(getSection(F, 0, 5, i, i)),joint->twistR6));
+
+                }
+            }
+
+            if (body->type == 1) {//flex
+                F_temp = matrix_sub(matrix_add(getSection(F, 0, 5, i, i),
+                                               matMult(matMult(matrix_transpose(adj_R6(getSection(eta, 0, 5, i, i))),
+                                                               body->object->flex->mass), getSection(eta, 0, 5, i, i))),
+                                    matMult(body->object->flex->mass, getSection(eta, 0, 5, i, i)));
+
+//                F_temp = matMult(matrix_add(getSection(F, 0, 5, i, i), matrix_transpose(adj_R6(getSection(eta, 0, 5, i, i)))),
+//                        matMult(curr_body->object->flex->mass, getSection(eta, 0, 5, i, i)));
+            } else {
+                F_temp = matrix_sub(matrix_add(getSection(F, 0, 5, i, i),
+                                               matMult(matMult(matrix_transpose(adj_R6(getSection(eta, 0, 5, i, i))),
+                                                               body->object->rigid->mass), getSection(eta, 0, 5, i, i))),
+                                    matMult(body->object->rigid->mass, getSection(eta, 0, 5, i, i)));
+
+
+            }
+
+        }
+
+    }
+
+
+
     return 0;
 }
