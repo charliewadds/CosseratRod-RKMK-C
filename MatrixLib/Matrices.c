@@ -73,6 +73,8 @@ matrix *matrix_new(uint8_t num_rows, uint8_t num_cols){
     return m;
 }
 
+
+
 void matrix_free(matrix *m){
 
     int i = m->numRows-1;
@@ -104,16 +106,16 @@ void matrix_free(matrix *m){
 }
 
 
-matrix *matrix_add(matrix* restrict m1, matrix* restrict m2){
-    assert(m1->numRows == m2->numRows);
-    assert(m1->numCols == m2->numCols);
-    matrix *result = matrix_new(m1->numRows, m1->numCols);
-    for(int i = 0; i < m1->numRows; i++){
-        for(int j = 0; j < m1->numCols; j++){
-            result->data[i][j] = m1->data[i][j] + m2->data[i][j];
+void matrix_add(matrix m1, matrix m2, matrix *result){
+    assert(m1.numRows == m2.numRows);
+    assert(m1.numCols == m2.numCols);
+    //matrix *result = matrix_new(m1->numRows, m1->numCols);
+    for(int i = 0; i < m1.numRows; i++){
+        for(int j = 0; j < m1.numCols; j++){
+            result->data[i][j] = m1.data[i][j] + m2.data[i][j];
         }
     }
-    return result;
+
 }
 
 matrix *matrix_scalar_mul(matrix *m, double scalar){
@@ -359,20 +361,31 @@ matrix *matrix_sin(matrix *m){
 
 }
 //todo this can be improved with different algorithms, matlab uses strassen's algorithm
-matrix *matMult(matrix *m1, matrix *m2){
-    //printf("shape of m1 [%f, %f]\n", m1->numRows, m1->numCols);
-    //printf("shape of m1 [%f, %f]\n", m1->numRows, m1->numCols);
-    assert(m1->numCols == m2->numRows);
-    //assert(m1->numRows == m2->numCols);todo I dont need this right?
+void matMult(matrix m1, matrix m2, matrix *result){
 
-    matrix *result = matrix_new(m1->numRows, m2->numCols);
+    assert(m1.numCols == m2.numRows);
 
-    for(int i = 0; i < m1->numRows; i++){
-        for(int j = 0; j < m2->numCols; j++){
-            for(int k = 0; k < m1->numCols; k++){
+    for(int i = 0; i < m1.numRows; i++){
+        for(int j = 0; j < m2.numCols; j++){
+            for(int k = 0; k < m1.numCols; k++){
 
-                result->data[i][j] += m1->data[i][k] * m2->data[k][j];
-                assert(result->data[i][j] != NAN);
+                result->data[i][j] += m1.data[i][k] * m2.data[k][j];
+                //assert(result->data[i][j] != NAN);
+            }
+        }
+    }
+}
+
+matrix *matMult_return(matrix m1, matrix m2){
+
+    assert(m1.numCols == m2.numRows);
+    matrix *result = matrix_new(m1.numRows, m2.numCols);
+    for(int i = 0; i < m1.numRows; i++){
+        for(int j = 0; j < m2.numCols; j++){
+            for(int k = 0; k < m1.numCols; k++){
+
+                result.data[i][j] += m1.data[i][k] * m2.data[k][j];
+                //assert(result->data[i][j] != NAN);
             }
         }
     }

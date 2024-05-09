@@ -65,7 +65,7 @@ matrix *matrix_sin(matrix *m);
 
 matrix *matrix_outerProduct(matrix *m1, matrix *m2);
 // Addition
-matrix *matrix_add(matrix *m1, matrix *m2);
+void matrix_add(matrix m1, matrix m2, matrix *result);
 
 // Subtraction
 matrix *matrix_sub(matrix *m1, matrix *m2);
@@ -82,7 +82,9 @@ matrix *eye(uint8_t n);
 matrix *diag(matrix *A, uint8_t n);
 
 //multiply two matrices to create a new matrix
-matrix *matMult(matrix *m1, matrix *m2);
+void matMult(matrix m1, matrix m2, matrix *result);
+
+matrix *matMult_return(matrix m1, matrix m2);
 
 matrix *matrixPow(matrix *m, int power);
 

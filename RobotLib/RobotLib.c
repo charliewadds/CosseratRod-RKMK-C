@@ -55,7 +55,7 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
 }
 
 
-rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint, matrix *eta_old, matrix *d_eta_old) {
+rigidKin *actuateRigidJoint(matrix g_old, matrix g_oldToCur, rigidJoint joint, matrix eta_old, matrix d_eta_old) {
     /*
      - g_cur:          Transformation from Base Frame to i_th Body CoM BCF in RRC (SE3)
      - g_act_wrt_prev: Transformation from i_th Body CoM BCF to i-1_th Body CoM BCF in RAC (SE3
@@ -73,17 +73,17 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
      */
 
 
-    assert(d_eta_old->numCols == 1);
-    assert(d_eta_old->numRows == 6);
+    assert(d_eta_old.numCols == 1);
+    assert(d_eta_old.numRows == 6);
 
-    assert(eta_old->numCols == 1);
-    assert(eta_old->numRows == 6);
+    assert(eta_old.numCols == 1);
+    assert(eta_old.numRows == 6);
 
-    assert(g_old->numCols == 4);
-    assert(g_old->numRows == 4);
+    assert(g_old.numCols == 4);
+    assert(g_old.numRows == 4);
 
-    assert(g_oldToCur->numCols == 4);
-    assert(g_oldToCur->numRows == 4);
+    assert(g_oldToCur.numCols == 4);
+    assert(g_oldToCur.numRows == 4);
 
 
     //matrix *parentCoM = malloc(sizeof(matrix));
@@ -98,30 +98,36 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
 //
 //    }
 
-    if(joint->child->type == 0){
+    if(joint.child->type == 0){
 
-        childCoM = joint->child->body->rigid->CoM;
-    }else if(joint->child->type == 1){
+        childCoM = joint.child->body->rigid->CoM;
+    }else if(joint.child->type == 1){
 
-        childCoM = joint->child->body->flex->CoM;
+        childCoM = joint.child->body->flex->CoM;
 
     }
 
-    matrix *newTwist = matMult(adj(expm_SE3(matrix_scalar_mul(hat_R6(childCoM),-1))), joint->twistR6);//redefine joint to now be about child CoM
+    matrix *newTwist = malloc(sizeof(matrix));
+            matMult(*adj(expm_SE3(matrix_scalar_mul(hat_R6(childCoM),-1))), *joint.twistR6, newTwist);//redefine joint to now be about child CoM
 
 
-    matrix *g_cur = matMult(g_old, g_oldToCur);
-    matrix *g_cur_wrt_prev = matrix_inverse(g_oldToCur);
+    matrix *g_cur = malloc(sizeof(matrix));
+    matMult(g_old, g_oldToCur, g_cur);
+
+    matrix *g_cur_wrt_prev = matrix_inverse(&g_oldToCur);
 
     matrix *g_act_wrt_prev = matMult(expm_SE3(matrix_scalar_mul(matrix_scalar_mul(hat_R6(newTwist), -1), joint->position)), g_cur_wrt_prev);
+    gsl_matrix_add()
 
-    matrix *eta = matrix_add(matMult(adj(g_act_wrt_prev), eta_old),
-                             matrix_scalar_mul(newTwist, joint->velocity));
+    matrix *eta = malloc(sizeof(matrix));
+    matrix_add(*matMult_return( *adj(g_act_wrt_prev), eta_old), *matrix_scalar_mul(newTwist, joint.velocity), eta);
 
-    matrix *d_eta = matrix_add(matrix_add(matMult(adj(g_act_wrt_prev), d_eta_old), matMult(adj_R6(eta),
-                                                                                                 matrix_scalar_mul(
+    matrix *d_eta = matrix_add(
+            matrix_add(matMult_return(*adj(g_act_wrt_prev), d_eta_old), matMult_return(*adj_R6(eta),
+                                                                                                 *matrix_scalar_mul(
                                                                                                          newTwist,
-                                                                                                         joint->velocity))),
+                                                                                                         joint.velocity))
+                                                                                                         ),
                                matrix_scalar_mul(newTwist, joint->acceleration));
     rigidKin *kin =  malloc(sizeof(rigidKin));
     kin->g_cur = g_cur;
