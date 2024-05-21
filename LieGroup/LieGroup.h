@@ -38,26 +38,40 @@ SE3 *new_SE3_T(matrix *T);
 
 
 // 3x1 column vector -> hat operator -> 3x3 matrix in so(3)
-matrix *hat_R3(matrix *z);
-// 6x1 column vector e.g. [p;p;p;r;r;r] -> hat operator -> 4x4 matrix in se(3)
-matrix *hat_R6(matrix *z);
+matrix *hat_R3(matrix *z, matrix *result);
 
+// 6x1 column vector e.g. [p;p;p;r;r;r] -> hat operator -> 4x4 matrix in se(3)
+matrix *hat_R6(matrix *z, matrix *result);
+
+// 6x1 column vector e.g. [p;p;p;r;r;r] -> hat operator -> 4x4 matrix in se(3)
+//free z after use, CHAIN FUNCTIONS MUST BE EITHER FREED OR USED IN ANOTHER CHAIN FUNCTION
+matrix *hat_R6_chain(matrix *z);
 // 3x3 matrix in so(3) -> unhat operator -> 3x1 column vector
-matrix *unhat_SO3(matrix *zhat);//return a 3x1 vector from a 3x3 SO3 matrix
+matrix *unhat_SO3(matrix *zhat, matrix *result);//return a 3x1 vector from a 3x3 SO3 matrix
 // 4x4 matrix in se(3) -> unhat operator -> 6x1 column vector
-matrix *unhat_SE3(matrix *zhat);//return a 6x1 vector from a 4x4 SE3 matrix
+matrix *unhat_SE3(matrix *zhat, matrix *result);//return a 6x1 vector from a 4x4 SE3 matrix
 
 // 4x4 matrix in SE3 -> adj operator -> 6x6 matrix in ????
-matrix *adj(matrix *T);
+matrix *adj(matrix *T, matrix *result);
+
+// 4x4 matrix in SE3 -> adj operator -> 6x6 matrix in ????
+//free T after use, CHAIN FUNCTIONS MUST BE EITHER FREED OR USED IN ANOTHER CHAIN FUNCTION
+matrix *adj_chain(matrix *T);
+
 // 6x1 column vector -> adjoint operator -> 6x6 matrix in ????
-matrix *adj_R6(matrix *z);
+matrix *adj_R6(matrix *z, matrix *result);
 
 // mapping from so(3) to SO(3)
-matrix *expm_SO3(matrix *w);
+// 3x3 matrix in so(3) -> expm operator -> 3x3 matrix in SO(3)
+matrix *expm_SO3(matrix *w, matrix *result);
 
 //mapping from se(3) to SE(3)
-matrix *expm_SE3(matrix *z);
+// 4x4 matrix in se(3) -> expm operator -> 4x4 matrix in SE(3)
+matrix *expm_SE3(matrix *z, matrix *result);
 
-
+//mapping from se(3) to SE(3)
+// 4x4 matrix in se(3) -> expm operator -> 4x4 matrix in SE(3)
+//free z after use, CHAIN FUNCTIONS MUST BE EITHER FREED OR USED IN ANOTHER CHAIN FUNCTION
+matrix *expm_SE3_chain(matrix *m);
 
 #endif //COSSERATROD_RKMK_C_LIEGROUP_H

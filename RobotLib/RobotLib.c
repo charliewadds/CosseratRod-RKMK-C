@@ -40,12 +40,18 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     assert(childCoM->numRows == 6);
 
 
+    matrix *temp4x4n1 = matrix_new(4,4);
+    matrix *temp4x4n2 = matrix_new(4,4);
+    matrix *temp4x4n3 = matrix_new(4,4);
 
-    CoM2CoM = matMult(matMult(
+    matrix *tempR6n1 = matrix_new(6,1);
+    matrix *tempR6n2 = matrix_new(6,1);
+    matrix *tempR6n3 = matrix_new(6,1);
+    matMult(matMult(
                               //curr_obj
-            expm_SE3(hat_R6(matrix_sub(joint->parent->body->rigid->Transform, parentCoM))),
-            expm_SE3(hat_R6(matrix_scalar_mul(joint->twistR6, joint->homepos)))),
-                      expm_SE3(hat_R6(childCoM)));
+            expm_SE3(hat_R6(matrix_sub(joint->parent->body->rigid->Transform, parentCoM, tempR6n1), temp4x4n1), temp4x4n1),
+            expm_SE3(hat_R6(matrix_scalar_mul(joint->twistR6, joint->homepos, tempR6n2), temp4x4n2), temp4x4n2), temp4x4n1),
+                      expm_SE3(hat_R6(childCoM, temp4x4n3), temp4x4n3 ), CoM2CoM);
     //free(parentCoM);
     //free(childCoM);
 
@@ -55,7 +61,7 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
 }
 
 
-rigidKin *actuateRigidJoint(matrix g_old, matrix g_oldToCur, rigidJoint joint, matrix eta_old, matrix d_eta_old) {
+rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint, matrix *eta_old, matrix *d_eta_old) {
     /*
      - g_cur:          Transformation from Base Frame to i_th Body CoM BCF in RRC (SE3)
      - g_act_wrt_prev: Transformation from i_th Body CoM BCF to i-1_th Body CoM BCF in RAC (SE3
@@ -73,17 +79,17 @@ rigidKin *actuateRigidJoint(matrix g_old, matrix g_oldToCur, rigidJoint joint, m
      */
 
 
-    assert(d_eta_old.numCols == 1);
-    assert(d_eta_old.numRows == 6);
+    assert(d_eta_old->numCols == 1);
+    assert(d_eta_old->numRows == 6);
 
-    assert(eta_old.numCols == 1);
-    assert(eta_old.numRows == 6);
+    assert(eta_old->numCols == 1);
+    assert(eta_old->numRows == 6);
 
-    assert(g_old.numCols == 4);
-    assert(g_old.numRows == 4);
+    assert(g_old->numCols == 4);
+    assert(g_old->numRows == 4);
 
-    assert(g_oldToCur.numCols == 4);
-    assert(g_oldToCur.numRows == 4);
+    assert(g_oldToCur->numCols == 4);
+    assert(g_oldToCur->numRows == 4);
 
 
     //matrix *parentCoM = malloc(sizeof(matrix));
@@ -98,50 +104,59 @@ rigidKin *actuateRigidJoint(matrix g_old, matrix g_oldToCur, rigidJoint joint, m
 //
 //    }
 
-    if(joint.child->type == 0){
+    if(joint->child->type == 0){
 
-        childCoM = joint.child->body->rigid->CoM;
-    }else if(joint.child->type == 1){
+        childCoM = joint->child->body->rigid->CoM;
+    }else if(joint->child->type == 1){
 
-        childCoM = joint.child->body->flex->CoM;
+        childCoM = joint->child->body->flex->CoM;
 
     }
 
-    matrix *newTwist = malloc(sizeof(matrix));
-            matMult(*adj(expm_SE3(matrix_scalar_mul(hat_R6(childCoM),-1))), *joint.twistR6, newTwist);//redefine joint to now be about child CoM
+    matrix *temp4x4n1 = matrix_new(4,4);
+    matrix *temp6x6n1 = adj_chain(expm_SE3_chain(matrix_scalar_mul_chain(hat_R6(childCoM, temp4x4n1),-1)));
+    matrix *temp6x6n2 = matrix_new(6,6);
+
+    matrix *newTwist = matrix_new(6,1);
+    matMult(temp6x6n1, joint->twistR6, newTwist);//redefine joint to now be about child CoM
+
+
+    //temp4x4 and 6x6 are available
 
 
     matrix *g_cur = malloc(sizeof(matrix));
     matMult(g_old, g_oldToCur, g_cur);
 
-    matrix *g_cur_wrt_prev = matrix_inverse(&g_oldToCur);
+    matrix *g_cur_wrt_prev = matrix_new(4,4);
+            matrix_inverse(g_oldToCur, g_cur_wrt_prev);
 
-    matrix *g_act_wrt_prev = matMult(expm_SE3(matrix_scalar_mul(matrix_scalar_mul(hat_R6(newTwist), -1), joint->position)), g_cur_wrt_prev);
-    gsl_matrix_add()
+
+    matrix *g_act_wrt_prev = matMult_chain(expm_SE3_chain(matrix_scalar_mul(matrix_scalar_mul(hat_R6(newTwist, temp4x4n1), -1, temp4x4n1), joint->position, temp4x4n1)), g_cur_wrt_prev);
+
+
+    matrix *temp6x1n1 = matrix_new(6,1);
+    matrix *temp6x1n2 = matrix_new(6,1);
 
     matrix *eta = malloc(sizeof(matrix));
-    matrix_add(*matMult_return( *adj(g_act_wrt_prev), eta_old), *matrix_scalar_mul(newTwist, joint.velocity), eta);
+    matrix_add(matMult( adj(g_act_wrt_prev, temp6x6n1), eta_old, temp6x1n1), matrix_scalar_mul(newTwist, joint->velocity, temp6x1n2), eta);
+
 
     matrix *d_eta = matrix_add(
-            matrix_add(matMult_return(*adj(g_act_wrt_prev), d_eta_old), matMult_return(*adj_R6(eta),
-                                                                                                 *matrix_scalar_mul(
-                                                                                                         newTwist,
-                                                                                                         joint.velocity))
-                                                                                                         ),
-                               matrix_scalar_mul(newTwist, joint->acceleration));
+            matrix_add(matMult(adj(g_act_wrt_prev, temp6x6n1), d_eta_old, temp6x6n1), matMult(adj_R6(eta, temp6x6n2), matrix_scalar_mul(newTwist, joint->velocity, temp6x1n1), temp6x6n2), temp6x6n2),
+                               matrix_scalar_mul(newTwist, joint->acceleration, temp6x1n2), temp6x1n2);
+
     rigidKin *kin =  malloc(sizeof(rigidKin));
     kin->g_cur = g_cur;
     kin->g_act_wrt_prev = g_act_wrt_prev;
     kin->eta = eta;
     kin->d_eta = d_eta;
 
-    //free_SE3(g_cur_wrt_prev);
-    //free_SE3(g_cur);
-    //free_SE3(g_act_wrt_prev);
-    //matrix_free(eta);
-    //matrix_free(d_eta);
-    //free(parentCoM);
-    //free(childCoM);
+    matrix_free(temp6x1n1);
+    matrix_free(newTwist);
+    matrix_free(g_cur);
+    matrix_free(g_cur_wrt_prev);//todo this might already be freed
+    matrix_free(temp6x6n1);
+    matrix_free(temp4x4n1);
     return kin;
 }
 
@@ -272,7 +287,9 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double v
 
 matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
     matrix *POS = zeros(3,11);//todo this is a hack, I need to make this dynamic
-    matrix *g = eye(4);
+    matrix *g = matrix_new(4,4);
+    eye(g);
+
     int iii = 1;//num points plotted
     //int i_R = 1;
 

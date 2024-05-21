@@ -109,7 +109,7 @@ typedef struct object_s {
 }Object;
 
 //this is the kinematic equations to solve for velocities
-rigidKin *actuateRigidJoint(matrix g_old, matrix g_oldToCur, rigidJoint joint, matrix eta_old, matrix d_eta_old);
+rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint, matrix *eta_old, matrix *d_eta_old);
 
 rigidBody *newRigidBody(char *name, matrix *mass, matrix *Transform, matrix *CoM);
 
