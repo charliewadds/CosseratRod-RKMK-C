@@ -298,24 +298,24 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
         currObj =  robot->objects[(i*2)+1]->object;
         //assert(robot->objects[(i*2)+2]->type == 0 || robot->objects[(i*2)+2]->type == 1);
         if(1){
+            matrix *temp6n1 = matrix_new(6,1);
+            matrix *temp4x4n1 = matrix_new(4,4);
+            matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[i][0]), temp6n1), temp4x4n1), temp4x4n1), g);
 
-            g = matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[i][0])))));
-            //printMatrix(g);
-            //
-            // printf("\n\n\n");
-            setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
+            //setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
+            getSetSection(g, POS, 0, 2, 3, 3, 0, 2, iii, iii);
             iii++;
 
 
-            //g = g * expm3(hat(ROBOT{2*i}.Child.Transform));
             if(currObj->joint->child->type == 0) {
-                g = matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->rigid->Transform)));
+                matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->rigid->Transform, temp6n1), temp4x4n1), g);
             }else if(currObj->joint->child->type == 1){
-                g = matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->flex->transform)));
+                matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->flex->transform, temp6n1), temp4x4n1),g);
             }
             //g = matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->rigid->Transform)));
 
-            setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
+            //setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
+            getSetSection(g, POS, 0, 2, 3, 3, 0, 2, iii, iii);
             iii++;
 
        }

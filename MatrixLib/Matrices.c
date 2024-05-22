@@ -367,6 +367,25 @@ void setSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, u
 
 }
 
+void getSetSection(matrix *get, matrix *set, uint8_t getStartRow, uint8_t getEndRow, uint8_t getStartCol, uint8_t getEndCol, uint8_t setStartRow, uint8_t setEndRow, uint8_t setStartCol, uint8_t setEndCol){
+    assert(getStartRow <= getEndRow);
+    assert(getStartCol <= getEndCol);
+    assert(getEndRow <= get->numRows);
+    assert(getEndCol <= get->numCols);
+
+    assert(setStartRow <= setEndRow);
+    assert(setStartCol <= setEndCol);
+    assert(setEndRow <= set->numRows);
+    assert(setEndCol <= set->numCols);
+
+    for(int i = getStartRow; i <= getEndRow; i++){
+        for(int j = getStartCol; j <= getEndCol; j++){
+            set->data[i - setStartRow][j - setStartCol] = get->data[i][j];
+        }
+    }
+
+}
+
 matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, uint8_t endCol, matrix *result){
 
     assert(startRow <= endRow);
