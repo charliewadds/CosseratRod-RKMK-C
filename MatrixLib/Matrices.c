@@ -117,6 +117,7 @@ matrix *matrix_add(matrix *m1, matrix *m2, matrix *result){
             result->data[i][j] = m1->data[i][j] + m2->data[i][j];
         }
     }
+    return result;
 
 }
 
@@ -180,7 +181,7 @@ matrix *matrix_solve(matrix *A, matrix *b, matrix *result){
 
     matrix *A_inv = matrix_new(A->numRows, A->numCols);
     matrix_inverse(A, A_inv);
-    dot(A_inv, b, result);
+    matMult(A_inv, b, result);
 
     matrix_free(A_inv);
 
@@ -243,16 +244,15 @@ matrix *matrix_inverse(matrix *m, matrix *result){
 
 
 //todo does this need to be dynamically allocated?
-matrix *dot(matrix *m1, matrix *m2, matrix *result){
+double dot(matrix *m1, matrix *m2){
     assert(m1->numCols == m2->numRows);
-
+    assert(m1->numRows == m2->numCols);
+    double result = 0;
     //matrix *result = matrix_new(m1->numRows, m2->numCols);
 
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m2->numCols; j++){
-            for(int k = 0; k < m1->numCols; k++){
-                result->data[i][j] += m1->data[i][k] * m2->data[k][j];
-            }
+            result += m1->data[i][j] * m2->data[j][i];
         }
     }
 
@@ -333,6 +333,16 @@ matrix *zeros(uint8_t num_rows, uint8_t num_cols){
     matrix *m = matrix_new(num_rows, num_cols);
     for(int i = 0; i < num_rows; i++){
         for(int j = 0; j < num_cols; j++){
+            m->data[i][j] = 0;
+        }
+    }
+    return m;
+}
+
+//todo I am sure there is some bitwise wizardry that can be done here
+matrix *zeroMatrix(matrix *m){
+    for(int i = 0; i < m->numRows; i++){
+        for(int j = 0; j < m->numCols; j++){
             m->data[i][j] = 0;
         }
     }
@@ -758,7 +768,7 @@ matrix *eigenvector(matrix *A, int iterations) {
     double b_k1_norm;
 
     while (iterations >= 0) {
-        dot(A, b_k, b_k1);
+        matMult(A, b_k, b_k1);
 
         //printMatrix(b_k1);
 
@@ -790,10 +800,10 @@ double eigenvalue(matrix *A, int iterations){
     matrix *vT = matrix_new(v->numCols, v->numRows);
     matrix_transpose(v, vT);
     matrix *vTv = matrix_new(v->numCols, v->numCols);
-    dot(vT, v, vTv);
+    matMult(vT, v, vTv);
 
     matrix *temp = matrix_new(v->numCols, v->numCols);
-    double result = matrixRatio(dot(vT, dot(A,v, temp), temp), vTv );//todo does this work??
+    double result = matrixRatio(matMult(vT, matMult(A,v, temp), temp), vTv );//todo does this work??
 
     matrix_free(v);
     matrix_free(vT);

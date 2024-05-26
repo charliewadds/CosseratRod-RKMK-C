@@ -53,7 +53,8 @@ int *matrix_shape(matrix *m);
 matrix *matMult_elem(matrix *m1, matrix *m2);
 matrix *matrix_inverse(matrix *m, matrix *result);
 // Dot product
-matrix *dot(matrix *m1, matrix *m2, matrix *result);
+double dot(matrix *m1, matrix *m2);
+
 //todo make most of these use pointers like this: matrix *dot(matrix *result, matrix *m1, matrix *m2);
 // Cross product
 matrix *cross(matrix *m1, matrix *m2, matrix *result);
@@ -102,6 +103,8 @@ matrix *matDiv(matrix *m1, matrix *m2);
 matrix *elemDiv(matrix *m1, double scalar, matrix *result);
 
 matrix *zeros(uint8_t num_rows, uint8_t num_cols);
+
+matrix *zeroMatrix(matrix *m);
 
 matrix *ones(uint8_t num_rows, uint8_t num_cols);
 

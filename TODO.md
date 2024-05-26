@@ -1,4 +1,5 @@
 # TO DO
+- [ ] Array sizes are written as static right now because it helped me with the math. they should be dynamic and I will change that soon
 - [ ] The robot struct is a nightmare and needs to be rewritten. It is possibly the worst code I have ever written.
 - [ ] I think it would be faster to have global temporary matrices for functions to use for math instead of mallocing and freeing them every time.
   - this would be a nightmare if I end up using concurrency though
@@ -34,10 +35,16 @@
 
 
 # OPTIMIZATIONS
+- [ ] speed up root finding.
+  - an analytical derivative for the BCS would, I think, be much faster than finite differences.
+  - should plot the error to see how accurate finite differences are
+  - if no analytical derivative is possible, it might be faster to parallelize the finite differences. Although there is some overhead to this so it might not be worth it.
+     pipelining might reduce the overhead a bit
 - [ ] I think it would be faster to use contiguously allocated matrices which expand like java arraylists
   - use realloc (I always forget it exists)
   - this would let me use non-size constrained matrices and therefore less temporary variables
   - they should probably start as 6x6 because I think the only thing bigger are the eta and f prev
+- [ ] similar to above, preallocating memory where possible could speed things up in the functions that are run many times
 - [ ] could use union to combine so3 and se3 etc. not sure if that is faster or slower
 - [ ] use `restrict` keyword to tell the compiler that the pointers are the only ref. to the data within the function
   - Is this useful in modern compilers? i.e. will this happen automatically?
