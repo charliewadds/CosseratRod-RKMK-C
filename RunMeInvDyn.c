@@ -270,39 +270,39 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 
     //todo find a better way to do this, maybe json or something
-    Object *base = malloc(sizeof(union object_u));
+    Object *base = malloc(sizeof(struct object_s));
     base->type = 0;
     base->object = malloc(sizeof(union object_u));
     base->object->rigid = newRigidBody("base", matrix_scalar_mul(eye(temp6x6n1), DBL_MAX, temp6x6n1), Z, Z);//todo dbl max to replace inf
 
-    Object *Body_1 =  malloc(sizeof(union object_u));
+    Object *Body_1 =  malloc(sizeof(struct object_s));
     Body_1->type = 0;
     Body_1->object = malloc(sizeof(union object_u));
     Body_1->object->rigid = newRigidBody("Body_1", M,  linkTwist, linkCoM);
 
-    Object *Body_2 =  malloc(sizeof(union object_u));
+    Object *Body_2 =  malloc(sizeof(struct object_s));
     Body_2->type = 1;
     Body_2->object = malloc(sizeof(union object_u));
     Body_2->object->flex = newFlexBody("Body_2", Mf,  K,C, zeros(6,1), N, L_0);
     Body_2->object->flex->F_0->data[2][0] = 1;
 
-    Object *Body_3 =  malloc(sizeof(union object_u));
+    Object *Body_3 =  malloc(sizeof(struct object_s));
     Body_3->type = 0;
     Body_3->object = malloc(sizeof(union object_u));
     Body_3->object->rigid = newRigidBody("Body_3", M,  linkTwist, linkCoM);
 
-    Object *Body_4 =  malloc(sizeof(union object_u));
+    Object *Body_4 =  malloc(sizeof(struct object_s));
     Body_4->type = 1;
     Body_4->object = malloc(sizeof(union object_u));
     Body_4->object->flex = newFlexBody("Body_4",Mf,  K,C, zeros(6,1), N, L_0);
     Body_4->object->flex->F_0->data[2][0] = 1;
 
-    Object *Body_5 =  malloc(sizeof(union object_u));
+    Object *Body_5 =  malloc(sizeof(struct object_s));
     Body_5->type = 0;
     Body_5->object = malloc(sizeof(union object_u));
     Body_5->object->rigid = newRigidBody("Body_5", elemDiv(M,2, temp6x6n1), elemDiv(linkTwist,2, tempR6n1), elemDiv(linkCoM,2, tempR6n2));
 
-    Object *EE =      malloc(sizeof(union object_u));
+    Object *EE =      malloc(sizeof(struct object_s));
     EE->type = 0;
     EE->object = malloc(sizeof(union object_u));
     EE->object->rigid = newRigidBody("EE", zeros(6,6),  Z, Z);
@@ -376,7 +376,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
     double zero[2] = {0,0};
 
-    Object *joint_EE = malloc(sizeof(union object_u));
+    Object *joint_EE = malloc(sizeof(struct object_s));
     joint_EE->type = 2;
     joint_EE->object = malloc(sizeof(union object_u));
     joint_EE->object->joint =  newRigidJoint("joint_EE", zeros(6,1), 0, 0, 0, zero, 0, Body_5, EE);
