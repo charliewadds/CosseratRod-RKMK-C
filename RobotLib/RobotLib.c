@@ -129,7 +129,7 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
     //matrix *temp4x4n2 = matrix_new(4,4);
 
     matrix *temp6x6n1 = matrix_new(6,6);
-            adj(expm_SE3(matrix_scalar_mul(hat_R6(childCoM, temp4x4n1),-1, temp4x4n1), temp4x4n1), temp6x6n1);
+    adj(expm_SE3(matrix_scalar_mul(hat_R6(childCoM, temp4x4n1),-1, temp4x4n1), temp4x4n1), temp6x6n1);
     matrix *temp6x6n2 = matrix_new(6,6);
 
     matrix *newTwist = matrix_new(6,1);
@@ -961,7 +961,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
     }
 
 
-    matrix_free(F_dist);
+
 
     // ALGORITHM FOR LAST ELASTIC BODY TO END OF MANIPULATOR FOR BC LOADS
     for(int i = BC_End+1; i < numBody+2; i++){//todo fix magic number
@@ -984,10 +984,10 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 
     }
 
-    for(int i = numBody +2; i >= 0; i++){
-        matrix_free(g_ref[i]);
-        matrix_free(g_act_wrt_prev[i]);
-    }
+//    for(int i = numBody + 1; i >= 0; i--){
+//        matrix_free(g_ref[i]);
+//        matrix_free(g_act_wrt_prev[i]);
+//    }
 
     setSection(F, 0,5,F->numCols,F->numCols, &F_ext); //TODO this needs to be added back in, it is the applied wrench to the end effector
 
@@ -1037,6 +1037,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
         matrix_free(g_ref[i]);
         matrix_free(g_act_wrt_prev[i]);
     }
+    matrix_free(F_dist);
     freeFlexDyn(dyn);
     freeRigidKin(kin);
     matrix_free(F);

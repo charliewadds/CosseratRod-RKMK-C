@@ -40,35 +40,42 @@ matrix *gsl_to_matrix(gsl_matrix *gsl_matrix, matrix *result){
     return result;
 }
 //make sure this is freed!!!
-matrix *matrix_new(uint8_t num_rows, uint8_t num_cols){
-
-
+matrix *matrix_new(uint8_t num_rows, uint8_t num_cols) {
     assert(num_rows != 0);
     assert(num_cols != 0);
 
-    matrix *m = malloc(sizeof(matrix));//todo make sure this is always freed
+    // Allocate memory for the matrix struct
+    matrix *m = malloc(sizeof(matrix));
+    if (m == NULL) {
+        fprintf(stderr, "Failed to allocate memory for matrix structure.\n");
+        return NULL;
+    }
 
     m->numCols = num_cols;
     m->numRows = num_rows;
-    if(num_cols == num_rows){
-        m->square = 1;
-    }else{
-        m->square = 0;
+    m->square = (num_cols == num_rows) ? 1 : 0;
+
+    // Allocate memory for the row pointers
+    m->data = malloc(m->numRows * sizeof(*(m->data)));
+    if (m->data == NULL) {
+        fprintf(stderr, "Failed to allocate memory for matrix rows.\n");
+        free(m);
+        return NULL;
     }
 
-    //allocate a pointer for each row
-    
-    m->data = malloc(m->numRows * sizeof(*(m->data)));
-    //NP_CHECK(m->data);
-
-//    for(int i = num_rows; i>=0; i--){
-//
-//        m->data[i]= calloc(num_cols, sizeof(**m->data));;
-//        //NP_CHECK(m->data[i]);
-//    }//0x600000514150
-    for (int i = num_rows - 1; i >= 0; i--) {
+    // Allocate memory for each row and initialize to zero
+    for (int i = 0; i < num_rows; i++) {
         m->data[i] = calloc(num_cols, sizeof(**m->data));
-        // NP_CHECK(m->data[i]);
+        if (m->data[i] == NULL) {
+            fprintf(stderr, "Failed to allocate memory for matrix row %d.\n", i);
+            // Free previously allocated rows
+            for (int j = 0; j < i; j++) {
+                free(m->data[j]);
+            }
+            free(m->data);
+            free(m);
+            return NULL;
+        }
     }
 
     return m;
@@ -118,6 +125,10 @@ matrix *matrix_add3(matrix *m1,matrix *m2, matrix *m3, matrix *result){
 
 matrix *matrix_scalar_mul(matrix *m, double scalar, matrix *result){
     //matrix *result = matrix_new(m->numRows, m->numCols);
+
+    assert(result->numRows == m->numRows);
+    assert(result->numCols == m->numCols);
+
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
             result->data[i][j] = m->data[i][j] * scalar;
@@ -390,7 +401,7 @@ void getSetSection(matrix *get, matrix *set, uint8_t getStartRow, uint8_t getEnd
         ii++;
         for(int j = getStartCol; j <= getEndCol; j++){
             jj++;
-            set->data[i - setStartRow][j - setStartCol] = get->data[i][j];
+            set->data[i][j] = get->data[ii][jj];
             //memcpy(set->data[i - setStartRow], get->data[i], sizeof(double) * (getEndCol - getStartCol));
         }
     }
