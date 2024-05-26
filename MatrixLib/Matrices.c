@@ -379,8 +379,8 @@ void getSetSection(matrix *get, matrix *set, uint8_t getStartRow, uint8_t getEnd
     assert(setStartRow <= setEndRow);
     assert(setStartCol <= setEndCol);
     //todo fix these asserts
-    //assert(setEndRow <= set->numRows);
-    //assert(setEndCol <= set->numCols);
+    assert(setEndRow <= set->numRows+1);
+    assert(setEndCol <= set->numCols+1);
 
 
     int ii = setStartRow;

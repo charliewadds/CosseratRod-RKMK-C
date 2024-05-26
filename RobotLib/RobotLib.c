@@ -51,6 +51,7 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     matrix *tempR6n1 = matrix_new(6,1);
     matrix *tempR6n2 = matrix_new(6,1);
     matrix *tempR6n3 = matrix_new(6,1);
+
     matMult(matMult(
                               //curr_obj
             expm_SE3(hat_R6(matrix_sub(joint->parent->body->rigid->Transform, parentCoM, tempR6n1), temp4x4n1), temp4x4n1),
