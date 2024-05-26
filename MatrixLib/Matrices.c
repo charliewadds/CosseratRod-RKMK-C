@@ -195,7 +195,7 @@ matrix *matrix_inverse(matrix *m, matrix *result){
     gsl_linalg_LU_decomp(gsl_m, p, &signum);
     //gsl_linalg_LU_decomp (a, p, &s);
     gsl_linalg_LU_invx(gsl_m, p);
-    //matrix *result = gsl_to_matrix(gsl_m);
+    gsl_to_matrix(gsl_m, result);
     gsl_matrix_free(gsl_m);
     gsl_permutation_free(p);
 
@@ -381,12 +381,20 @@ void getSetSection(matrix *get, matrix *set, uint8_t getStartRow, uint8_t getEnd
 
     assert(setStartRow <= setEndRow);
     assert(setStartCol <= setEndCol);
-    assert(setEndRow <= set->numRows);
-    assert(setEndCol <= set->numCols);
+    //todo fix these asserts
+    //assert(setEndRow <= set->numRows);
+    //assert(setEndCol <= set->numCols);
+
+
+    int ii = setStartRow;
+    int jj = setStartCol;
 
     for(int i = getStartRow; i <= getEndRow; i++){
+        ii++;
         for(int j = getStartCol; j <= getEndCol; j++){
+            jj++;
             set->data[i - setStartRow][j - setStartCol] = get->data[i][j];
+            //memcpy(set->data[i - setStartRow], get->data[i], sizeof(double) * (getEndCol - getStartCol));
         }
     }
 

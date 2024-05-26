@@ -4,6 +4,7 @@
 
 #include <math.h>
 #include <assert.h>
+#include <string.h>
 #include "LieGroup.h"
 
 
@@ -152,10 +153,14 @@ matrix *hat_R6(matrix *z, matrix *result){
     assert(z->numRows == 6);
     assert(z->numCols == 1);
 
+    assert(result->numRows == 4);
+    assert(result->numCols == 4);
+
     matrix *temp = matrix_new(3,3);
     matrix *temp3x1 = matrix_new(3,1);
     setSection(result, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0, temp3x1), temp));
-    setSection(result, 0, 2, 3, 3, getSection(z, 0, 2, 0, 0, temp3x1));
+    //setSection(result, 0, 2, 3, 3, getSection(z, 0, 2, 0, 0, temp3x1));
+    getSetSection(z, result,0,2,0,0,0,2,3,5);
     setSection(result, 3, 3, 0, 3, zeros(1,4));//todo convert to zeroSection using memset
     //T->data[3][3] = 1;//todo this is not in matlab, dont I need it?
 
@@ -197,9 +202,14 @@ matrix *unhat_SO3(matrix *zhat, matrix *result){
 
     //matrix *z = matrix_new(3,1);
 
-    result->data[0] = & zhat->data[2][1];
-    result->data[1] = & zhat->data[0][2];
-    result->data[2] = & zhat->data[1][0];
+    //result->data[0] = &zhat->data[2][1];
+    memcpy(result->data[0], &zhat->data[2][1], sizeof(double) * 1);
+
+    //result->data[1] = & zhat->data[0][2];
+    memcpy(result->data[1], &zhat->data[0][2], sizeof(double) * 1);
+
+    //result->data[2] = & zhat->data[1][0];
+    memcpy(result->data[2], &zhat->data[1][0], sizeof(double) * 1);
 
     return result;
 }
@@ -234,8 +244,8 @@ matrix *adj(matrix *T, matrix *result) {
     assert(result->numCols == 6);
 
     zeroMatrix(result); //todo is this necessary? also it could be faster
-    //matrix *r = matrix_new(3,3);
-    getSection(T, 0, 2, 0, 2, result);
+    matrix *r = matrix_new(3,3);
+    getSection(T, 0, 2, 0, 2, r);
 
     matrix *p = matrix_new(3,1);
     getSection(T, 0, 2, 3, 3, p);
@@ -244,10 +254,10 @@ matrix *adj(matrix *T, matrix *result) {
 
     matrix *temp = matrix_new(3,3);
 
-    setSection(result, 0, 2, 0, 2, result);
-    setSection(result, 0, 2, 3, 5, matMult( hat_R3(p, temp),result, temp));
+    setSection(result, 0, 2, 0, 2, r);
+    setSection(result, 0, 2, 3, 5, matMult( hat_R3(p, temp),r, temp));
 
-    setSection(result, 3, 5, 3, 5, result);
+    setSection(result, 3, 5, 3, 5, r);
     setSection(result, 3, 5, 0, 2, zeros(3,3));//todo does this make sense?
 
 
@@ -367,8 +377,9 @@ matrix *expm_SE3(matrix *m, matrix *result) {
     matrix *gU = matrix_new(3,1);
     getSection(m, 0, 2, 3, 3, gU);
 
+    matrix *temp3x1 = matrix_new(3,1);
     matrix *temp3x3 = matrix_new(3,3);
-    double mag = norm(unhat_SO3(gW, temp3x3));
+    double mag = norm(unhat_SO3(gW, temp3x1));
 
     matrix *A = eye(matrix_new(3,3));
 
@@ -390,7 +401,9 @@ matrix *expm_SE3(matrix *m, matrix *result) {
 
     matrix_free(gW);
     matrix_free(gU);
-    matrix_free(temp3x3);
+    matrix_free(temp3x1);
+    //matrix_free(temp3x3);// todo make sure there is not residual memory leak
+
     matrix_free(A);
 
     return result;
@@ -408,7 +421,8 @@ matrix *expm_SE3_chain(matrix *m) {
     getSection(m, 0, 2, 3, 3, gU);
 
     matrix *temp3x3 = matrix_new(3,3);
-    double mag = norm(unhat_SO3(gW, temp3x3));
+    matrix *temp3x1 = matrix_new(3,1);
+    double mag = norm(unhat_SO3(gW, temp3x1));
 
     matrix *A = eye(matrix_new(3,3));
 

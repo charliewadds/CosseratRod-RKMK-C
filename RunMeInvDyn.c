@@ -182,7 +182,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
     matrix *temp3x3n1 = matrix_new(3,3);
 
-    matrix *temp6x6n1 = matrix_new(4,4);
+    matrix *temp6x6n1 = matrix_new(6,6);
 
 
     matrix *tempR6n1 = matrix_new(6,1);
@@ -454,8 +454,9 @@ int main() {
     F_0->data[5][0] = 0;
 
     matrix *temp1xRowsM1 = matrix_new(5, timeStep);
+    matrix *tempBodiesx1 = matrix_new(5, 1);
 
-    Robot *robot = defPaperSample_2(&theta, &theta_dot, getSection(&theta_ddot, 0, theta_ddot.numRows-1, 0, 0, temp1xRowsM1));//todo check -1
+    Robot *robot = defPaperSample_2(&theta, &theta_dot, getSection(&theta_ddot, 0, theta_ddot.numRows-1, 0, 0, tempBodiesx1));//todo check -1
 
     int BC_Start = 2;//todo, this should be automated
     //int BC_End = 4;
