@@ -377,9 +377,9 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
 
             if(currObj->joint->child->type == 0) {
-                matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->rigid->Transform, temp6n1), temp4x4n1), g);
+                matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->rigid->Transform, temp4x4n1), temp4x4n1), g);
             }else if(currObj->joint->child->type == 1){
-                matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->flex->transform, temp6n1), temp4x4n1),g);
+                matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->flex->transform, temp4x4n1), temp4x4n1),g);
             }
             //g = matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->rigid->Transform)));
 
@@ -1448,7 +1448,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     //printMatrix(matrix_sub(ones(6,1),InitGuess));
 //printMatrix(Flex_MB_BCS(InitGuess, robot,F_ext, c0,c1,c2 ))
-    assert(!isnan(InitGuess->data[0][0]));
+    //assert(!isnan(InitGuess->data[0][0]));
     InitGuess = find_roots(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
 
 

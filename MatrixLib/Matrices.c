@@ -383,31 +383,26 @@ void copyMatrix(matrix *m, matrix *result){
         }
     }
 }
-void getSetSection(matrix *get, matrix *set, uint8_t getStartRow, uint8_t getEndRow, uint8_t getStartCol, uint8_t getEndCol, uint8_t setStartRow, uint8_t setEndRow, uint8_t setStartCol, uint8_t setEndCol){
-    assert(getStartRow <= getEndRow);
-    assert(getStartCol <= getEndCol);
-    assert(getEndRow <= get->numRows);
-    assert(getEndCol <= get->numCols);
+void getSetSection(matrix *get, matrix *set, uint8_t getStartRow, uint8_t getEndRow, uint8_t getStartCol, uint8_t getEndCol, uint8_t setStartRow, uint8_t setEndRow, uint8_t setStartCol, uint8_t setEndCol) {
+    // Check if input parameters are within bounds
+    assert(getStartRow <= getEndRow && getStartCol <= getEndCol);
+    assert(getEndRow < get->numRows && getEndCol < get->numCols);
+    assert(setStartRow <= setEndRow && setStartCol <= setEndCol);
+    assert(setEndRow < set->numRows && setEndCol < set->numCols);
 
-    assert(setStartRow <= setEndRow);
-    assert(setStartCol <= setEndCol);
-    //todo fix these asserts
-    assert(setEndRow <= set->numRows+1);
-    assert(setEndCol <= set->numCols+1);
+    // Iterate over the source matrix
+    for (uint8_t i = 0; i <= getEndRow - getStartRow; i++) {
+        for (uint8_t j = 0; j <= getEndCol - getStartCol; j++) {
+            // Calculate indices for the source and destination matrices
+            uint8_t src_i = getStartRow + i;
+            uint8_t src_j = getStartCol + j;
+            uint8_t dest_i = setStartRow + i;
+            uint8_t dest_j = setStartCol + j;
 
-
-    int ii = setStartRow;
-    int jj = setStartCol;
-
-    for(int i = getStartRow; i <= getEndRow; i++){
-        ii++;
-        for(int j = getStartCol; j <= getEndCol; j++){
-            jj++;
-            set->data[ii][jj] = get->data[i][j];
-            //memcpy(set->data[i - setStartRow], get->data[i], sizeof(double) * (getEndCol - getStartCol));
+            // Copy data from the source to the destination matrix
+            set->data[dest_i][dest_j] = get->data[src_i][src_j];
         }
     }
-
 }
 
 matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, uint8_t endCol, matrix *result){
