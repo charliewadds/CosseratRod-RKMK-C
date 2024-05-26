@@ -76,31 +76,17 @@ matrix *matrix_new(uint8_t num_rows, uint8_t num_cols){
 
 
 
-void matrix_free(matrix *m){
+void matrix_free(matrix *m) {
     assert(m != NULL);
-
-    int i = m->numRows-1;
-    for(i; i>=0; i--){
-        if(m->data != NULL){
-            free(m->data[i]);
-            m->data = NULL;
-        }else{
-            printf("tried to free null pointer\n");//todo could I just break here?
+    if (m->data != NULL) {
+        for (int i = 0; i < m->numRows; i++) {
+            if (m->data[i] != NULL) {
+                free(m->data[i]);
+            }
         }
-
-
-    }
-
-    if(m->data != NULL) {
         free(m->data);
-        m->data = NULL;
-    }else{
-        printf("tried to free null pointer\n");
     }
-
     free(m);
-
-
 }
 
 
