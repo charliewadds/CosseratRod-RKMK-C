@@ -173,7 +173,7 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
     matrix_free(temp6x1n1);
     matrix_free(newTwist);
     matrix_free(g_cur);
-    matrix_free(g_cur_wrt_prev);//todo this might already be freed
+    //matrix_free(g_cur_wrt_prev);//todo this might already be freed
     matrix_free(temp6x6n1);
     matrix_free(temp4x4n1);
     return result;
@@ -750,9 +750,9 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
 
 
     //todo there has to be a better way to do this
-    for(int i = 0; i < body->N; i++){
-        matrix_free(g[i]);
-    }
+//    for(int i = 0; i < body->N; i++){
+//        matrix_free(g[i]);
+//    }
     matrix_free(temp6xNn1);
     matrix_free(temp6xNn2);
     matrix_free(tempR6n1);
@@ -976,9 +976,8 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 
 
     }
-    freeFlexDyn(dyn);
-    freeRigidKin(kin);
-    for(int i = 0; i < numBody+2; i++){
+
+    for(int i = numBody +2; i >= 0; i++){
         matrix_free(g_ref[i]);
         matrix_free(g_act_wrt_prev[i]);
     }
@@ -1023,10 +1022,16 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
     matrix_sub(&F_temp, getSection(F,0,5,BC_End,BC_End, out), out);
     free(bodyMass);
     matrix_free(eta);
+
+
+
+
     for(int i = 0; i < 6; i++){
         matrix_free(g_ref[i]);
         matrix_free(g_act_wrt_prev[i]);
     }
+    freeFlexDyn(dyn);
+    freeRigidKin(kin);
     matrix_free(F);
     matrix_free(d_eta);
     matrix_free(&F_temp);
