@@ -633,7 +633,8 @@ char* matrixToJson(matrix *m, char *version){
 matrix *matrixPow(matrix *m, int power, matrix *result){
     assert(m->square == 1);
 
-    result->data = m->data;
+    //result->data = m->data;
+    memcpy(result->data, m->data, m->numRows * m->numCols * sizeof(double));
     result->square = 1;
 //    for(int i = 0; i < m->numRows; i++){
 //        for(int j = 0; j < m->numCols; j++){
