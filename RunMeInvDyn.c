@@ -21,33 +21,48 @@ Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     double linkMass = 12.5;
     double linkLen = 0.5;
 
+    matrix *temp3x3n1 = matrix_new(3,3);
+
+    matrix *temp6x6n1 = matrix_new(4,4);
+
+
+    matrix *tempR6n1 = matrix_new(6,1);
+    matrix *tempR6n2 = matrix_new(6,1);
+
+
+
     matrix *linkTwist = zeros(6,1);
     linkTwist->data[2][0] = 1;
-    linkTwist = matrix_scalar_mul(linkTwist, linkLen);
+
+    matrix_scalar_mul(linkTwist, linkLen, linkTwist);
 
 
 
-    matrix *linkCoM = elemDiv(linkTwist, 2);
+    matrix *linkCoM = matrix_new(6,1);
+    elemDiv(linkTwist, 2, linkCoM);
 
-    matrix *linkInertia = matrix_scalar_mul(eye(3), 1.0/12.0 * linkMass * pow(linkLen, 2));
+    matrix *linkInertia = matrix_new(3,3);
+    matrix_scalar_mul(eye(linkInertia), 1.0/12.0 * linkMass * pow(linkLen, 2), linkInertia);
 
-    matrix *M = eye(6);
-    setSection(M, 0, 2, 0, 2, matrix_scalar_mul(eye(3),linkMass));
+    matrix *M = matrix_new(6,6);
+    eye(M);
+
+    setSection(M, 0, 2, 0, 2, matrix_scalar_mul(eye(temp3x3n1),linkMass, temp3x3n1));
     setSection(M, 3, 5, 3, 5, linkInertia);
 
     matrix *Z = zeros(6,1);
 
-    SE3 *Z_SE3 = new_SE3_zeros();
+    //SE3 *Z_SE3 = new_SE3_zeros();
 
     Object *base = malloc(sizeof(union object_u));
     base->type = 0;
     base->object = malloc(sizeof(union object_u));
-    base->object->rigid = newRigidBody("base", matrix_scalar_mul(eye(6), DBL_MAX), Z, Z);//todo dbl max to replace inf
+    base->object->rigid = newRigidBody("base", matrix_scalar_mul(eye(temp6x6n1), DBL_MAX, temp6x6n1), Z, Z);//todo dbl max to replace inf
 
     Object *Body_1 =  malloc(sizeof(union object_u));
     Body_1->type = 0;
     Body_1->object = malloc(sizeof(union object_u));
-    Body_1->object->rigid = newRigidBody("Body_1", M,  linkTwist, linkCoM);
+    Body_1->object->rigid = newRigidBody("Body_1", M,  linkTwist, linkCoM);//todo not sure why this works, shouldnt the pointers change everywhere anytime they are changed?
 
     Object *Body_2 =  malloc(sizeof(union object_u));
     Body_2->type = 0;
@@ -67,7 +82,7 @@ Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Object *Body_5 =  malloc(sizeof(union object_u));
     Body_5->type = 0;
     Body_5->object = malloc(sizeof(union object_u));
-    Body_5->object->rigid = newRigidBody("Body_5", elemDiv(M,2), elemDiv(linkTwist,2), elemDiv(linkCoM,2));
+    Body_5->object->rigid = newRigidBody("Body_5", elemDiv(M,2, temp6x6n1), elemDiv(linkTwist,2, tempR6n1), elemDiv(linkCoM,2, tempR6n2));
 
     Object *EE =      malloc(sizeof(union object_u));
     EE->type = 0;
@@ -165,18 +180,33 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     double linkMass = 12.5;
     double linkLen = 0.5;
 
+    matrix *temp3x3n1 = matrix_new(3,3);
+
+    matrix *temp6x6n1 = matrix_new(4,4);
+
+
+    matrix *tempR6n1 = matrix_new(6,1);
+    matrix *tempR6n2 = matrix_new(6,1);
     matrix *linkTwist = zeros(6,1);
+
+
     linkTwist->data[2][0] = 1;
-    linkTwist = matrix_scalar_mul(linkTwist, linkLen);
+
+    linkTwist = matrix_new(6,1);
+    matrix_scalar_mul(linkTwist, linkLen, linkTwist);
 
 
 
-    matrix *linkCoM = elemDiv(linkTwist, 2);
+    matrix *linkCoM = matrix_new(6,1);
+    elemDiv(linkTwist, 2, linkCoM);
 
-    matrix *linkInertia = matrix_scalar_mul(eye(3), 1.0/12.0 * linkMass * pow(linkLen, 2));
+    matrix *linkInertia = matrix_new(3,3);
+    matrix_scalar_mul(eye(temp3x3n1), 1.0/12.0 * linkMass * pow(linkLen, 2), linkInertia);
 
-    matrix *M = eye(6);
-    setSection(M, 0, 2, 0, 2, matrix_scalar_mul(eye(3),linkMass));
+    matrix *M = matrix_new(6,6);
+    eye(M);
+
+    setSection(M, 0, 2, 0, 2, matrix_scalar_mul(eye(temp3x3n1),linkMass, temp3x3n1));
     setSection(M, 3, 5, 3, 5, linkInertia);
 
     matrix *Z = zeros(6,1);
@@ -215,13 +245,13 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Cse->data[0][0] = 3*A;
     Cse->data[1][1] = A;
     Cse->data[2][2] = A;
-    Cse = matrix_scalar_mul(Cse, mu);
+    matrix_scalar_mul(Cse, mu, Cse);
 
     matrix *Cbt = zeros(3,3);
     Cbt->data[0][0] = 2*I;
     Cbt->data[1][1] = I;
     Cbt->data[2][2] = I;
-    Cbt = matrix_scalar_mul(Cbt, mu);
+    matrix_scalar_mul(Cbt, mu, Cbt);
 
     matrix *    K = zeros(6,6);
     setSection(K, 0, 2, 0, 2, Kse);
@@ -233,8 +263,8 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 
     matrix *Mf = zeros(6,6);
-    setSection(Mf, 0, 2, 0, 2, matrix_scalar_mul(eye(3),rho*A));
-    setSection(Mf, 3, 5, 3, 5, matrix_scalar_mul(J,rho));
+    setSection(Mf, 0, 2, 0, 2, matrix_scalar_mul(eye(temp3x3n1),rho*A, temp3x3n1));
+    setSection(Mf, 3, 5, 3, 5, matrix_scalar_mul(J,rho, temp3x3n1));
 
 
 
@@ -243,7 +273,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Object *base = malloc(sizeof(union object_u));
     base->type = 0;
     base->object = malloc(sizeof(union object_u));
-    base->object->rigid = newRigidBody("base", matrix_scalar_mul(eye(6), DBL_MAX), Z, Z);//todo dbl max to replace inf
+    base->object->rigid = newRigidBody("base", matrix_scalar_mul(eye(temp6x6n1), DBL_MAX, temp6x6n1), Z, Z);//todo dbl max to replace inf
 
     Object *Body_1 =  malloc(sizeof(union object_u));
     Body_1->type = 0;
@@ -270,7 +300,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Object *Body_5 =  malloc(sizeof(union object_u));
     Body_5->type = 0;
     Body_5->object = malloc(sizeof(union object_u));
-    Body_5->object->rigid = newRigidBody("Body_5", elemDiv(M,2), elemDiv(linkTwist,2), elemDiv(linkCoM,2));
+    Body_5->object->rigid = newRigidBody("Body_5", elemDiv(M,2, temp6x6n1), elemDiv(linkTwist,2, tempR6n1), elemDiv(linkCoM,2, tempR6n2));
 
     Object *EE =      malloc(sizeof(union object_u));
     EE->type = 0;
@@ -388,7 +418,7 @@ int main() {
 
     double dt = 0.025;
     int timeStep = 100;
-    double restTime = 0;
+    //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
     for (int i = 0; i < timeStep; i++) {
@@ -405,13 +435,14 @@ int main() {
 
     matrix theta_ddot = *zeros(5, timeStep);
 
+    matrix *tempTStep = matrix_new(1, timeStep);
 
     //todo should be a loop for num bodies
-    theta_ddot.data[0] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep))),*shape->data[0])->data[0];//todo check shapes
-    theta_ddot.data[1] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep))),*shape->data[1])->data[0];
-    theta_ddot.data[2] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep))),*shape->data[2])->data[0];
-    theta_ddot.data[3] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep))),*shape->data[3])->data[0];
-    theta_ddot.data[4] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep))),*shape->data[4])->data[0];
+    theta_ddot.data[0] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[0], tempTStep)->data[0];//todo check shapes
+    theta_ddot.data[1] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[1], tempTStep)->data[0];
+    theta_ddot.data[2] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[2], tempTStep)->data[0];
+    theta_ddot.data[3] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[3], tempTStep)->data[0];
+    theta_ddot.data[4] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[4], tempTStep)->data[0];
 
     matrix *F_ext = zeros(6, 1);
     matrix *F_0 = zeros(6, 1);
@@ -422,11 +453,12 @@ int main() {
     F_0->data[4][0] = 0;
     F_0->data[5][0] = 0;
 
+    matrix *temp1xRowsM1 = matrix_new(5, timeStep);
 
-    Robot *robot = defPaperSample_2(&theta, &theta_dot, getSection(&theta_ddot, 0, theta_ddot.numRows-1, 0, 0));//todo check -1
+    Robot *robot = defPaperSample_2(&theta, &theta_dot, getSection(&theta_ddot, 0, theta_ddot.numRows-1, 0, 0, temp1xRowsM1));//todo check -1
 
     int BC_Start = 2;//todo, this should be automated
-    int BC_End = 4;
+    //int BC_End = 4;
 
     matrix *t = zeros(1, timeStep);
     for(int i = 0; i < timeStep; i++){
@@ -436,34 +468,35 @@ int main() {
     matrix *T_H = zeros(5, timeStep);//todo 5 should be num bodies
     matrix *Td_H = zeros(5, timeStep);//todo 5 should be num bodies
 
-    matrix *EE_POS = zeros(3, timeStep);
+    //matrix *EE_POS = zeros(3, timeStep);
 
 
     IDM_MB_RE_OUT *idm = malloc(sizeof(IDM_MB_RE_OUT));
-
+    matrix *tempLinkx1 = matrix_new(5,1);
     for(int i = 0; i < timeStep; i++){
         printf("timestep: %d\n", i);
         //printMatrix(Flex_MB_BCS(F_0, robot,  *F_ext, 60, -80, 20));//todo just for testing
         addRobotState(robot, "testRobotOut.json", i);
         matrix f = *robot->objects[2*BC_Start ]->object->flex->f_prev;//save previous guess
 
-        idm = IDM_MB_RE(robot, &theta, &theta_dot, getSection(&theta_ddot, 0, 4, i, i), F_ext, dt, F_0);
+        idm = IDM_MB_RE(robot, &theta, &theta_dot, getSection(&theta_ddot, 0, 4, i, i, tempLinkx1), F_ext, dt, F_0);
         //printf("%f", robot->objects[11]->object->joint->limits[0]);
         setSection(C, 0, 4, i, i, idm->C);
 
 
         //flexBody *flex = robot->objects[2*BC_Start ]->object->flex;
-        flexBody *flexNew = robot->objects[2*BC_Start]->object->flex;
+        //flexBody *flexNew = robot->objects[2*BC_Start]->object->flex;
 
         //prevGuess is always 1, todo add other cases
-        F_0 = getSection(&f, 0, 5, 0, 0);
+        getSection(&f, 0, 5, 0, 0, F_0);
         robot = idm->robot_new;
 
         setSection(T_H, 0, 4, i, i, &theta);
         setSection(Td_H, 0, 4, i, i, &theta_dot);
 
-        theta = *matrix_add(&theta, matrix_scalar_mul(getSection(&theta_dot, 0, 4, 0, 0), dt));
-        theta_dot = *matrix_add(&theta_dot, matrix_scalar_mul(getSection(getSection(&theta_ddot, 0, 4, i, i), 0, 4, 0, 0), dt));
+
+        theta = *matrix_add(&theta, matrix_scalar_mul(getSection(&theta_dot, 0, 4, 0, 0, tempLinkx1), dt, tempLinkx1), &theta);
+        theta_dot = *matrix_add(&theta_dot, matrix_scalar_mul(getSection(getSection(&theta_ddot, 0, 4, i, i, tempLinkx1), 0, 4, 0, 0, tempLinkx1), dt, tempLinkx1), &theta_dot);//todo this feels wrong
         int currJointIndex = 0;
         for(int j = 1; j < 10; j+= 2 ) {//todo j should start at firstjoint an
             if (robot->objects[j]->type == 2) {

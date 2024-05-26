@@ -81,9 +81,9 @@ void matrix_free(matrix *m){
 
     int i = m->numRows-1;
     for(i; i>=0; i--){
-        if(m->data[i] != NULL){
+        if(m->data != NULL){
             free(m->data[i]);
-            m->data[i] = NULL;
+            m->data = NULL;
         }else{
             printf("tried to free null pointer\n");//todo could I just break here?
         }
@@ -97,12 +97,8 @@ void matrix_free(matrix *m){
     }else{
         printf("tried to free null pointer\n");
     }
-    if(m != NULL){//todo why is this always true?
-        free(m);
-        m = NULL;
-    }else{
-        printf("tried to free null pointer\n");
-    }
+
+    free(m);
 
 
 }
@@ -751,20 +747,29 @@ matrix *elemDiv(matrix *m1, double scalar, matrix *result){
 matrix *eigenvector(matrix *A, int iterations) {
     int *shape = matrix_shape(A);
     int n;
+    int m;
     if (shape[0] > shape[1]) {
         n = shape[0];
+        m = shape[1];
     } else {
         n = shape[1];
+        m = shape[0];
     }
 
     double vals[n];
-    matrix *b_k = matrix_new(n, 1);//eigen vector
-    matrix *b_k1 = matrix_new(n, 1);
+    matrix *b_k = matrix_new(n, m);//eigen vector
+    matrix *b_k1 = matrix_new(n, m);
 
 
-    b_k->data[0][0] = (double) rand() / RAND_MAX;
-    b_k->data[1][0] = (double) rand() / RAND_MAX;
-    b_k->data[2][0] = (double) rand() / RAND_MAX;
+//    b_k->data[0][0] = (double) rand() / RAND_MAX;
+//    b_k->data[1][0] = (double) rand() / RAND_MAX;
+//    b_k->data[2][0] = (double) rand() / RAND_MAX;
+
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < m; j++) {
+            b_k->data[i][j] = (double) rand() / RAND_MAX;
+        }
+    }
     double b_k1_norm;
 
     while (iterations >= 0) {

@@ -4,6 +4,8 @@
 
 #include "RobotLib.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
 
@@ -173,10 +175,11 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
 
 rigidBody *newRigidBody(char *name, matrix *mass, matrix *Transform, matrix *CoM) {
     rigidBody *body = (rigidBody *) malloc(sizeof(rigidBody));
-    body->name = name;
-    body->mass = mass;
-    body->Transform = Transform;
-    body->CoM = CoM;
+    //todo should I memcpy mass and CoM since they are not going to change?
+    memcpy(body->name, name, sizeof(char) * strlen(name) + 1);
+    memcpy(body->mass, mass, sizeof(matrix));
+    memcpy(body->Transform, Transform, sizeof(matrix));
+    memcpy(body->CoM, CoM, sizeof(matrix));
     return body;
 }
 
@@ -201,6 +204,7 @@ void freeRigidBody(rigidBody *body){
     matrix_free(body->mass);
     matrix_free(body->Transform);
     matrix_free(body->CoM);
+    free(body->name);
     free(body);
 }
 void freeFlexBody(flexBody *body){
@@ -220,6 +224,7 @@ void freeJoint(rigidJoint *joint){
     free(joint->name);
     matrix_free(joint->twistR6);
     free(joint->limits);
+    //free(joint->parent);
 
     free(joint);
 }
@@ -256,7 +261,7 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double v
     }
     else if(parent->type == 0) {
 
-        joint->parent = malloc(sizeof(struct object_s));
+        joint->parent = malloc(sizeof(struct body_s));
         joint->parent->body = malloc(sizeof(union object_u));
         joint->parent->body->rigid =  parent->object->rigid;
         joint->parent->type = 0;
@@ -271,7 +276,7 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double v
     }
 
     if(child == NULL) {
-        joint->parent = NULL;
+        joint->child = NULL;
     }
     else if(child->type == 0) {
         //joint->child->type = 0;
