@@ -160,9 +160,11 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
                                matrix_scalar_mul(newTwist, joint->acceleration, temp6x1n2), temp6x1n2);
 
     //rigidKin *kin =  malloc(sizeof(rigidKin));
-    memcpy(result->g_cur, g_cur, sizeof(matrix));
+    //memcpy(result->g_cur, g_cur, sizeof(matrix));
+    copyMatrix(g_cur, result->g_cur);
     //result->g_cur = g_cur;
-    memcpy(result->g_act_wrt_prev, g_cur_wrt_prev, sizeof(matrix));
+    //memcpy(result->g_act_wrt_prev, g_cur_wrt_prev, sizeof(matrix));
+    copyMatrix(g_cur_wrt_prev, result->g_act_wrt_prev);
     //result->g_act_wrt_prev = g_act_wrt_prev;
     memcpy(result->eta, eta, sizeof(matrix));
     //result->eta = eta;
@@ -928,7 +930,9 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
             flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i, tempR6n1), curr_body->object->flex,
                      getSection(eta, 0, 5, i, i, tempR6n2), c0, c1, c2, dyn);
             setSection(d_eta, 0,5,i,i, dyn->d_eta_end);
-            memcpy(g_ref[i], dyn->g_end, sizeof(matrix));
+            //memcpy(g_ref[i], dyn->g_end, sizeof(matrix));
+            copyMatrix(dyn->g_end, g_ref[i]);
+
 //            g_ref[i] = dyn->g_end;//is this the leak??
             //d_eta[i] = *dyn->d_eta_end;
 

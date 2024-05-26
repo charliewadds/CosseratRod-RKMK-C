@@ -373,6 +373,17 @@ void setSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, u
 
 }
 
+
+void copyMatrix(matrix *m, matrix *result){
+    assert(m->numRows == result->numRows);
+    assert(m->numCols == result->numCols);
+
+    for(int i = 0; i < m->numRows; i++){
+        for(int j = 0; j < m->numCols; j++){
+            result->data[i][j] = m->data[i][j];
+        }
+    }
+}
 void getSetSection(matrix *get, matrix *set, uint8_t getStartRow, uint8_t getEndRow, uint8_t getStartCol, uint8_t getEndCol, uint8_t setStartRow, uint8_t setEndRow, uint8_t setStartCol, uint8_t setEndCol){
     assert(getStartRow <= getEndRow);
     assert(getStartCol <= getEndCol);

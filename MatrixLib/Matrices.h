@@ -43,7 +43,7 @@ matrix *matrix_solve(matrix *A, matrix *b, matrix *result);
 // Allocates memory for a new matrix
 // All elements in the matrix are 0.0
 matrix *matrix_new(uint8_t num_rows, uint8_t num_cols);
-
+void copyMatrix(matrix *m, matrix *result);
 double matrix_sumSelf(matrix *m);
 void printGSLMatrix(gsl_matrix *m);
 matrix *matrix_rand(uint8_t num_rows, uint8_t num_cols);
