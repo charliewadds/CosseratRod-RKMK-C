@@ -159,8 +159,8 @@ matrix *hat_R6(matrix *z, matrix *result){
     matrix *temp = matrix_new(3,3);
     matrix *temp3x1 = matrix_new(3,1);
     setSection(result, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0, temp3x1), temp));
-    //setSection(result, 0, 2, 3, 3, getSection(z, 0, 2, 0, 0, temp3x1));
-    getSetSection(z, result,0,2,0,0,0,2,3,5);
+    setSection(result, 0, 2, 3, 3, getSection(z, 0, 2, 0, 0, temp3x1));
+    //getSetSection(z, result,0,2,0,0,0,2,3,5);
     setSection(result, 3, 3, 0, 3, zeros(1,4));//todo convert to zeroSection using memset
     //T->data[3][3] = 1;//todo this is not in matlab, dont I need it?
 
@@ -260,7 +260,7 @@ matrix *adj(matrix *T, matrix *result) {
     setSection(result, 3, 5, 3, 5, r);
     setSection(result, 3, 5, 0, 2, zeros(3,3));//todo does this make sense?
 
-
+    matrix_free(temp);
     return result;
 }
 
@@ -392,13 +392,14 @@ matrix *expm_SE3(matrix *m, matrix *result) {
 
         matrix_add3(A,k,f, A);
     }
-    //matrix *result = zeros(4,4);
+    zeroMatrix(result);
     setSection(result, 0, 2, 0, 2, expm_SO3(gW, temp3x3));
     setSection(result, 0, 2, 3, 3, matMult(A, gU, temp3x3));
-    setSection(result , 3, 3, 0, 3, zeros(1,4));
+    //matrix *temp1x4 = zeros(1,4);
+    //setSection(result , 3, 3, 0, 3, temp1x4);
     result->data[3][3] = 1;
 
-
+    //matrix_free()
     matrix_free(gW);
     matrix_free(gU);
     matrix_free(temp3x1);

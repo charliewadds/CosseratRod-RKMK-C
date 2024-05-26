@@ -269,6 +269,8 @@ matrix *cross(matrix *m1, matrix *m2, matrix *result){
 
 matrix *matrix_transpose(matrix *m, matrix *result){
     //matrix *result = matrix_new(m->numCols, m->numRows);
+    assert(result->numRows == m->numCols);
+    assert(result->numCols == m->numRows);
 
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
@@ -401,7 +403,7 @@ void getSetSection(matrix *get, matrix *set, uint8_t getStartRow, uint8_t getEnd
         ii++;
         for(int j = getStartCol; j <= getEndCol; j++){
             jj++;
-            set->data[i][j] = get->data[ii][jj];
+            set->data[ii][jj] = get->data[i][j];
             //memcpy(set->data[i - setStartRow], get->data[i], sizeof(double) * (getEndCol - getStartCol));
         }
     }
@@ -445,6 +447,11 @@ matrix *matrix_sin(matrix *m){
 matrix *matMult(matrix *m1, matrix *m2, matrix *result){
 
     assert(m1->numCols == m2->numRows);
+
+    assert((result->numRows == m1->numCols && result->numCols == m2->numCols)
+    ||
+    (result->numRows == m2->numRows && result->numCols == m1->numCols));
+
 
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m2->numCols; j++){

@@ -422,7 +422,7 @@ int main() {
 
     matrix *t1 = matrix_new(1, timeStep);
     for (int i = 0; i < timeStep; i++) {
-        t1->data[0][i] = t1->data[0][i-1] + dt;
+        t1->data[0][i] = t1->data[0][i] + dt;
 
     }
 
