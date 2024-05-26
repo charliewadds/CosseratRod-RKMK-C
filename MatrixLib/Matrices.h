@@ -99,7 +99,7 @@ matrix *matrixPow(matrix *m, int power, matrix *result);
 
 matrix *matDiv(matrix *m1, matrix *m2);
 
-matrix *elemDiv(matrix *m1, double scalar);
+matrix *elemDiv(matrix *m1, double scalar, matrix *result);
 
 matrix *zeros(uint8_t num_rows, uint8_t num_cols);
 

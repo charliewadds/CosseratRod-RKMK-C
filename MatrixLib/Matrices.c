@@ -726,8 +726,8 @@ double matrixRatio(matrix *m1, matrix *m2){
     return result;
 }
 
-matrix *elemDiv(matrix *m1, double scalar){
-    matrix *result = matrix_new(m1->numRows, m1->numCols);
+matrix *elemDiv(matrix *m1, double scalar, matrix *result){
+    //matrix *result = matrix_new(m1->numRows, m1->numCols);
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m1->numCols; j++){
             result->data[i][j] = m1->data[i][j] / scalar;

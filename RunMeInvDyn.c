@@ -223,7 +223,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Cbt->data[2][2] = I;
     Cbt = matrix_scalar_mul(Cbt, mu);
 
-    matrix *K = zeros(6,6);
+    matrix *    K = zeros(6,6);
     setSection(K, 0, 2, 0, 2, Kse);
     setSection(K, 3, 5, 3, 5, Kbt);
 

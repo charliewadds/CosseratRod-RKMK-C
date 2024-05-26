@@ -13,29 +13,29 @@
 #include <gsl/gsl_deriv.h>
 typedef struct rigidBody_s{
     char *name;
-    matrix *mass;
-    matrix *Transform;//transform from start to end, se3 (6x1)
+    matrix *mass;//6x6 mass matrix
+    matrix *Transform;//R6 transformation from start to end
 
     //in R6?
-    matrix *CoM;//transformation start to COM todo is start J or I?
+    matrix *CoM;//R6 transformation start to COM
 
 }rigidBody;
 
 
 typedef struct flexBody_s{
     char *name;
-    matrix *mass;
-    matrix *transform;
-    matrix *stiff;
-    matrix *damping;
-    matrix *F_0;//free strain of the continuum under no applied load todo what?
+    matrix *mass;//6x6 mass matrix
+    matrix *transform;//R6 transformation from start to end
+    matrix *stiff;//6x6 stiffness matrix
+    matrix *damping;//6x6 damping matrix
+    matrix *F_0;//R6 force at start
     int N;//number of elements to discretize the continuum todo some of these ints could be uint_8 or 16 to save memory
     double L;//length of the continuum
-    matrix *eta_prev;
-    matrix *eta_pprev;
-    matrix *f_prev;
-    matrix *f_pprev;
-    matrix *CoM;
+    matrix *eta_prev;//6xN matrix of previous eta values
+    matrix *eta_pprev;//6xN matrix of previous eta values
+    matrix *f_prev;//6xN matrix of previous f values
+    matrix *f_pprev;//6xN matrix of previous f values
+    matrix *CoM;//R6 transformation start to COM todo is start J or I?
 }flexBody;
 
 
@@ -223,7 +223,7 @@ ODE_type getODEfunction(matrix *elem1, matrix *elem2);
  * Written by BD Bhai
  * function [g_end,f,eta,d_eta_end] = Flex_Dyn(g_base, F_dist, F_base, BODY, eta_base, c0, c1, c2)
  */
-flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *BODY, matrix *eta_base, double c0, double c1, double c2);
+flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *BODY, matrix *eta_base, double c0, double c1, double c2, flexDyn *result);
 
 
 

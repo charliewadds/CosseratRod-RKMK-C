@@ -1,10 +1,13 @@
 # TO DO
-- [ ] I think getting rid of SO3 and SE3 is going to be best in the long run
+- [ ] The robot struct is a nightmare and needs to be rewritten. It is possibly the worst code I have ever written.
+- [ ] I think it would be faster to have global temporary matrices for functions to use for math instead of mallocing and freeing them every time.
+  - this would be a nightmare if I end up using concurrency though
+- [x] I think getting rid of SO3 and SE3 is going to be best in the long run
 - [x] one joint is upside down or someting in the rigid Kin
 - [ ] multiply fixed size matrices using NEON instructions
   - https://developer.arm.com/documentation/102467/0201/Example---matrix-multiplication
 - [ ] add shape and math descriptions to variables
-- [ ] There is probably a way to make getSection just return a pointer to the 'top left corner' of the section so it doesn't have to create a new matrix
+- [x] There is probably a way to make getSection just return a pointer to the 'top left corner' of the section so it doesn't have to create a new matrix
 - [ ] It is probably best to use a premade matrix library because it can use SIMD and other optimizations
   - or I could learn how to use those things but that is a bit of a can of worms
 - [ ] if eta_prev or f_prev is ever more than 1x6xnx? it will break the soft sim
@@ -31,6 +34,10 @@
 
 
 # OPTIMIZATIONS
+- [ ] I think it would be faster to use contiguously allocated matrices which expand like java arraylists
+  - use realloc (I always forget it exists)
+  - this would let me use non-size constrained matrices and therefore less temporary variables
+  - they should probably start as 6x6 because I think the only thing bigger are the eta and f prev
 - [ ] could use union to combine so3 and se3 etc. not sure if that is faster or slower
 - [ ] use `restrict` keyword to tell the compiler that the pointers are the only ref. to the data within the function
   - Is this useful in modern compilers? i.e. will this happen automatically?
