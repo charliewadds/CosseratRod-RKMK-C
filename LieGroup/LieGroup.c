@@ -135,17 +135,17 @@ matrix *hat_R3(matrix *z, matrix *result){
     assert(z->numRows == 3);
     assert(z->numCols == 1);
 
-    matrix *T = zeros(3,3);
+    //matrix *T = zeros(3,3);
 
-    T->data[0][1] = z->data[2][0] * -1;
-    T->data[0][2] = z->data[1][0];
+    result->data[0][1] = z->data[2][0] * -1;
+    result->data[0][2] = z->data[1][0];
 
-    T->data[1][0] = z->data[2][0];
-    T->data[1][2] = z->data[0][0] * -1;
+    result->data[1][0] = z->data[2][0];
+    result->data[1][2] = z->data[0][0] * -1;
 
-    T->data[2][0] = z->data[1][0] * -1;
-    T->data[2][1] = z->data[0][0];
-    return T;
+    result->data[2][0] = z->data[1][0] * -1;
+    result->data[2][1] = z->data[0][0];
+    return result;
 }
 
 matrix *hat_R6(matrix *z, matrix *result){
@@ -160,8 +160,10 @@ matrix *hat_R6(matrix *z, matrix *result){
     //T->data[3][3] = 1;//todo this is not in matlab, dont I need it?
 
     matrix_free(temp);
+    matrix_free(temp3x1);
     return result;
 }
+
 
 matrix *hat_R6_chain(matrix *z){
     assert(z->numRows == 6);
@@ -231,8 +233,9 @@ matrix *adj(matrix *T, matrix *result) {
     assert(result->numRows == 6);
     assert(result->numCols == 6);
 
-    matrix *r = matrix_new(3,3);
-    getSection(T, 0, 2, 0, 2, r);
+    zeroMatrix(result); //todo is this necessary? also it could be faster
+    //matrix *r = matrix_new(3,3);
+    getSection(T, 0, 2, 0, 2, result);
 
     matrix *p = matrix_new(3,1);
     getSection(T, 0, 2, 3, 3, p);
@@ -241,10 +244,10 @@ matrix *adj(matrix *T, matrix *result) {
 
     matrix *temp = matrix_new(3,3);
 
-    setSection(result, 0, 2, 0, 2, r);
-    setSection(result, 0, 2, 3, 5, matMult( hat_R3(p, temp),r, temp));
+    setSection(result, 0, 2, 0, 2, result);
+    setSection(result, 0, 2, 3, 5, matMult( hat_R3(p, temp),result, temp));
 
-    setSection(result, 3, 5, 3, 5, r);
+    setSection(result, 3, 5, 3, 5, result);
     setSection(result, 3, 5, 0, 2, zeros(3,3));//todo does this make sense?
 
 
@@ -320,29 +323,32 @@ matrix *expm_SO3(matrix *m, matrix *result){
     matrix *temp = matrix_new(3,1);
     double mag = norm(unhat_SO3(m, temp));
 
-    matrix *temp_3x3 = matrix_new(3,3);
+    matrix *temp_3x3n1 = matrix_new(3,3);
+    matrix *temp_3x3n2 = matrix_new(3,3);
+
 
     if (mag == 0) {
         eye(result);
     } else {
         matrix_add(
                 matrix_add(
-                        eye(result),matrix_scalar_mul(elemDiv(m, mag), sin(mag), temp_3x3)
-                              , temp_3x3),
+                        eye(result),matrix_scalar_mul(elemDiv(m, mag, temp_3x3n1), sin(mag), temp_3x3n1)
+                              , temp_3x3n1),
                                   matrix_scalar_mul(
                                           elemDiv(
-                                                  matrixPow(m, 2, temp_3x3), pow(mag, 2.0)
+                                                  matrixPow(m, 2, temp_3x3n2), pow(mag, 2.0),
+                                                  temp_3x3n2
                                                   ),
-
                                                   (1 - cos(mag))
-                                          , temp_3x3)
+                                          , temp_3x3n2)
                         , result);
 
 
     }
 
     matrix_free(temp);
-    matrix_free(temp_3x3);
+    matrix_free(temp_3x3n1);
+    matrix_free(temp_3x3n2);
     return result;
 }
 
@@ -368,10 +374,10 @@ matrix *expm_SE3(matrix *m, matrix *result) {
 
     if(mag != 0){
         matrix *k = matrix_new(3,3);
-        matrix_scalar_mul(elemDiv(matrixPow(gW, 2, temp3x3), ((double) pow(mag,3.0))) , (mag - (double) sin(mag)), k);
+        matrix_scalar_mul(elemDiv(matrixPow(gW, 2, temp3x3), ((double) pow(mag,3.0)), temp3x3) , (mag - (double) sin(mag)), k);
 
         matrix *f = matrix_new(3,3);
-        matrix_scalar_mul(elemDiv(gW, pow(mag,2.0)) , (1-cos(mag)), f);
+        matrix_scalar_mul(elemDiv(gW, pow(mag,2.0), temp3x3) , (1-cos(mag)), f);
 
         matrix_add3(A,k,f, A);
     }
@@ -408,10 +414,10 @@ matrix *expm_SE3_chain(matrix *m) {
 
     if(mag != 0){
         matrix *k = matrix_new(3,3);
-        matrix_scalar_mul(elemDiv(matrixPow(gW, 2, temp3x3), ((double) pow(mag,3.0))) , (mag - (double) sin(mag)), k);
+        matrix_scalar_mul(elemDiv(matrixPow(gW, 2, temp3x3), ((double) pow(mag,3.0)), temp3x3) , (mag - (double) sin(mag)), k);
 
         matrix *f = matrix_new(3,3);
-        matrix_scalar_mul(elemDiv(gW, pow(mag,2.0)) , (1-cos(mag)), f);
+        matrix_scalar_mul(elemDiv(gW, pow(mag,2.0), temp3x3) , (1-cos(mag)), f);
 
         matrix_add3(A,k,f, A);
     }

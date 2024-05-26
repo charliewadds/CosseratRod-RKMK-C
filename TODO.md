@@ -1,5 +1,6 @@
 # TO DO
 - [ ] Array sizes are written as static right now because it helped me with the math. they should be dynamic and I will change that soon
+- [ ] CopySection function would be nice. it would also speed things up a lot
 - [ ] The robot struct is a nightmare and needs to be rewritten. It is possibly the worst code I have ever written.
 - [ ] I think it would be faster to have global temporary matrices for functions to use for math instead of mallocing and freeing them every time.
   - this would be a nightmare if I end up using concurrency though
