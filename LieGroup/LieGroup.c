@@ -391,6 +391,9 @@ matrix *expm_SE3(matrix *m, matrix *result) {
         matrix_scalar_mul(elemDiv(gW, pow(mag,2.0), temp3x3) , (1-cos(mag)), f);
 
         matrix_add3(A,k,f, A);
+
+        matrix_free(k);
+        matrix_free(f);
     }
     zeroMatrix(result);
     setSection(result, 0, 2, 0, 2, expm_SO3(gW, temp3x3));
@@ -403,8 +406,8 @@ matrix *expm_SE3(matrix *m, matrix *result) {
     matrix_free(gW);
     matrix_free(gU);
     matrix_free(temp3x1);
-    //matrix_free(temp3x3);// todo make sure there is not residual memory leak
-
+    matrix_free(temp3x3);// todo make sure there is not residual memory leak
+    //matrix
     matrix_free(A);
 
     return result;

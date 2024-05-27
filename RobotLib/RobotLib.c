@@ -532,6 +532,9 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
 
     matrix_add(f_t, matMult(adj_R6(eta, temp6x6n1), f, tempR6n1), result->eta_s);
 
+
+    matrix_free(eta_t);
+
     matrix_free(temp6x6n1);
     matrix_free(temp6x6n2);
     matrix_free(tempR6n1);
@@ -1673,6 +1676,16 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         out->F = F;
         out->v = eta;
         out->robot_new = robot;
+
+
+        matrix_free(tempR6n1);
+        matrix_free(tempR6n2);
+        matrix_free(tempR6n3);
+        matrix_free(tempR6n4);
+
+        matrix_free(tempR6n1t);
+
+        matrix_free(temp4x4n1);
 
         return out;
 
