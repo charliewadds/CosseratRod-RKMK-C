@@ -158,10 +158,12 @@ matrix *hat_R6(matrix *z, matrix *result){
 
     matrix *temp = matrix_new(3,3);
     matrix *temp3x1 = matrix_new(3,1);
+
+    zeroMatrix(result);
     setSection(result, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0, temp3x1), temp));
     setSection(result, 0, 2, 3, 3, getSection(z, 0, 2, 0, 0, temp3x1));
     //getSetSection(z, result,0,2,0,0,0,2,3,5);
-    setSection(result, 3, 3, 0, 3, zeros(1,4));//todo convert to zeroSection using memset
+    //setSection(result, 3, 3, 0, 3, zeros(1,4));//todo convert to zeroSection using memset
     //T->data[3][3] = 1;//todo this is not in matlab, dont I need it?
 
     matrix_free(temp);

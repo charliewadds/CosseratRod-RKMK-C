@@ -526,6 +526,8 @@ int main() {
     }
     printf("DONE");
 
+
+
     free(idm);
     robotFree(robot);
 

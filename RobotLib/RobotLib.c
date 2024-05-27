@@ -193,7 +193,7 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
     matrix_free(temp6x1n1);
     matrix_free(newTwist);
     matrix_free(g_cur);
-    //matrix_free(g_cur_wrt_prev);//todo this might already be freed
+    matrix_free(g_cur_wrt_prev);//todo this might already be freed
     matrix_free(temp6x6n1);
     matrix_free(temp4x4n1);
     return result;
@@ -365,20 +365,21 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double v
 
 
 matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
+
     matrix *POS = zeros(3,11);//todo this is a hack, I need to make this dynamic
     matrix *g = matrix_new(4,4);
     eye(g);
 
     int iii = 1;//num points plotted
     //int i_R = 1;
-
+    matrix *temp6n1 = matrix_new(6,1);
+    matrix *temp4x4n1 = matrix_new(4,4);
     union object_u *currObj;
     for(int i = 0; i < (robot->numObjects - 2)/2; i++){
         currObj =  robot->objects[(i*2)+1]->object;
         //assert(robot->objects[(i*2)+2]->type == 0 || robot->objects[(i*2)+2]->type == 1);
         if(1){
-            matrix *temp6n1 = matrix_new(6,1);
-            matrix *temp4x4n1 = matrix_new(4,4);
+
             matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[i][0]), temp6n1), temp4x4n1), temp4x4n1), g);
 
             //setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
@@ -421,6 +422,11 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
     }
 
     //free(currObj);
+    matrix_free(g);
+
+    matrix_free(temp6n1);
+    matrix_free(temp4x4n1);
+
     return POS;
 
 }
