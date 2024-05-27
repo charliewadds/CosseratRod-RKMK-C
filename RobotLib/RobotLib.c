@@ -257,9 +257,10 @@ flexBody *newFlexBody(char *name, matrix *mass, matrix *stiff, matrix *damping, 
 }
 void freeRigidBody(rigidBody *body){
     matrix_free(body->mass);
+    //free(body->mass);
     matrix_free(body->Transform);
     matrix_free(body->CoM);
-    free(body->name);
+    free(body->name);//todo do I need to free this?
     free(body);
 }
 void freeFlexBody(flexBody *body){
@@ -276,11 +277,11 @@ void freeFlexBody(flexBody *body){
     free(body);
 }
 void freeJoint(rigidJoint *joint){
-    free(joint->name);
+    //free(joint->name);
     matrix_free(joint->twistR6);
-    free(joint->limits);
+    //free(joint->limits);
     //free(joint->parent);
-
+    //free(joint->)
     free(joint);
 }
 
@@ -288,10 +289,19 @@ void robotFree(Robot *robot){
     for(int i = 0; i < robot->numObjects; i++){
         if(robot->objects[i]->type == 0){
             freeRigidBody(robot->objects[i]->object->rigid);
+            free(robot->objects[i]->object);
+            free(robot->objects[i]);
+
         }else if(robot->objects[i]->type == 1){
             freeFlexBody(robot->objects[i]->object->flex);
+            free(robot->objects[i]->object);
+            free(robot->objects[i]);
+
         }else if(robot->objects[i]->type == 2){
             freeJoint(robot->objects[i]->object->joint);
+            free(robot->objects[i]);
+            free(robot->objects[i]->object);
+            free(robot->objects[i]);
         }
         free(robot->objects[i]);
     }

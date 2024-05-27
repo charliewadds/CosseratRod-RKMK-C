@@ -346,58 +346,62 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
     double pihalf = M_PI/2;
 
+    Object **robotList = calloc(13, sizeof(Object));
 
+    for (int i = 0; i < 13; i++){
+        robotList[i] = malloc(sizeof(Object));
+    }
     //todo this should be in a function like createObject or something
-    Object *Joint_1 = malloc(sizeof(Object));
-    Joint_1->type = 2;
-    Joint_1->object = malloc(sizeof(union object_u));
 
-    Joint_1->object->joint = newRigidJoint("Joint_1", r6_5, theta->data[0][0], theta_dot->data[0][0], theta_ddot->data[0][0], lims, 0, base, Body_1);
+    robotList[1]->type = 2;
+    robotList[1]->object = malloc(sizeof(union object_u));
 
-    Object *Joint_2 = malloc(sizeof(Object));
-    Joint_2->type = 2;
-    Joint_2->object = malloc(sizeof(union object_u));
-    Joint_2->object->joint = newRigidJoint("Joint_2", r6_3, theta->data[1][0], theta_dot->data[1][0], theta_ddot->data[1][0], lims, pihalf, Body_1, Body_2);
+    robotList[1]->object->joint = newRigidJoint("Joint_1", r6_5, theta->data[0][0], theta_dot->data[0][0], theta_ddot->data[0][0], lims, 0, base, Body_1);
 
-    Object *Joint_3= malloc(sizeof(Object));
-    Joint_3->type = 2;
-    Joint_3->object = malloc(sizeof(union object_u));
-    Joint_3->object->joint = newRigidJoint("Joint_3", r6_4, theta->data[2][0], theta_dot->data[2][0], theta_ddot->data[2][0], lims, 0, Body_2, Body_3);
+    //Object *Joint_2 = malloc(sizeof(Object));
+    robotList[3]->type = 2;
+    robotList[3]->object = malloc(sizeof(union object_u));
+    robotList[3]->object->joint = newRigidJoint("Joint_2", r6_3, theta->data[1][0], theta_dot->data[1][0], theta_ddot->data[1][0], lims, pihalf, Body_1, Body_2);
 
-    Object *Joint_4= malloc(sizeof(Object));
-    Joint_4->type = 2;
-    Joint_4->object = malloc(sizeof(union object_u));
-    Joint_4->object->joint = newRigidJoint("Joint_4", r6_3, theta->data[3][0], theta_dot->data[3][0], theta_ddot->data[3][0], lims, 0, Body_3, Body_4);
+    //Object *Joint_3= malloc(sizeof(Object));
+    robotList[5]->type = 2;
+    robotList[5]->object = malloc(sizeof(union object_u));
+    robotList[5]->object->joint = newRigidJoint("Joint_3", r6_4, theta->data[2][0], theta_dot->data[2][0], theta_ddot->data[2][0], lims, 0, Body_2, Body_3);
 
-    Object *Joint_5 = malloc(sizeof(Object));
-    Joint_5->type = 2;
-    Joint_5->object = malloc(sizeof(union object_u));
-    Joint_5->object->joint = newRigidJoint("Joint_5", r6_2, theta->data[4][0], theta_dot->data[4][0], theta_ddot->data[4][0], lims, 0, Body_4, Body_5);
+    //Object *Joint_4= malloc(sizeof(Object));
+    robotList[7]->type = 2;
+    robotList[7]->object = malloc(sizeof(union object_u));
+    robotList[7]->object->joint = newRigidJoint("Joint_4", r6_3, theta->data[3][0], theta_dot->data[3][0], theta_ddot->data[3][0], lims, 0, Body_3, Body_4);
+
+    //Object *Joint_5 = malloc(sizeof(Object));
+    robotList[9]->type = 2;
+    robotList[9]->object = malloc(sizeof(union object_u));
+    robotList[9]->object->joint = newRigidJoint("Joint_5", r6_2, theta->data[4][0], theta_dot->data[4][0], theta_ddot->data[4][0], lims, 0, Body_4, Body_5);
 
     double zero[2] = {0,0};
 
-    Object *joint_EE = malloc(sizeof(struct object_s));
-    joint_EE->type = 2;
-    joint_EE->object = malloc(sizeof(union object_u));
-    joint_EE->object->joint =  newRigidJoint("joint_EE", zeros(6,1), 0, 0, 0, zero, 0, Body_5, EE);
+    //Object *joint_EE = malloc(sizeof(struct object_s));
+    robotList[11]->type = 2;
+    robotList[11]->object = malloc(sizeof(union object_u));
+    robotList[11]->object->joint =  newRigidJoint("joint_EE", zeros(6,1), 0, 0, 0, zero, 0, Body_5, EE);
 
     Robot *newRobot = malloc(sizeof(Robot));
     newRobot->name = "RigidRandy";
 
     //{base, Joint_1, Body_1, Jxoint_2, Body_2, Joint_3, Body_3, Joint_4, Body_4, Joint_5, Body_5, joint_EE, EE};
-    Object **robotList = malloc(sizeof(Object) * 13);
+
     robotList[0] = base;
-    robotList[1] = Joint_1;
+    //robotList[1] = Joint_1;
     robotList[2] = Body_1;
-    robotList[3] = Joint_2;
+    //robotList[3] = Joint_2;
     robotList[4] = Body_2;
-    robotList[5] = Joint_3;
+    //robotList[5] = Joint_3;
     robotList[6] = Body_3;
-    robotList[7] = Joint_4;
+    //robotList[7] = Joint_4;
     robotList[8] = Body_4;
-    robotList[9] = Joint_5;
+    //robotList[9] = Joint_5;
     robotList[10] = Body_5;
-    robotList[11] = joint_EE;
+    //robotList[11] = joint_EE;
     robotList[12] = EE;
 
 
@@ -417,7 +421,7 @@ int main() {
     matrix theta_dot = *zeros(5, 1);
 
     double dt = 0.025;
-    int timeStep = 100;
+    int timeStep = 3;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -524,4 +528,5 @@ int main() {
 
     free(idm);
     robotFree(robot);
+
 }

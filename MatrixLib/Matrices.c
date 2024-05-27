@@ -85,14 +85,13 @@ matrix *matrix_new(uint8_t num_rows, uint8_t num_cols) {
 
 void matrix_free(matrix *m) {
     assert(m != NULL);
-    if (m->data != NULL) {
-        for (int i = 0; i < m->numRows; i++) {
-            if (m->data[i] != NULL) {
-                free(m->data[i]);
-            }
+
+    for (int i = 0; i < m->numRows; i++) {
+        if (m->data[i] != NULL) {
+            free(m->data[i]);
         }
-        free(m->data);
     }
+    free(m->data);
     free(m);
 }
 
