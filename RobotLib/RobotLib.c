@@ -58,11 +58,12 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     hat_R6(tempR6n2, temp4x4n2);
     expm_SE3(temp4x4n2, temp4x4n2);
 
-    matMult(matMult(
+    matMult(
             temp4x4n1,
             temp4x4n2,
-            temp4x4n2),
-            expm_SE3(hat_R6(childCoM, temp4x4n3), temp4x4n3 ), CoM2CoM);
+            temp4x4n2);
+
+    matMult(temp4x4n2,expm_SE3(hat_R6(childCoM, temp4x4n3), temp4x4n3 ), CoM2CoM);
     //free(parentCoM);
 //    matMult(matMult(
 //                              //curr_obj
@@ -1267,7 +1268,7 @@ matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta
 
         status = gsl_multiroot_test_residual(s->f, 1e-9);
 
-    } while (status == GSL_CONTINUE && iter < 10);//increase this later
+    } while (status == GSL_CONTINUE && iter < 5);//increase this later
     //assert(!isnan(s->f->data[0]));
     // Extract solution
     //matrix *solution = zeros(6, 1);

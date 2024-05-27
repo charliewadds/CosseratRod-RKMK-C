@@ -66,6 +66,7 @@ matrix *matrix_new(uint8_t num_rows, uint8_t num_cols) {
     // Allocate memory for each row and initialize to zero
     for (int i = 0; i < num_rows; i++) {
         m->data[i] = calloc(num_cols, sizeof(**m->data));
+        memset(m->data[i], 0, num_cols * sizeof(**m->data));
         if (m->data[i] == NULL) {
             fprintf(stderr, "Failed to allocate memory for matrix row %d.\n", i);
             // Free previously allocated rows
@@ -446,17 +447,28 @@ matrix *matMult(matrix *m1, matrix *m2, matrix *result){
     ||
     (result->numRows == m2->numRows && result->numCols == m1->numCols));
 
+    matrix *temp;
+    if(m1 == result || m2 == result){
+        temp = matrix_new(result->numRows, result->numCols);
+    }else{
+        temp = result;
+        zeroMatrix(result);
+    }
+
 
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m2->numCols; j++){
             for(int k = 0; k < m1->numCols; k++){
 
-                result->data[i][j] += m1->data[i][k] * m2->data[k][j];
+                temp->data[i][j] += m1->data[i][k] * m2->data[k][j];
                 //assert(result->data[i][j] != NAN);
             }
         }
     }
-
+    if(m1 == result || m2 == result){
+        copyMatrix(temp, result);
+        matrix_free(temp);
+    }
     return result;
 }
 
@@ -464,6 +476,8 @@ matrix *matMult_chain(matrix *m1, matrix *m2){
 
     assert(m1->numCols == m2->numRows);
     matrix *result = matrix_new(m1->numRows, m2->numCols);
+
+
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m2->numCols; j++){
             for(int k = 0; k < m1->numCols; k++){

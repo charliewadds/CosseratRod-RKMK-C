@@ -364,51 +364,67 @@ matrix *expm_SO3(matrix *m, matrix *result){
 
 
 
-matrix *expm_SE3(matrix *m, matrix *result) {
-    assert(m->numRows == 4);
-    assert(m->numCols == 4);
+matrix *expm_SE3(matrix *G, matrix *result) {
+    assert(G->numRows == 4 && G->numCols == 4);
+    assert(result->numRows == 4 && result->numCols == 4);
 
-    assert(result->numRows == 4);
-    assert(result->numCols == 4);
-
-    matrix *gW = matrix_new(3,3);
-    getSection(m, 0, 2, 0, 2, gW);
-
-    matrix *gU = matrix_new(3,1);
-    getSection(m, 0, 2, 3, 3, gU);
-
-    matrix *temp3x1 = matrix_new(3,1);
-    matrix *temp3x3 = matrix_new(3,3);
-    double mag = norm(unhat_SO3(gW, temp3x1));
-
-    matrix *A = eye(matrix_new(3,3));
-
-    if(mag != 0){
-        matrix *k = matrix_new(3,3);
-        matrix_scalar_mul(elemDiv(matrixPow(gW, 2, temp3x3), ((double) pow(mag,3.0)), temp3x3) , (mag - (double) sin(mag)), k);
-
-        matrix *f = matrix_new(3,3);
-        matrix_scalar_mul(elemDiv(gW, pow(mag,2.0), temp3x3) , (1-cos(mag)), f);
-
-        matrix_add3(A,k,f, A);
+    if (G == result) {
+        matrix *tempG = matrix_new(4, 4);
+        copyMatrix(G, tempG);
+        G = tempG;
     }
+
     zeroMatrix(result);
-    setSection(result, 0, 2, 0, 2, expm_SO3(gW, temp3x3));
-    setSection(result, 0, 2, 3, 3, matMult(A, gU, temp3x3));
-    //matrix *temp1x4 = zeros(1,4);
-    //setSection(result , 3, 3, 0, 3, temp1x4);
+
+    matrix *Gw = matrix_new(3, 3);
+    getSection(G, 0, 2, 0, 2, Gw);
+
+    matrix *Gu = matrix_new(3, 1);
+    getSection(G, 0, 2, 3, 3, Gu);
+
+    matrix *temp3x1 = matrix_new(3, 1);
+    matrix *temp3x3 = matrix_new(3, 3);
+    double magGw = norm(unhat_SO3(Gw, temp3x1));
+
+    matrix *A = eye(matrix_new(3, 3));
+
+    if (magGw != 0) {
+        matrix *Gw2 = matrix_new(3, 3);
+        matrixPow(Gw, 2, Gw2);
+        matrix *term1 = matrix_new(3, 3);
+        matrix *term2 = matrix_new(3, 3);
+
+        matrix_scalar_mul(elemDiv(Gw2, pow(magGw, 3), term1), magGw - sin(magGw), term1);
+        matrix_scalar_mul(elemDiv(Gw, pow(magGw, 2), term2), 1 - cos(magGw), term2);
+
+        matrix_add3(A, term1, term2, A);
+
+        matrix_free(Gw2);
+        matrix_free(term1);
+        matrix_free(term2);
+    }
+
+    expm_SO3(Gw, temp3x3);
+    setSection(result, 0, 2, 0, 2, temp3x3);
+
+    matMult(A, Gu, temp3x1);
+    setSection(result, 0, 2, 3, 3, temp3x1);
+
     result->data[3][3] = 1;
 
-    //matrix_free()
-    matrix_free(gW);
-    matrix_free(gU);
+    matrix_free(Gw);
+    matrix_free(Gu);
     matrix_free(temp3x1);
-    //matrix_free(temp3x3);// todo make sure there is not residual memory leak
-
+    matrix_free(temp3x3);
     matrix_free(A);
+
+    if (G != result) {
+        matrix_free(G);
+    }
 
     return result;
 }
+
 
 matrix *expm_SE3_chain(matrix *m) {
     assert(m->numRows == 4);

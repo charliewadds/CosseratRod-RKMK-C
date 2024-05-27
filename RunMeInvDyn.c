@@ -190,9 +190,10 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     matrix *linkTwist = zeros(6,1);
 
 
-    linkTwist->data[2][0] = 1;
+
 
     linkTwist = matrix_new(6,1);
+    linkTwist->data[2][0] = 1;
     matrix_scalar_mul(linkTwist, linkLen, linkTwist);
 
 
@@ -421,12 +422,13 @@ int main() {
     matrix theta_dot = *zeros(5, 1);
 
     double dt = 0.025;
-    int timeStep = 3;
+    int timeStep = 100;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
-    for (int i = 0; i < timeStep; i++) {
-        t1->data[0][i] = t1->data[0][i] + dt;
+    t1->data[0][0] = dt;
+    for (int i = 1; i < timeStep; i++) {
+        t1->data[0][i] = t1->data[0][i-1] + dt;
 
     }
 
@@ -442,11 +444,22 @@ int main() {
     matrix *tempTStep = matrix_new(1, timeStep);
 
     //todo should be a loop for num bodies
-    theta_ddot.data[0] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[0], tempTStep)->data[0];//todo check shapes
-    theta_ddot.data[1] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[1], tempTStep)->data[0];
-    theta_ddot.data[2] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[2], tempTStep)->data[0];
-    theta_ddot.data[3] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[3], tempTStep)->data[0];
-    theta_ddot.data[4] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[4], tempTStep)->data[0];
+    for(int i = 0; i < 5; i++){
+        //matrix *tempTStep = matrix_new(1, timeStep);
+        zeroMatrix(tempTStep);
+        matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[i], tempTStep);
+        memcpy(theta_ddot.data[i],tempTStep->data[0],  sizeof *theta_ddot.data[i] * timeStep);
+
+    }
+//    matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[0], tempTStep);//todo check shapes
+//    memcpy(theta_ddot.data[0],tempTStep->data[0],  sizeof *theta_ddot.data[0] * timeStep);
+//
+//    matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[1], tempTStep);
+//    memcpy(tempTStep->data[0], theta_ddot.data[1], sizeof *theta_ddot.data[1] * timeStep);
+//
+//    theta_ddot.data[2] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[2], tempTStep)->data[0];
+//    theta_ddot.data[3] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[3], tempTStep)->data[0];
+//    theta_ddot.data[4] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[4], tempTStep)->data[0];
 
     matrix *F_ext = zeros(6, 1);
     matrix *F_0 = zeros(6, 1);
