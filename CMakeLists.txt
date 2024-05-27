@@ -9,7 +9,7 @@ project(CosseratRod_RKMK_C C)
 #set(CMAKE_OSX_ARCHITECTURES "arm64") # Add any other architectures you need, separated by semicolons
 #set(CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE "arm64")
 #endif()
-set(CMAKE_PREFIX_PATH "/opt/homebrew")
+#set(CMAKE_PREFIX_PATH "/opt/homebrew")
 set(CMAKE_PREFIX_PATH "/usr/local/bin")
 link_directories("/opt/homebrew/lib")
 include_directories("/opt/homebrew/include")
@@ -33,9 +33,9 @@ set(FDM_SOURCE FDM/Discretization.c FDM/FDM.c
         RunMeInvDyn.c)
 
 # Create libraries
-add_library(LieGroup STATIC ${LIE_GROUP_SOURCES})
-add_library(MatrixLib STATIC ${MATRIX_LIB_SOURCES})
-add_library(RobotLib STATIC ${ROBOT_LIB_SOURCES})
+add_library(MatrixLib SHARED ${MATRIX_LIB_SOURCES})
+add_library(LieGroup SHARED ${LIE_GROUP_SOURCES})
+add_library(RobotLib SHARED ${ROBOT_LIB_SOURCES})
 add_library(TestLib STATIC ${TEST_SOURCE})
 add_library(FDM STATIC ${FDM_SOURCE})
 # Main executable
@@ -45,8 +45,19 @@ add_executable(rigidKin RunMeRigidKinCW.c)
 add_executable(InvDyn RunMeInvDyn.c)
 add_executable(playground playground.c)
 # Link libraries to the executable
+# Link GSL libraries with MatrixLib
+target_link_libraries(MatrixLib PRIVATE -lgsl -lgslcblas)
+target_link_libraries(LieGroup PRIVATE MatrixLib)
+target_link_libraries(RobotLib PRIVATE -lgsl -lgslcblas MatrixLib LieGroup)
+
+install(TARGETS MatrixLib LieGroup RobotLib TestLib FDM
+        LIBRARY DESTINATION /Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/sharedLibs
+)
+
+
 target_link_libraries(CosseratRod_RKMK_C MatrixLib LieGroup RobotLib FDM -lm)
-target_link_libraries(InvDyn MatrixLib LieGroup RobotLib FDM -lm -lgsl -lgslcblas)
+target_link_libraries(InvDyn -lm -lgsl -lgslcblas MatrixLib LieGroup RobotLib)
+
 target_link_libraries(runTests TestLib MatrixLib LieGroup RobotLib FDM -lm)
 target_link_libraries(rigidKin TestLib MatrixLib LieGroup RobotLib FDM -lm -lgsl -lgslcblas)
 target_link_libraries(playground MatrixLib LieGroup RobotLib FDM -lm -lgsl -lgslcblas -lm)

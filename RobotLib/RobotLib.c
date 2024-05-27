@@ -992,6 +992,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 
             flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i, tempR6n1), curr_body->object->flex,
                      getSection(eta, 0, 5, i, i, tempR6n2), c0, c1, c2, dyn);
+
             setSection(d_eta, 0,5,i,i, dyn->d_eta_end);
             //memcpy(g_ref[i], dyn->g_end, sizeof(matrix));
             copyMatrix(dyn->g_end, g_ref[i]);
@@ -1456,9 +1457,9 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     matrix *CoM2CoM = zeros(4, 4);
     //[]     FDM Coefficients for BDF-2
-    double c0 = 1.5 / dt;
-    double c1 = -2 / dt;
-    double c2 = .5 / dt;
+    double c0 = 1.5 / dt;//60
+    double c1 = -2 / dt;//-80
+    double c2 = .5 / dt;//20
     //options = optimset('Display','OFF','TolFun',1e-9);
 
     //todo does this need to find ALL roots or just the one 'nearest' to the initial guess?
@@ -1491,7 +1492,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     rigidKin *kin = rigidKinAlloc();
     matrix *F_dist ;
-    flexDyn *dyn = flexDynAlloc(robot->numObjects);
+    flexDyn *dyn = flexDynAlloc();
 
 
     matrix **etaPrev = malloc(sizeof(matrix) * (numBody + 2));

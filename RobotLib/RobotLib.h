@@ -9,7 +9,7 @@
 #ifndef COSSERATROD_RKMK_C_ROBOTLIB_H
 #define COSSERATROD_RKMK_C_ROBOTLIB_H
 #include "LieGroup.h"
-#include "FDM.h"
+//#include "FDM.h"
 #include <gsl/gsl_deriv.h>
 typedef struct rigidBody_s{
     char *name;
