@@ -338,6 +338,8 @@ matrix *expm_SO3(matrix *m, matrix *result){
     assert(result->numRows == 3);
     assert(result->numCols == 3);
 
+
+    zeroMatrix(result);
     matrix *temp = matrix_new(3,1);
     double mag = norm(unhat_SO3(m, temp));
 
@@ -376,19 +378,17 @@ matrix *expm_SE3(matrix *G, matrix *result) {
     assert(G->numRows == 4 && G->numCols == 4);
     assert(result->numRows == 4 && result->numCols == 4);
 
-    if (G == result) {
-        matrix *tempG = matrix_new(4, 4);
-        copyMatrix(G, tempG);
-        G = tempG;
-    }
+    matrix *tempG = matrix_new(4, 4);
+    copyMatrix(G, tempG);
+    //G = tempG;
 
     zeroMatrix(result);
 
     matrix *Gw = matrix_new(3, 3);
-    getSection(G, 0, 2, 0, 2, Gw);
+    getSection(tempG, 0, 2, 0, 2, Gw);
 
     matrix *Gu = matrix_new(3, 1);
-    getSection(G, 0, 2, 3, 3, Gu);
+    getSection(tempG, 0, 2, 3, 3, Gu);
 
     matrix *temp3x1 = matrix_new(3, 1);
     matrix *temp3x3 = matrix_new(3, 3);
@@ -426,9 +426,9 @@ matrix *expm_SE3(matrix *G, matrix *result) {
     matrix_free(temp3x3);
     matrix_free(A);
 
-    if (G != result) {
-        matrix_free(G);
-    }
+
+    matrix_free(tempG);
+
 
     return result;
 }

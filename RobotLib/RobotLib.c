@@ -47,23 +47,26 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     matrix *temp4x4n1 = matrix_new(4,4);
     matrix *temp4x4n2 = matrix_new(4,4);
     matrix *temp4x4n3 = matrix_new(4,4);
+    matrix *temp4x4n4 = matrix_new(4,4);
 
     matrix *tempR6n1 = matrix_new(6,1);
     matrix *tempR6n2 = matrix_new(6,1);
     matrix *tempR6n3 = matrix_new(6,1);
+    matrix *tempR6n4 = matrix_new(6,1);
 
     expm_SE3(hat_R6(matrix_sub(joint->parent->body->rigid->Transform, parentCoM, tempR6n1), temp4x4n1), temp4x4n1);
 
     matrix_scalar_mul(joint->twistR6, joint->homepos, tempR6n2);
     hat_R6(tempR6n2, temp4x4n2);
-    expm_SE3(temp4x4n2, temp4x4n2);
+    expm_SE3(temp4x4n2, temp4x4n3);
 
     matMult(
             temp4x4n1,
-            temp4x4n2,
-            temp4x4n2);
+            temp4x4n3,
+            temp4x4n3);
 
-    matMult(temp4x4n2,expm_SE3(hat_R6(childCoM, temp4x4n3), temp4x4n3 ), CoM2CoM);
+    zeroMatrix(CoM2CoM);
+    matMult(temp4x4n3,expm_SE3(hat_R6(childCoM, temp4x4n4), temp4x4n4 ), CoM2CoM);
     //free(parentCoM);
 //    matMult(matMult(
 //                              //curr_obj
@@ -995,6 +998,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 
         setSection(eta, 0,5,i,i, kin->eta);
         setSection(d_eta, 0,5,i,i, kin->d_eta);
+
 
         matMult(matrix_transpose(adj(g_act_wrt_prev[i], temp6x6n1), temp6x6n2), F_temp, F_temp);//why is this not a pointer
 

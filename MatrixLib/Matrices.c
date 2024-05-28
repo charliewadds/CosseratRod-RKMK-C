@@ -450,10 +450,12 @@ matrix *matMult(matrix *m1, matrix *m2, matrix *result){
     matrix *temp;
     if(m1 == result || m2 == result){
         temp = matrix_new(result->numRows, result->numCols);
+        copyMatrix(result, temp);
     }else{
         temp = result;
-        zeroMatrix(result);
+
     }
+    zeroMatrix(result);
 
 
     for(int i = 0; i < m1->numRows; i++){
