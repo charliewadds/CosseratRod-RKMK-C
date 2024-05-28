@@ -996,7 +996,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
         setSection(eta, 0,5,i,i, kin->eta);
         setSection(d_eta, 0,5,i,i, kin->d_eta);
 
-        matMult(matrix_transpose(adj(g_act_wrt_prev[i], temp6x6n1), temp6x6n1), F_temp, F_temp);//why is this not a pointer
+        matMult(matrix_transpose(adj(g_act_wrt_prev[i], temp6x6n1), temp6x6n2), F_temp, F_temp);//why is this not a pointer
 
         if(curr_body->type == 1) {//flexible body
             if(dyn->eta != NULL){
@@ -1020,6 +1020,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
             if(F_dist != NULL){
                 matrix_free(F_dist);
             }
+
             //matrix_free(F_dist);
             F_dist = zeros(6, curr_body->object->flex->N);
 
@@ -1502,7 +1503,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     //printf("INIT_GUESS pre\n");
 
     //printMatrix(matrix_sub(ones(6,1),InitGuess));
-//printMatrix(Flex_MB_BCS(InitGuess, robot,F_ext, c0,c1,c2 ))
+    //printMatrix(Flex_MB_BCS(InitGuess, robot, *F_ext, c0,c1,c2 ));
     //assert(!isnan(InitGuess->data[0][0]));
     InitGuess = find_roots(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
 
@@ -1578,7 +1579,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 //
 //        printf("gref\n");
 //        printMatrix(g_ref[i]);
-        matMult(matrix_transpose(adj(g_act_wrt_prev[i], temp6x6n1), temp6x6n1), F_temp, F_temp);
+        matMult(matrix_transpose(adj(g_act_wrt_prev[i], temp6x6n1), temp6x6n2), F_temp, F_temp);
 
         if (body->type == 1) {//flexible body
             if (dyn->eta != NULL) {
