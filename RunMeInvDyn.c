@@ -212,7 +212,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
     matrix *Z = zeros(6,1);
 
-    SE3 *Z_SE3 = new_SE3_zeros();
+    //SE3 *Z_SE3 = new_SE3_zeros();
 
     double L_0 = 0.4;
     matrix F_0 = *zeros(6,1);
@@ -422,7 +422,7 @@ int main() {
     matrix theta_dot = *zeros(5, 1);
 
     double dt = 0.025;
-    int timeStep = 100;
+    int timeStep = 2;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);

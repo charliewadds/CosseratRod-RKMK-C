@@ -197,6 +197,9 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
     matrix_free(g_cur_wrt_prev);//todo this might already be freed
     matrix_free(temp6x6n1);
     matrix_free(temp4x4n1);
+
+    matrix_free(temp6x1n2);
+    matrix_free(temp6x1n3);
     return result;
 }
 
@@ -261,7 +264,7 @@ void freeRigidBody(rigidBody *body){
     //free(body->mass);
     matrix_free(body->Transform);
     matrix_free(body->CoM);
-    free(body->name);//todo do I need to free this?
+    //free(body->name);//todo do I need to free this?
     free(body);
 }
 void freeFlexBody(flexBody *body){
@@ -280,7 +283,7 @@ void freeFlexBody(flexBody *body){
 void freeJoint(rigidJoint *joint){
     //free(joint->name);
     matrix_free(joint->twistR6);
-    //free(joint->limits);
+    free(joint->limits);
     //free(joint->parent);
     //free(joint->)
     free(joint);
@@ -300,25 +303,37 @@ void robotFree(Robot *robot){
 
         }else if(robot->objects[i]->type == 2){
             freeJoint(robot->objects[i]->object->joint);
-            free(robot->objects[i]);
             free(robot->objects[i]->object);
             free(robot->objects[i]);
         }
-        free(robot->objects[i]);
+
     }
     free(robot);
 
 }
 
+rigidJoint *rigidJoint_alloc(){
+    rigidJoint *joint = (rigidJoint *) malloc(sizeof(rigidJoint));
+    joint->name = malloc(100);
+    joint->twistR6 = matrix_new(6,1);
+    joint->limits = malloc(sizeof(double) * 2);
+    //joint->parent = malloc(sizeof(struct object_s));
+    //joint->child = malloc(sizeof(struct object_s));
+    return joint;
+}
+
 rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double velocity, double acceleration, double *limits,
                           double homepos, Object *parent, Object *child) {
-    rigidJoint *joint = (rigidJoint *) malloc(sizeof(rigidJoint));
+    rigidJoint *joint = rigidJoint_alloc();
     joint->name = name;
-    joint->twistR6 = twistR6;
+    //joint->twistR6 = twistR6;
+
+    copyMatrix(twistR6, joint->twistR6);
     joint->position = position;
     joint->velocity = velocity;
     joint->acceleration = acceleration;
-    joint->limits = limits;
+    //joint->limits = limits;
+    memcpy(joint->limits, limits, sizeof(double) * 2);
     joint->homepos = homepos;
 
     //todo this whole body union thing is a mess it needs to be redone
@@ -928,9 +943,8 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 
     eye(g_ref[0]);           //[SE(3)]    Base Frame Located @ Base Frame so Identity Transform
     eye(g_act_wrt_prev[0]);  //[SE(3)]    Base Frame Located @ Base Frame so Identity Transform
-    //eta(:,1) = zeros(6,1);           //[se(3)]    Base Frame Stationary so Twist zero todo this does nothing right??
-    //d_eta(:,1) = zeros(6,1);         //[se(3)]    Base Frame Stationary so Twist Rate zero todo same here
-    matrix F_temp = *zeros(6,1);
+
+    matrix F_temp = *zeros(6,1);//todo this should be a pointer
     
     //recursive definition of dynamics using Euler-pointcare EOM
     Object *curr_joint;
@@ -1108,7 +1122,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
     freeRigidKin(kin);
     matrix_free(F);
     matrix_free(d_eta);
-    //matrix_free(&F_temp);
+    matrix_free(&F_temp);
     matrix_free(CoM2CoM);
     //matrix_free(F_dist);
 
@@ -1160,8 +1174,8 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
     }
 
     // Free memory
-    //matrix_free(x_matrix);
-    //matrix_free(result);
+    matrix_free(x_matrix);
+    matrix_free(result);
 
     return GSL_SUCCESS;//todo is this right?
 }

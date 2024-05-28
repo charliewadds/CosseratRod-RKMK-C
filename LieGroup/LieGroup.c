@@ -81,6 +81,9 @@ SE3 *new_SE3_zeros(){
     T->T->data[3][1] = 0;
     T->T->data[3][2] = 0;
     T->T->data[3][3] = 1;
+
+    matrix_free(P);
+    free_SO3(R);
     return T;
 }
 
@@ -256,13 +259,15 @@ matrix *adj(matrix *T, matrix *result) {
     //matrix *out = zeros(6,6);
 
     matrix *temp = matrix_new(3,3);
-
+    zeroMatrix(result);
     setSection(result, 0, 2, 0, 2, r);
     setSection(result, 0, 2, 3, 5, matMult( hat_R3(p, temp),r, temp));
 
     setSection(result, 3, 5, 3, 5, r);
-    setSection(result, 3, 5, 0, 2, zeros(3,3));//todo does this make sense?
+    //setSection(result, 3, 5, 0, 2, zeros(3,3));//todo does this make sense?
 
+    matrix_free(p);
+    matrix_free(r);
     matrix_free(temp);
     return result;
 }
