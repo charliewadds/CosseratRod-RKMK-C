@@ -260,8 +260,8 @@ class testLieGroup:
 class testMatrix:
     def test_matrix_add_sq(matlab_engine):
         # Define test inputs (ensure these match the values used in the MATLAB test)
-        randSize = random() * 100# change 100 to set max size
-        m1 = np.random.rand(randSize,randSize)
+        randSize =  int(random() * 100)# change 100 to set max size
+        m1 = np.random.rand( randSize, randSize)
         m2 = np.random.rand(randSize,randSize)
 
         #testing agains numpy
@@ -271,27 +271,111 @@ class testMatrix:
 
         c_result = makeMatrix(npResult)
         # Call the C function
-        c_result = matrixCall.matrix_add(m1,m2_result)
+        c_result = matrixCall.call_matrix_add(m1, m2, c_result)
 
         print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
-        print("testing unhatSO3 in C against unhatSO3 in MATLAB")
+        print("testing add in C against add in Numpy")
         print("------------------------------------------------------")
-        print("\n\t\t\t\tInput")
-        print(v)
+
+        print("\n\t\t\t\tInput 1")
+        print(m1)
+        print("\n\t\t\t\tInput 2")
+        print(m2)
+
         print("\n\t\t\t\tMATLAB Output")
-        print(matlab_result)
+        print(npResult)
 
         print("\n\t\t\t\tC Output")
         print(c_result)
 
         # Compare results (you might need to adjust the tolerance based on the expected numerical accuracy)
-        np.testing.assert_allclose(c_result, matlab_result, rtol=1e-5, atol=1e-8)
+        np.testing.assert_allclose(c_result, npResult, rtol=1e-5, atol=1e-8)
 
-        print("MATLAB Input")
-        print(v)
-        print("MATLAB Output")
-        print(matlab_result)
+
+        print("TEST PASSED")
+        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
+    def test_matrix_add3(matlab_engine):
+
+        # Define test inputs (ensure these match the values used in the MATLAB test)
+        randSize =  int(random() * 100)# change 100 to set max size
+        m1 = np.random.rand( randSize, randSize)
+        m2 = np.random.rand(randSize,randSize)
+        m3 = np.random.rand(randSize,randSize)
+
+        #testing agains numpy
+
+
+        npResult = m1 + m2 + m3
+
+        c_result = makeMatrix(npResult)
+        # Call the C function
+        c_result = matrixCall.call_matrix_add3(m1, m2, m3, c_result)
+
+        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
+        print("testing add3 in C against unhatSO3 in Numpy")
+        print("------------------------------------------------------")
+
+        print("\n\t\t\t\tInput 1")
+        print(m1)
+        print("\n\t\t\t\tInput 2")
+        print(m2)
+        print("\n\t\t\t\tInput 2")
+        print(m3)
+
+        print("\n\t\t\t\tMATLAB Output")
+        print(npResult)
+
+        print("\n\t\t\t\tC Output")
+        print(c_result)
+
+        # Compare results (you might need to adjust the tolerance based on the expected numerical accuracy)
+        np.testing.assert_allclose(c_result, npResult, rtol=1e-5, atol=1e-8)
+
+
+        print("TEST PASSED")
+        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
+        
+    def test_matrix_sub(matlab_engine):
+        # Define test inputs (ensure these match the values used in the MATLAB test)
+        randSize =  int(random() * 100)# change 100 to set max size
+        m1 = np.random.rand( randSize, randSize)
+        m2 = np.random.rand(randSize,randSize)
+
+
+        #testing agains numpy
+
+
+        npResult = m1 + m2
+
+        c_result = makeMatrix(npResult)
+        # Call the C function
+        c_result = matrixCall.call_matrix_sub(m1, m2, c_result)
+
+        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
+        print("testing sub in C against subtracting in Numpy")
+        print("------------------------------------------------------")
+
+        print("\n\t\t\t\tInput 1")
+        print(m1)
+        print("\n\t\t\t\tInput 2")
+        print(m2)
+
+
+        print("\n\t\t\t\tMATLAB Output")
+        print(npResult)
+
+        print("\n\t\t\t\tC Output")
+        print(c_result)
+
+        # Compare results (you might need to adjust the tolerance based on the expected numerical accuracy)
+        np.testing.assert_allclose(c_result, npResult, rtol=1e-5, atol=1e-8)
+
+
         print("TEST PASSED")
         print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
 
+
+
 testLieGroup.test_all(testLieGroup,eng);#todo I havent used python in a while, this is not the right way to do this
+testMatrix.test_matrix_add_sq(eng)
+testMatrix.test_matrix_add3(eng)

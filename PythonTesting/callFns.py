@@ -105,12 +105,12 @@ class lieGroupCall:
         return result_numpy
 
 
-class matrixCalls:
+class matrixCall:
     def call_matrix_add(m1, m2, result_ptr):
         m1_ptr = makeMatrix(m1)
         m2_ptr = makeMatrix(m2)
 
-        lieGroupLib.expm_SE3(m1, m2, ctypes.byref(result_ptr))
+        matrixLib.matrix_add(m1_ptr, m2_ptr, ctypes.byref(result_ptr))
 
         result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
         for i in range(result_ptr.numRows):
@@ -118,3 +118,58 @@ class matrixCalls:
                 result_numpy[i, j] = result_ptr.data[i][j]
 
         return result_numpy
+
+
+    def call_matrix_add3(m1, m2, m3, result_ptr):
+        m1_ptr = makeMatrix(m1)
+        m2_ptr = makeMatrix(m2)
+        m3_ptr = makeMatrix(m3)
+
+        matrixLib.matrix_add3(m1_ptr, m2_ptr, m3_ptr, ctypes.byref(result_ptr))
+
+        result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
+        for i in range(result_ptr.numRows):
+            for j in range(result_ptr.numCols):
+                result_numpy[i, j] = result_ptr.data[i][j]
+
+        return result_numpy
+
+    def call_matrix_sub(m1, m2, result_ptr):
+        m1_ptr = makeMatrix(m1)
+        m2_ptr = makeMatrix(m2)
+
+        matrixLib.matrix_sub(m1_ptr, m2_ptr, ctypes.byref(result_ptr))
+
+        result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
+        for i in range(result_ptr.numRows):
+            for j in range(result_ptr.numCols):
+                result_numpy[i, j] = result_ptr.data[i][j]
+
+        return result_numpy
+
+    def call_matrix_scalar_mult(m, scalar, result_ptr):
+        m_ptr = makeMatrix(m)
+
+        matrixLib.matrix_scalar_mult(m_ptr, scalar, ctypes.byref(result_ptr))
+
+        result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
+        for i in range(result_ptr.numRows):
+            for j in range(result_ptr.numCols):
+                result_numpy[i, j] = result_ptr.data[i][j]
+
+        return result_numpy
+
+    def call_matrix_solve(A, B, result_ptr):
+        A_ptr = makeMatrix(A)
+        B_ptr = makeMatrix(B)
+
+        matrixLib.matrix_solve(A_ptr, B_ptr, ctypes.byref(result_ptr))
+
+        result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
+
+        for i in range(result_ptr.numRows):
+            for j in range(result_ptr.numCols):
+                result_numpy[i, j] = result_ptr.data[i][j]
+
+        return result_numpy
+
