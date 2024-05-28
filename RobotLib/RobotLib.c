@@ -191,13 +191,16 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
     copyMatrix(d_eta, result->d_eta);
 
     matrix_free(eta);
-    matrix_free(temp6x1n1);
+
     matrix_free(newTwist);
     matrix_free(g_cur);
     matrix_free(g_cur_wrt_prev);//todo this might already be freed
     matrix_free(temp6x6n1);
+    matrix_free(temp6x6n2);
     matrix_free(temp4x4n1);
+    matrix_free(d_eta);
 
+    matrix_free(temp6x1n1);
     matrix_free(temp6x1n2);
     matrix_free(temp6x1n3);
     return result;
@@ -501,16 +504,6 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
  */
 COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matrix *f_sh, matrix *K, matrix *C, matrix *M, double c0, matrix *f_0, matrix *Fd_ext, COSS_ODE_OUT *result) {
-
-
-//    printf("odeEta\n");
-//    printMatrix(eta);
-//    printf("\n\n\n");
-    //COSS_ODE_OUT *out = (COSS_ODE_OUT *) malloc(sizeof(COSS_ODE_OUT));//TODO how is this leaked???
-
-    // Time Discretization (definition of c0 & X_h based on FDM used)
-
-    //matrix *tempR6n1 = matrix_new(6,1);
 
     matrix *f_t = matrix_new(6,1);
     matrix_add(matrix_scalar_mul(f, c0, f_t), f_h, f_t);     // Local Time Discretization for history in Local Coordinates
@@ -1122,7 +1115,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
     freeRigidKin(kin);
     matrix_free(F);
     matrix_free(d_eta);
-    matrix_free(&F_temp);
+    //matrix_free(&F_temp);
     matrix_free(CoM2CoM);
     //matrix_free(F_dist);
 
@@ -1510,7 +1503,14 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
 
     matrix **etaPrev = malloc(sizeof(matrix) * (numBody + 2));
+    for(int i = 0; i < numBody + 2; i++){
+        etaPrev[i] = zeros(6,1);
+    }
+
     matrix **etaPPrev = malloc(sizeof(matrix) * (numBody + 2));
+    for(int i = 0; i < numBody + 2; i++){
+        etaPPrev[i] = zeros(6,1);
+    }
 
     matrix **fPrev = malloc(sizeof(matrix) * (numBody + 2));
     matrix **fPPrev = malloc(sizeof(matrix) * (numBody + 2));
@@ -1593,8 +1593,11 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
             fPPrev[i] = body->object->flex->f_prev;
             fPrev[i] = dyn->f;
 
-            etaPPrev[i] = body->object->flex->eta_prev;//double check this
-            etaPrev[i] = dyn->eta;
+            copyMatrix(body->object->flex->eta_prev, etaPPrev[i]);//double che
+            //etaPPrev[i] = body->object->flex->eta_prev;//double check this
+
+            copyMatrix(dyn->eta, etaPrev[i]);
+            //etaPrev[i] = dyn->eta;
 
 
         } else if (i > BC_Start) {//rigid bodies
@@ -1680,8 +1683,11 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         for (int i = 1; i < numBody + 2; i++) {
             Object *body = robot->objects[2 * i ];
             if(body->type == 1) {
-                body->object->flex->eta_prev = etaPrev[i];
-                body->object->flex->eta_pprev = etaPPrev[i];
+                //body->object->flex->eta_prev = etaPrev[i];
+                copyMatrix(etaPrev[i], body->object->flex->eta_prev);
+
+                //body->object->flex->eta_pprev = etaPPrev[i];
+                copyMatrix(etaPPrev[i], body->object->flex->eta_pprev);
 
                 body->object->flex->f_prev = fPrev[i];
                 body->object->flex->f_pprev = fPPrev[i];
