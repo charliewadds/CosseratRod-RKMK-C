@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 set(CMAKE_C_STANDARD 11)
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=leak")
 project(CosseratRod_RKMK_C C)
 # Set optimization flags for C compiler
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native")
