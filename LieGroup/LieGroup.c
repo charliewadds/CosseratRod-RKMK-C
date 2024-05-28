@@ -133,7 +133,7 @@ matrix *T_from_PR_SO3(SO3 *R, matrix *P){
 //_________________________________________________________________________________________________________
 
 matrix *hat_R3(matrix *z, matrix *result){
-    printf("z->numRows: %d\n", z->numRows);
+
     assert(z->numRows == 3);
     assert(z->numCols == 1);
 
