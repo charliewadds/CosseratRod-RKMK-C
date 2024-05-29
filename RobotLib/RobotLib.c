@@ -510,7 +510,10 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
  */
 COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matrix *f_sh, matrix *K, matrix *C, matrix *M, double c0, matrix *f_0, matrix *Fd_ext, COSS_ODE_OUT *result) {
-
+//    if(isnan(eta->data[0][0])){
+//        printf("eta is nan\n");
+//        assert(0);
+//    }
     matrix *f_t = matrix_new(6,1);
     matrix_add(matrix_scalar_mul(f, c0, f_t), f_h, f_t);     // Local Time Discretization for history in Local Coordinates
 
@@ -552,7 +555,10 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
     result->f_s);
 
     matrix_add(f_t, matMult(adj_R6(eta, temp6x6n1), f, tempR6n1), result->eta_s);
-
+//    if(isnan(result->eta_s->data[1][0]) || isnan(result->eta_s->data[0][0])){
+//        printf("eta is nan\n");
+//        assert(0);
+//    }
 
     matrix_free(eta_t);
 
@@ -806,6 +812,8 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
                    (matrix_add(getSection(result->eta,0,5,i,i, tempR6n1), matrix_scalar_mul(ode->eta_s,ds, tempR6n2), tempR6n1))
         );
 
+
+
         matMult(g[i], expm_SE3(matrix_scalar_mul(hat_R6(getSection(result->f,0,5,i,i, tempR6n1), temp4x4n1), ds, temp4x4n1), temp4x4n1),g[i+1]);
 
 
@@ -1011,6 +1019,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
             if(dyn->f != NULL){
                 matrix_free(dyn->f);
             }
+
             dyn->f = zeros(6, curr_body->object->flex->N);
 
             if(i == BC_Start ) {
@@ -1058,6 +1067,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 //                    ),matMult(curr_body->object->rigid->mass,getSection(eta,0,5,i,i))
 //            );
         }
+
     }
 
 
@@ -1708,7 +1718,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
                                adj(expm_SE3(hat_R6(matrix_scalar_mul(objCoM,-1, tempR6n1),temp4x4n1), temp4x4n1), temp6x6n1),
                                joint->twistR6,
                                tempR6n2),
-                               tempR6n1
+                               temp6x6n2
                        ));
 
         }

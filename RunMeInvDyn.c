@@ -513,7 +513,7 @@ int main() {
     for(int i = 0; i < timeStep; i++){
         printf("timestep: %d\n", i);
         //printMatrix(Flex_MB_BCS(F_0, robot,  *F_ext, 60, -80, 20));//todo just for testing
-        addRobotState(robot, "testRobotOut.json", i);
+        //addRobotState(robot, "testRobotOut.json", i);
         matrix f = *robot->objects[2*BC_Start ]->object->flex->f_prev;//save previous guess
 
         idm = IDM_MB_RE(robot, theta, theta_dot, getSection(theta_ddot, 0, 4, i, i, tempLinkx1), F_ext, dt, F_0);
@@ -543,13 +543,13 @@ int main() {
                 currJointIndex++;
             }
         }
-        matrix *angles = zeros(robot->numObjects+1,200);
-        for(int j = 0; j < robot->numObjects; j++){
-            if(robot->objects[j]->type == 2){
-                angles->data[j][i] = robot->objects[j]->object->joint->position;
-
-            }
-        }
+//        matrix *angles = zeros(robot->numObjects+1,200);
+//        for(int j = 0; j < robot->numObjects; j++){
+//            if(robot->objects[j]->type == 2){
+//                angles->data[j][i] = robot->objects[j]->object->joint->position;
+//
+//            }
+//        }
 
 
 

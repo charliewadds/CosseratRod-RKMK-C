@@ -117,9 +117,11 @@ matrix *matrix_add3(matrix *m1,matrix *m2, matrix *m3, matrix *result){
     assert(m1->numRows == m3->numRows);
     assert(m1->numCols == m3->numCols);
 
-    matrix_add(m1, m2, result);
-    matrix_add(result, m3, result);
+    matrix *temp = matrix_new(m1->numRows, m1->numCols);
+    matrix_add(m1, m2, temp);
+    matrix_add(temp, m3, result);
 
+    matrix_free(temp);
     return result;
 }
 
@@ -129,11 +131,14 @@ matrix *matrix_scalar_mul(matrix *m, double scalar, matrix *result){
     assert(result->numRows == m->numRows);
     assert(result->numCols == m->numCols);
 
-    for(int i = 0; i < m->numRows; i++){
-        for(int j = 0; j < m->numCols; j++){
-            result->data[i][j] = m->data[i][j] * scalar;
+    matrix *temp = matrix_new(m->numRows, m->numCols);
+    copyMatrix(m, temp);
+    for(int i = 0; i < temp->numRows; i++){
+        for(int j = 0; j < temp->numCols; j++){
+            result->data[i][j] = temp->data[i][j] * scalar;
         }
     }
+    matrix_free(temp);
     return result;
 }
 
@@ -379,6 +384,11 @@ void copyMatrix(matrix *m, matrix *result){
 
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
+
+//            if(isnan(m->data[i][j])){
+//                printf("NAN");
+//                assert(0);
+//            }
             result->data[i][j] = m->data[i][j];
         }
     }
@@ -439,40 +449,43 @@ matrix *matrix_sin(matrix *m){
 
 }
 //todo this can be improved with different algorithms, matlab uses strassen's algorithm
-matrix *matMult(matrix *m1, matrix *m2, matrix *result){
-
+matrix *matMult(matrix *m1, matrix *m2, matrix *result) {
+    // Ensure the matrices have compatible dimensions for multiplication
     assert(m1->numCols == m2->numRows);
 
-    assert((result->numRows == m1->numCols && result->numCols == m2->numCols)
-    ||
-    (result->numRows == m2->numRows && result->numCols == m1->numCols));
+    // Ensure the result matrix has the correct dimensions
+    assert((result->numRows == m1->numRows && result->numCols == m2->numCols) || (result->numRows == m1->numCols && result->numCols == m2->numRows));
 
     matrix *temp;
-    if(m1 == result || m2 == result){
+    if (m1 == result || m2 == result) {
         temp = matrix_new(result->numRows, result->numCols);
-        copyMatrix(result, temp);
-    }else{
+    } else {
         temp = result;
-
     }
-    zeroMatrix(result);
 
+    // Initialize the temporary/result matrix to zero
+    zeroMatrix(temp);
 
-    for(int i = 0; i < m1->numRows; i++){
-        for(int j = 0; j < m2->numCols; j++){
-            for(int k = 0; k < m1->numCols; k++){
-
+    // Perform the matrix multiplication
+    for (int i = 0; i < m1->numRows; i++) {
+        for (int j = 0; j < m2->numCols; j++) {
+            for (int k = 0; k < m1->numCols; k++) {
                 temp->data[i][j] += m1->data[i][k] * m2->data[k][j];
-                //assert(result->data[i][j] != NAN);
             }
+            // Ensure the calculated value is not NaN
+            //assert(!isnan(temp->data[i][j]));
         }
     }
-    if(m1 == result || m2 == result){
+
+    // If we used a temporary matrix, copy the results back to the result matrix
+    if (m1 == result || m2 == result) {
         copyMatrix(temp, result);
         matrix_free(temp);
     }
+
     return result;
 }
+
 
 matrix *matMult_chain(matrix *m1, matrix *m2){
 
@@ -540,9 +553,15 @@ matrix *matMult_elem(matrix *m1, matrix *m2){
 
 matrix *scalarMatDiv(matrix *m, double scalar, matrix *result){
     //matrix *result = matrix_new(m->numRows, m->numCols);
+    if(scalar == 0){
+        printf("DIVIDE BY ZERO");
+        assert(0);
+        return result;
+    }
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
             result->data[i][j] = m->data[i][j] / scalar;
+
         }
     }
     return result;
@@ -559,6 +578,10 @@ double norm(matrix *m){
         }
     }
 
+    if(result < 0){
+        printf("NEGATIVE SQUARE ROOT");
+        assert(0);
+    }
     result = sqrt(result);
     return result;
 }
@@ -771,6 +794,11 @@ double matrixRatio(matrix *m1, matrix *m2){
 
 matrix *elemDiv(matrix *m1, double scalar, matrix *result){
     //matrix *result = matrix_new(m1->numRows, m1->numCols);
+    if(scalar == 0){
+        printf("DIVIDE BY ZERO");
+        assert(0);
+        return result;
+    }
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m1->numCols; j++){
             result->data[i][j] = m1->data[i][j] / scalar;

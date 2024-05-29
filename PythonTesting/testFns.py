@@ -16,7 +16,7 @@ class testLieGroup:
     def test_hatR3(matlab_engine):
         # Define test inputs (ensure these match the values used in the MATLAB test)
         #v = np.array([[], [2], [3]], dtype=np.float64)
-        v = np.random.rand(3,1)
+        v = np.random.rand(3,1) * 10
         # Call the MATLAB function
         matlab_result = matlab_engine.hat(v)
         matlab_result = np.array(matlab_result)
@@ -44,7 +44,7 @@ class testLieGroup:
         print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
     def test_hatR6(matlab_engine):
         # Define test inputs (ensure these match the values used in the MATLAB test)
-        v = np.random.rand(6,1)
+        v = np.random.rand(6,1) * 10
 
         # Call the MATLAB function
         matlab_result = matlab_engine.hat(v)
@@ -374,8 +374,46 @@ class testMatrix:
         print("TEST PASSED")
         print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
 
+    def test_matrix_mul(matlab_engine):
+        # Define test inputs (ensure these match the values used in the MATLAB test)
+        randSize =  int(random() * 10)
+
+        m1 = np.random.rand( randSize, randSize)
+        m2 = np.random.rand(randSize,randSize)
+
+        #testing agains numpy
+
+
+        npResult = m1 * m2
+
+        c_result = makeMatrix(npResult)
+        # Call the C function
+        c_result = matrixCall.call_matrix_mult(m1, m2, c_result)
+
+        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
+        print("testing matrix multiplication in C against matrix multiplication in Numpy")
+        print("------------------------------------------------------")
+
+        print("\n\t\t\t\tInput 1")
+        print(m1)
+        print("\n\t\t\t\tInput 2")
+        print(m2)
+
+
+        print("\n\t\t\t\tMATLAB Output")
+        print(npResult)
+
+        print("\n\t\t\t\tC Output")
+        print(c_result)
+
+        # Compare results (you might need to adjust the tolerance based on the expected numerical accuracy)
+        np.testing.assert_allclose(c_result, npResult, rtol=1e-5, atol=1e-8)
+
+
+        print("TEST PASSED")
+        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
 
 
 testLieGroup.test_all(testLieGroup,eng);#todo I havent used python in a while, this is not the right way to do this
-testMatrix.test_matrix_add_sq(eng)
+testMatrix.test_matrix_mul(eng)
 testMatrix.test_matrix_add3(eng)

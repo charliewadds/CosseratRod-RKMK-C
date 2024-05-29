@@ -140,6 +140,8 @@ matrix *hat_R3(matrix *z, matrix *result){
     assert(z->numRows == 3);
     assert(z->numCols == 1);
 
+    assert(result->numRows == 3);
+    assert(result->numCols == 3);
     //matrix *T = zeros(3,3);
 
     result->data[0][1] = z->data[2][0] * -1;
@@ -249,28 +251,42 @@ matrix *adj(matrix *T, matrix *result) {
     assert(result->numRows == 6);
     assert(result->numCols == 6);
 
-    zeroMatrix(result); //todo is this necessary? also it could be faster
-    matrix *r = matrix_new(3,3);
-    getSection(T, 0, 2, 0, 2, r);
+    // Create temporary matrices
+    matrix *tempIn = matrix_new(4, 4);
+    copyMatrix(T, tempIn);
 
-    matrix *p = matrix_new(3,1);
-    getSection(T, 0, 2, 3, 3, p);
-
-    //matrix *out = zeros(6,6);
-
-    matrix *temp = matrix_new(3,3);
+    // Clear the result matrix
     zeroMatrix(result);
+
+    // Create submatrices
+    matrix *r = matrix_new(3, 3);
+    getSection(tempIn, 0, 2, 0, 2, r);
+
+    matrix *p = matrix_new(3, 1);
+    getSection(tempIn, 0, 2, 3, 3, p);
+
+    matrix *temp = matrix_new(3, 3);
+
+    // Set the first 3x3 block of the result matrix to r
     setSection(result, 0, 2, 0, 2, r);
-    setSection(result, 0, 2, 3, 5, matMult( hat_R3(p, temp),r, temp));
 
+    // Compute hat_R3(p) * r and set it in the result matrix
+    hat_R3(p, temp);
+    matMult(temp, r, temp);
+    setSection(result, 0, 2, 3, 5, temp);
+
+    // Set the bottom-right 3x3 block of the result matrix to r
     setSection(result, 3, 5, 3, 5, r);
-    //setSection(result, 3, 5, 0, 2, zeros(3,3));//todo does this make sense?
 
+    // Free temporary matrices
     matrix_free(p);
     matrix_free(r);
     matrix_free(temp);
+    matrix_free(tempIn);
+
     return result;
 }
+
 
 matrix *adj_chain(matrix *T) {
     assert(T->numRows == 4);

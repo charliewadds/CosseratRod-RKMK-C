@@ -173,3 +173,16 @@ class matrixCall:
 
         return result_numpy
 
+    def call_matrix_mult(A, B, result_ptr):
+        A_ptr = makeMatrix(A)
+        B_ptr = makeMatrix(B)
+
+        matrixLib.matMult(A_ptr, B_ptr, ctypes.byref(result_ptr))
+
+        result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
+
+        for i in range(result_ptr.numRows):
+            for j in range(result_ptr.numCols):
+                result_numpy[i, j] = result_ptr.data[i][j]
+
+        return result_numpy
