@@ -1,6 +1,7 @@
 from random import random
 
 import matlab.engine
+import numpy as np
 
 from termcolor import colored
 
@@ -413,7 +414,93 @@ class testMatrix:
         print("TEST PASSED")
         print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
 
+    def test_matrix_solve(matlab_engine):
+        # Define test inputs (ensure these match the values used in the MATLAB test)
+        randSize =  int(random() * 10)
+
+        A = np.random.rand(randSize, randSize)
+        A = A * (np.eye(randSize)*100)
+
+        B = np.random.rand(randSize, 1)
+
+        #testing agains numpy
+
+
+        npResult = np.linalg.solve(A,B);
+
+        c_result = makeMatrix(npResult)
+        # Call the C function
+        c_result = matrixCall.call_matrix_solve(A, B, c_result)
+
+        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
+        print("testing matrix solve in C against np.linlag.solve in Numpy")
+        print("------------------------------------------------------")
+
+        print("\n\t\t\t\tInput 1")
+        print(A)
+        print("\n\t\t\t\tInput 2")
+        print(B)
+
+
+        print("\n\t\t\t\tMATLAB Output")
+        print(npResult)
+
+        print("\n\t\t\t\tC Output")
+        print(c_result)
+
+        # Compare results (you might need to adjust the tolerance based on the expected numerical accuracy)
+        np.testing.assert_allclose(c_result, npResult, rtol=1e-5, atol=1e-8)
+
+
+        print("TEST PASSED")
+        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
+
+
+
+
+
+class testRobot:
+    def test_coss_ode(matlab_engine):
+
+
+        #testing agains numpy
+        eta = np.random.rand(6, 1)
+        f = np.random.rand(6, 1)
+        eta_h = np.random.rand(6, 1)
+        f_h = np.random.rand(6, 1)
+        f_sh = np.random.rand(6, 1)
+        K = np.random.rand(6, 6)
+        C = np.random.rand(6, 6)
+        M = np.random.rand(6, 6)
+        c0 = 60.0
+        f_0 = np.random.rand(6, 1)
+        Fd_ext = np.random.rand(6, 1)
+
+
+
+        matlabResult = matlab_engine.Coss_ODE(eta, f, eta_h, f_h, f_sh, K, C, M, c0, f_0, Fd_ext)
+
+
+        c_result = makeOdeOutput()
+        # Call the C function
+        c_result = robotCall.call_ode(eta, f, eta_h, f_h, f_sh, K, C, M, c0, f_0, Fd_ext, c_result)
+
+        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
+        print("testing COSS_ODE in C against Coss_ODE in MATLAB")
+        print("------------------------------------------------------")
+
+
+
+
+
+        # Compare results (you might need to adjust the tolerance based on the expected numerical accuracy)
+        np.testing.assert_allclose(c_result, matlabResult, rtol=1e-5, atol=1e-8)
+
+
+        print("TEST PASSED")
+        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
 
 testLieGroup.test_all(testLieGroup,eng);#todo I havent used python in a while, this is not the right way to do this
-testMatrix.test_matrix_mul(eng)
-testMatrix.test_matrix_add3(eng)
+# testMatrix.test_matrix_mul(eng)
+#testMatrix.test_matrix_solve(eng)
+#testRobot.test_coss_ode(eng)

@@ -1,5 +1,7 @@
 import ctypes
 
+import numpy as np
+robotLib = ctypes.CDLL('cmake-build-debug/libRobotLib.dylib')
 
 class matrix(ctypes.Structure):
     _fields_ = [
@@ -79,9 +81,22 @@ class Robot(ctypes.Structure):
     ]
 
 
-
+class ODE_output(ctypes.Structure):
+    _fields_ = [
+        ("eta_s", ctypes.POINTER(matrix)),
+        ("f_s", ctypes.POINTER(matrix))
+    ]
 #________________-Functions-____________________
 
+
+
+def makeOdeOutput():
+    # Create an instance of ODE_output
+    ode_output = None
+
+
+
+    return ode_output
 
 def makeMatrix(m):
     try:

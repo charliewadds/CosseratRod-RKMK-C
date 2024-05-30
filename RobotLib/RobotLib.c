@@ -514,6 +514,13 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
 //        printf("eta is nan\n");
 //        assert(0);
 //    }
+
+    if(result == NULL){
+        printf("result is null\n");
+
+        result = odeAlloc();
+        printf("pointer address is %p\n", result);
+    }
     matrix *f_t = matrix_new(6,1);
     matrix_add(matrix_scalar_mul(f, c0, f_t), f_h, f_t);     // Local Time Discretization for history in Local Coordinates
 
@@ -530,29 +537,61 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
     matrix *tempR6n2 = matrix_new(6,1);
     matrix *tempR6n3 = matrix_new(6,1);
 
-    matrix_solve(
-    matrix_add(K, matrix_scalar_mul(C, c0, temp6x6n1), temp6x6n1),
-    matrix_add(
-    matrix_add(
 
-       matrix_sub(
-            matrix_sub(
-                    matMult(M, eta_t, tempR6n1),
-                    matMult(matMult(matrix_transpose(adj_R6(eta, temp6x6n2), temp6x6n2), M, temp6x6n2), eta,tempR6n2),
-                    tempR6n1),
-            matMult(C, f_sh, tempR6n2),
-            tempR6n1),
+    matrix_scalar_mul(C, c0, temp6x6n2);
+    matrix_add(temp6x6n2, K, temp6x6n1);
+    //66n2 available
+    //temp6x6n1 = (K + C*c0)
 
-       matMult(
-               matrix_transpose(adj_R6(f, temp6x6n2), temp6x6n2),
-               matrix_add(
-                       matMult(K, matrix_sub(f,f_0, tempR6n2), tempR6n2),
-                       matMult(C,f_t,tempR6n3),
-                       tempR6n2),
-               tempR6n2),
-               tempR6n1),
-    Fd_ext, tempR6n1),
-    result->f_s);
+    matMult(M, eta_t, tempR6n1);
+    //tempR6n1 = M*eta_t
+
+
+    matrix_transpose(adj_R6(eta, temp6x6n2), temp6x6n2);
+    //temp6x6n2 = (adj(eta)')
+    matMult(M, eta, tempR6n3);
+    //tempR6n3 = M*eta
+    matMult(temp6x6n2, tempR6n3, tempR6n2);
+    //tempR6n2 = (adj(eta)')*M*eta
+    //tempR6n3 is available
+
+    matMult(C, f_sh, tempR6n3);
+    //tempR6n3 = C*f_sh
+
+    matrix_sub(tempR6n1, tempR6n2, tempR6n2);
+    matrix_sub(tempR6n2, tempR6n3, tempR6n1);
+    //tempR6n1 = M*eta_t - (adj(eta)')*M*eta - C*f_sh
+    //tempR6n3 is available
+    //tempR6n2 is available
+
+    //---------second half of bracket----------------------
+    //(adj(f)')*(K*(f - f_0) + C*f_t) + Fd_ext)
+
+    matrix_transpose(adj_R6(f, temp6x6n2), temp6x6n2);
+    //temp6x6n2 = (adj(f)')
+    matrix_sub(f, f_0, tempR6n3);
+    //tempR6n3 = f - f_0
+
+    matMult(K, tempR6n3, tempR6n3);
+    //tempR6n3 = K*(f - f_0)
+
+    matMult(C, f_t, tempR6n2);
+    //tempR6n2 = C*f_t
+
+    matrix_add(tempR6n3, tempR6n2, tempR6n2);
+    //tempR6n2 = K*(f - f_0) + C*f_t
+
+    matMult(temp6x6n2, tempR6n2, tempR6n3);
+    //tempR6n3 = (adj(f)')*(K*(f - f_0)+ C*f_t)
+
+    matrix_add(tempR6n3, Fd_ext, tempR6n3);
+    //tempR6n3 = (adj(f)')*(K*(f - f_0)+ C*f_t) + Fd_ext
+
+    matrix_add(tempR6n1, tempR6n3, tempR6n1);
+    //tempR6n1 = M*eta_t - (adj(eta)')*M*eta - C*f_sh + (adj(f)')*(K*(f - f_0)+ C*f_t) + Fd_ext
+
+    matrix_solve(temp6x6n1, tempR6n1, result->f_s);
+
 
     matrix_add(f_t, matMult(adj_R6(eta, temp6x6n1), f, tempR6n1), result->eta_s);
 //    if(isnan(result->eta_s->data[1][0]) || isnan(result->eta_s->data[0][0])){
@@ -702,7 +741,7 @@ void freeRigidKin(rigidKin *kin){
 }
 flexDyn *flexDynAlloc(){
     flexDyn *dyn = malloc(sizeof(flexDyn));
-    dyn->d_eta_end = zeros(6,6);
+    dyn->d_eta_end = zeros(6,1);
     dyn->g_end = zeros(4,4);
     dyn->eta = NULL;
     dyn->f = NULL;
@@ -813,8 +852,11 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
         );
 
 
-
-        matMult(g[i], expm_SE3(matrix_scalar_mul(hat_R6(getSection(result->f,0,5,i,i, tempR6n1), temp4x4n1), ds, temp4x4n1), temp4x4n1),g[i+1]);
+        getSection(result->f,0,5,i,i, tempR6n1);
+        hat_R6(tempR6n1, temp4x4n1);
+        matrix_scalar_mul(temp4x4n1, ds, temp4x4n1);
+        expm(temp4x4n1, temp4x4n1);
+        matMult(g[i], temp4x4n1,g[i+1]);
 
 
     }

@@ -144,14 +144,19 @@ matrix *hat_R3(matrix *z, matrix *result){
     assert(result->numCols == 3);
     //matrix *T = zeros(3,3);
 
-    result->data[0][1] = z->data[2][0] * -1;
-    result->data[0][2] = z->data[1][0];
+    matrix *temp = matrix_new(3,3);
+    temp->data[0][1] = z->data[2][0] * -1;
+    temp->data[0][2] = z->data[1][0];
 
-    result->data[1][0] = z->data[2][0];
-    result->data[1][2] = z->data[0][0] * -1;
+    temp->data[1][0] = z->data[2][0];
+    temp->data[1][2] = z->data[0][0] * -1;
 
-    result->data[2][0] = z->data[1][0] * -1;
-    result->data[2][1] = z->data[0][0];
+    temp->data[2][0] = z->data[1][0] * -1;
+    temp->data[2][1] = z->data[0][0];
+
+    copyMatrix(temp, result);
+    matrix_free(temp);
+
     return result;
 }
 
@@ -165,15 +170,18 @@ matrix *hat_R6(matrix *z, matrix *result){
     matrix *temp = matrix_new(3,3);
     matrix *temp3x1 = matrix_new(3,1);
 
-    zeroMatrix(result);
-    setSection(result, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0, temp3x1), temp));
-    setSection(result, 0, 2, 3, 3, getSection(z, 0, 2, 0, 0, temp3x1));
+    matrix *tempResult = matrix_new(4,4);
+    zeroMatrix(tempResult);
+    setSection(tempResult, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0, temp3x1), temp));
+    setSection(tempResult, 0, 2, 3, 3, getSection(z, 0, 2, 0, 0, temp3x1));
     //getSetSection(z, result,0,2,0,0,0,2,3,5);
     //setSection(result, 3, 3, 0, 3, zeros(1,4));//todo convert to zeroSection using memset
     //T->data[3][3] = 1;//todo this is not in matlab, dont I need it?
 
     matrix_free(temp);
     matrix_free(temp3x1);
+    copyMatrix(tempResult, result);
+    matrix_free(tempResult);
     return result;
 }
 
@@ -208,16 +216,13 @@ matrix *unhat_SO3(matrix *zhat, matrix *result){
     assert(result->numRows == 3);
     assert(result->numCols == 1);
 
-    //matrix *z = matrix_new(3,1);
+    matrix *temp = matrix_new(3,1);
+    temp->data[0][0] = zhat->data[2][1];
+    temp->data[1][0] = zhat->data[0][2];
+    temp->data[2][0] = zhat->data[1][0];
 
-    //result->data[0] = &zhat->data[2][1];
-    memcpy(result->data[0], &zhat->data[2][1], sizeof(double) * 1);
-
-    //result->data[1] = & zhat->data[0][2];
-    memcpy(result->data[1], &zhat->data[0][2], sizeof(double) * 1);
-
-    //result->data[2] = & zhat->data[1][0];
-    memcpy(result->data[2], &zhat->data[1][0], sizeof(double) * 1);
+    copyMatrix(temp, result);
+    matrix_free(temp);
 
     return result;
 }
@@ -251,38 +256,38 @@ matrix *adj(matrix *T, matrix *result) {
     assert(result->numRows == 6);
     assert(result->numCols == 6);
 
-    // Create temporary matrices
-    matrix *tempIn = matrix_new(4, 4);
-    copyMatrix(T, tempIn);
 
-    // Clear the result matrix
-    zeroMatrix(result);
 
+
+    matrix *tempRes = matrix_new(6,6);
     // Create submatrices
     matrix *r = matrix_new(3, 3);
-    getSection(tempIn, 0, 2, 0, 2, r);
+    getSection(T, 0, 2, 0, 2, r);
 
     matrix *p = matrix_new(3, 1);
-    getSection(tempIn, 0, 2, 3, 3, p);
+    getSection(T, 0, 2, 3, 3, p);
 
     matrix *temp = matrix_new(3, 3);
 
     // Set the first 3x3 block of the result matrix to r
-    setSection(result, 0, 2, 0, 2, r);
+    setSection(tempRes, 0, 2, 0, 2, r);
 
     // Compute hat_R3(p) * r and set it in the result matrix
     hat_R3(p, temp);
     matMult(temp, r, temp);
-    setSection(result, 0, 2, 3, 5, temp);
+    setSection(tempRes, 0, 2, 3, 5, temp);
 
     // Set the bottom-right 3x3 block of the result matrix to r
-    setSection(result, 3, 5, 3, 5, r);
+    setSection(tempRes, 3, 5, 3, 5, r);
 
     // Free temporary matrices
     matrix_free(p);
     matrix_free(r);
     matrix_free(temp);
-    matrix_free(tempIn);
+
+    copyMatrix(tempRes, result);
+    matrix_free(tempRes);
+    //matrix_free(tempIn);
 
     return result;
 }
@@ -321,6 +326,9 @@ matrix *adj_R6(matrix *z, matrix *result){
     assert(result->numRows == 6);
     assert(result->numCols == 6);
 
+
+    matrix *tempOut = matrix_new(6,6);
+
     matrix *gu = matrix_new(3,1);
     getSection(z, 0, 2, 0, 0, gu);
 
@@ -329,13 +337,17 @@ matrix *adj_R6(matrix *z, matrix *result){
 
     //matrix *r = zeros(6,6);
     matrix *temp = matrix_new(3,3);
-    setSection(result, 0, 2, 0, 2, hat_R3(gw, temp));
-    setSection(result, 0, 2, 3, 5, hat_R3(gu, temp));
-    setSection(result, 3, 5, 3, 5, hat_R3(gw, temp));
+    setSection(tempOut, 0, 2, 0, 2, hat_R3(gw, temp));
+    setSection(tempOut, 0, 2, 3, 5, hat_R3(gu, temp));
+    setSection(tempOut, 3, 5, 3, 5, hat_R3(gw, temp));
 
     matrix_free(gw);
     matrix_free(gu);
     matrix_free(temp);
+
+    copyMatrix(tempOut, result);
+    matrix_free(tempOut);
+
     return result;
 }
 
@@ -355,7 +367,8 @@ matrix *expm_SO3(matrix *m, matrix *result){
     assert(result->numCols == 3);
 
 
-    zeroMatrix(result);
+    matrix *tempOut = matrix_new(3,3);
+
     matrix *temp = matrix_new(3,1);
     double mag = norm(unhat_SO3(m, temp));
 
@@ -364,11 +377,11 @@ matrix *expm_SO3(matrix *m, matrix *result){
 
 
     if (mag == 0) {
-        eye(result);
+        eye(tempOut);
     } else {
         matrix_add(
                 matrix_add(
-                        eye(result),matrix_scalar_mul(elemDiv(m, mag, temp_3x3n1), sin(mag), temp_3x3n1)
+                        eye(tempOut),matrix_scalar_mul(elemDiv(m, mag, temp_3x3n1), sin(mag), temp_3x3n1)
                               , temp_3x3n1),
                                   matrix_scalar_mul(
                                           elemDiv(
@@ -377,7 +390,7 @@ matrix *expm_SO3(matrix *m, matrix *result){
                                                   ),
                                                   (1 - cos(mag))
                                           , temp_3x3n2)
-                        , result);
+                        , tempOut);
 
 
     }
@@ -385,6 +398,9 @@ matrix *expm_SO3(matrix *m, matrix *result){
     matrix_free(temp);
     matrix_free(temp_3x3n1);
     matrix_free(temp_3x3n2);
+
+    copyMatrix(tempOut, result);
+    matrix_free(tempOut);
     return result;
 }
 
@@ -394,17 +410,17 @@ matrix *expm_SE3(matrix *G, matrix *result) {
     assert(G->numRows == 4 && G->numCols == 4);
     assert(result->numRows == 4 && result->numCols == 4);
 
-    matrix *tempG = matrix_new(4, 4);
-    copyMatrix(G, tempG);
+    matrix *temp = matrix_new(4, 4);
+
     //G = tempG;
 
-    zeroMatrix(result);
+    //zeroMatrix(result);
 
     matrix *Gw = matrix_new(3, 3);
-    getSection(tempG, 0, 2, 0, 2, Gw);
+    getSection(G, 0, 2, 0, 2, Gw);
 
     matrix *Gu = matrix_new(3, 1);
-    getSection(tempG, 0, 2, 3, 3, Gu);
+    getSection(G, 0, 2, 3, 3, Gu);
 
     matrix *temp3x1 = matrix_new(3, 1);
     matrix *temp3x3 = matrix_new(3, 3);
@@ -429,12 +445,12 @@ matrix *expm_SE3(matrix *G, matrix *result) {
     }
 
     expm_SO3(Gw, temp3x3);
-    setSection(result, 0, 2, 0, 2, temp3x3);
+    setSection(temp, 0, 2, 0, 2, temp3x3);
 
     matMult(A, Gu, temp3x1);
-    setSection(result, 0, 2, 3, 3, temp3x1);
+    setSection(temp, 0, 2, 3, 3, temp3x1);
 
-    result->data[3][3] = 1;
+    temp->data[3][3] = 1;
 
     matrix_free(Gw);
     matrix_free(Gu);
@@ -442,8 +458,8 @@ matrix *expm_SE3(matrix *G, matrix *result) {
     matrix_free(temp3x3);
     matrix_free(A);
 
-
-    matrix_free(tempG);
+    copyMatrix(temp, result);
+    matrix_free(temp);
 
 
     return result;

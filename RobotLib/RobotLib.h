@@ -175,8 +175,10 @@ typedef struct COSS_ODE_OUT_s{
 
 }COSS_ODE_OUT;
 
-char* objToJson(Object *obj);
+COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matrix *f_sh, matrix *K, matrix *C, matrix *M, double c0, matrix *f_0, matrix *Fd_ext, COSS_ODE_OUT *result);
 
+char* objToJson(Object *obj);
+COSS_ODE_OUT *odeAlloc();
 void freeCOSS_ODE_OUT(COSS_ODE_OUT *out);
 /*Time Stepper for the Runge Kutta Method using an Explicit Integration Scheme
  * DETERMINE:    Spatial Derivative of Velocity and Strain Twists

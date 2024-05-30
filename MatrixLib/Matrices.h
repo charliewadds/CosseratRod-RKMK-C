@@ -36,6 +36,7 @@ char* matrixToJson(matrix *m, char *version);
 void matrixToFile(matrix *m, char *filename);
 
 gsl_matrix *matrix_to_gsl(matrix *matrix, gsl_matrix *out);
+gsl_matrix *copy_matrix_to_gsl(matrix *matrix, gsl_matrix *out);
 matrix *gsl_to_matrix(gsl_matrix *gsl_matrix, matrix *result);
 
 matrix *matrix_solve(matrix *A, matrix *b, matrix *result);

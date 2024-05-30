@@ -17,11 +17,23 @@ gsl_matrix *matrix_to_gsl(matrix *matrix, gsl_matrix *out){
     return out;
 }
 
+gsl_matrix *copy_matrix_to_gsl(matrix *matrix, gsl_matrix *out){
+    //gsl_matrix *m = gsl_matrix_alloc(matrix->numRows, matrix->numCols);
+    for(int i = 0; i < matrix->numRows; i++){
+        for(int j = 0; j < matrix->numCols; j++){
+            gsl_matrix_set(out, i, j, matrix->data[i][j]);
+        }
+    }
+    return out;
+}
+
 matrix *expm(matrix *A, matrix *result){
     assert(A->square == 1);
 
     gsl_matrix *gsl_A = gsl_matrix_alloc(A->numRows, A->numCols);
     gsl_matrix *gsl_result = gsl_matrix_alloc(A->numRows, A->numCols);
+    copy_matrix_to_gsl(A, gsl_A);
+    //matrix_to_gsl(A, gsl_A);
     gsl_linalg_exponential_ss(gsl_A, gsl_result, GSL_PREC_DOUBLE);
 
     gsl_to_matrix(gsl_result, result);
@@ -32,6 +44,7 @@ matrix *expm(matrix *A, matrix *result){
 
 matrix *gsl_to_matrix(gsl_matrix *gsl_matrix, matrix *result){
     //matrix *m = matrix_new(gsl_matrix->size1, gsl_matrix->size2);
+    zeroMatrix(result);
     for(int i = 0; i < result->numRows; i++){
         for(int j = 0; j < result->numCols; j++){
             result->data[i][j] = gsl_matrix_get(gsl_matrix, i, j);
@@ -101,11 +114,21 @@ matrix *matrix_add(matrix *m1, matrix *m2, matrix *result){
     assert(m1->numRows == m2->numRows);
     assert(m1->numCols == m2->numCols);
     //matrix *result = matrix_new(m1->numRows, m1->numCols);
+
+    assert(result->numRows == m1->numRows);
+    assert(result->numCols == m1->numCols);
+
+    matrix *temp = matrix_new(result->numRows, result->numCols);
+    copyMatrix(m1, temp);
+
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m1->numCols; j++){
-            result->data[i][j] = m1->data[i][j] + m2->data[i][j];
+            temp->data[i][j] = m1->data[i][j] + m2->data[i][j];
         }
     }
+
+    copyMatrix(temp, result);
+    matrix_free(temp);
     return result;
 
 }
@@ -131,13 +154,15 @@ matrix *matrix_scalar_mul(matrix *m, double scalar, matrix *result){
     assert(result->numRows == m->numRows);
     assert(result->numCols == m->numCols);
 
-    matrix *temp = matrix_new(m->numRows, m->numCols);
-    copyMatrix(m, temp);
-    for(int i = 0; i < temp->numRows; i++){
-        for(int j = 0; j < temp->numCols; j++){
-            result->data[i][j] = temp->data[i][j] * scalar;
+    matrix *temp = matrix_new(result->numRows, result->numCols);
+
+    for(int i = 0; i < m->numRows; i++){
+        for(int j = 0; j < m->numCols; j++){
+            temp->data[i][j] = m->data[i][j] * scalar;
         }
     }
+
+    copyMatrix(temp, result);
     matrix_free(temp);
     return result;
 }
@@ -177,8 +202,13 @@ matrix *matrix_solve(matrix *A, matrix *b, matrix *result){
     assert(A->numCols == A->numRows);
     //matrix *result = matrix_new(A->numRows, 1);
 
+
+
     matrix *A_inv = matrix_new(A->numRows, A->numCols);
     matrix_inverse(A, A_inv);
+
+
+
     matMult(A_inv, b, result);
 
     matrix_free(A_inv);
@@ -188,6 +218,7 @@ matrix *matrix_solve(matrix *A, matrix *b, matrix *result){
 
 matrix *matrix_inverse(matrix *m, matrix *result){
     assert(m->square == 1);
+
     gsl_matrix *gsl_m = gsl_matrix_alloc(m->numRows, m->numCols);
     matrix_to_gsl(m, gsl_m);
     gsl_permutation *p = gsl_permutation_alloc(m->numRows);
@@ -276,12 +307,16 @@ matrix *matrix_transpose(matrix *m, matrix *result){
     //matrix *result = matrix_new(m->numCols, m->numRows);
     assert(result->numRows == m->numCols);
     assert(result->numCols == m->numRows);
-
+    zeroMatrix(result);
+    matrix *temp = matrix_new(result->numRows, result->numCols);
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            result->data[j][i] = m->data[i][j];
+            temp->data[j][i] = m->data[i][j];
         }
     }
+
+    copyMatrix(temp, result);
+    matrix_free(temp);
 
     return result;
 }
@@ -381,7 +416,7 @@ void setSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, u
 void copyMatrix(matrix *m, matrix *result){
     assert(m->numRows == result->numRows);
     assert(m->numCols == result->numCols);
-
+    //zeroMatrix(result);
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
 
@@ -456,15 +491,10 @@ matrix *matMult(matrix *m1, matrix *m2, matrix *result) {
     // Ensure the result matrix has the correct dimensions
     assert((result->numRows == m1->numRows && result->numCols == m2->numCols) || (result->numRows == m1->numCols && result->numCols == m2->numRows));
 
-    matrix *temp;
-    if (m1 == result || m2 == result) {
-        temp = matrix_new(result->numRows, result->numCols);
-    } else {
-        temp = result;
-    }
+    matrix *temp = matrix_new(result->numRows, result->numCols);
 
     // Initialize the temporary/result matrix to zero
-    zeroMatrix(temp);
+    //zeroMatrix(temp);
 
     // Perform the matrix multiplication
     for (int i = 0; i < m1->numRows; i++) {
@@ -477,11 +507,9 @@ matrix *matMult(matrix *m1, matrix *m2, matrix *result) {
         }
     }
 
-    // If we used a temporary matrix, copy the results back to the result matrix
-    if (m1 == result || m2 == result) {
-        copyMatrix(temp, result);
-        matrix_free(temp);
-    }
+    copyMatrix(temp, result);
+    matrix_free(temp);
+
 
     return result;
 }
@@ -558,12 +586,15 @@ matrix *scalarMatDiv(matrix *m, double scalar, matrix *result){
         assert(0);
         return result;
     }
+    matrix *temp = matrix_new(result->numRows, result->numCols);
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            result->data[i][j] = m->data[i][j] / scalar;
+            temp->data[i][j] = m->data[i][j] / scalar;
 
         }
     }
+    copyMatrix(temp, result);
+    matrix_free(temp);
     return result;
 
 }
@@ -681,20 +712,26 @@ char* matrixToJson(matrix *m, char *version){
 matrix *matrixPow(matrix *m, int power, matrix *result){
     assert(m->square == 1);
 
-    //result->data = m->data;
-    for(int i = 0; i< m->numRows; i++){
-        memcpy(result->data[i], m->data[i], m->numCols * sizeof(double));
+    matrix *temp = matrix_new(m->numRows, m->numCols);
+    copyMatrix(m, temp);
+
+    // If power is 1, result should be the same as the original matrix
+    if(power == 1){
+        copyMatrix(m, result);
+        matrix_free(temp);
+        return result;
     }
-    //memcpy(result->data, m->data, m->numRows * m->numCols * sizeof(double));
-    result->square = 1;
-//    for(int i = 0; i < m->numRows; i++){
-//        for(int j = 0; j < m->numCols; j++){
-//            result->data[i][j] = m->data[i][j];
-//        }
-//    }
-    for(int i = 0; i < power-1; i++){
-        matMult(result, m, result);
+
+    for(int i = 1; i < power; i++){
+        matrix *tempResult = matrix_new(m->numRows, m->numCols);
+        matMult(m, temp, tempResult); // Multiply original matrix with temp
+        copyMatrix(tempResult, temp); // Update temp with the result
+        matrix_free(tempResult); // Free the intermediate result
     }
+
+    // Copy the final result into the output matrix
+    copyMatrix(temp, result);
+    matrix_free(temp);
     return result;
 }
 matrix *matrix_sub(matrix *m1, matrix *m2, matrix *result){
@@ -705,12 +742,17 @@ matrix *matrix_sub(matrix *m1, matrix *m2, matrix *result){
     assert(result->numRows == m1->numRows);
     assert(result->numCols == m1->numCols);
 
-    //matrix *result = matrix_new(m1->numRows, m1->numCols);
+    matrix *temp = matrix_new(m1->numRows, m1->numCols);
+
+
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m1->numCols; j++){
-            result->data[i][j] = m1->data[i][j] - m2->data[i][j];
+            temp->data[i][j] = m1->data[i][j] - m2->data[i][j];
         }
     }
+
+    copyMatrix(temp, result);
+    free(temp);
     return result;
 }
 //this only works for column vectors right now
