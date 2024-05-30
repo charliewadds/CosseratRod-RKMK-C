@@ -44,7 +44,7 @@ matrix *expm(matrix *A, matrix *result){
 
 matrix *gsl_to_matrix(gsl_matrix *gsl_matrix, matrix *result){
     //matrix *m = matrix_new(gsl_matrix->size1, gsl_matrix->size2);
-    zeroMatrix(result);
+    //zeroMatrix(result);
     for(int i = 0; i < result->numRows; i++){
         for(int j = 0; j < result->numCols; j++){
             result->data[i][j] = gsl_matrix_get(gsl_matrix, i, j);
@@ -307,7 +307,7 @@ matrix *matrix_transpose(matrix *m, matrix *result){
     //matrix *result = matrix_new(m->numCols, m->numRows);
     assert(result->numRows == m->numCols);
     assert(result->numCols == m->numRows);
-    zeroMatrix(result);
+
     matrix *temp = matrix_new(result->numRows, result->numCols);
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){

@@ -171,7 +171,7 @@ matrix *hat_R6(matrix *z, matrix *result){
     matrix *temp3x1 = matrix_new(3,1);
 
     matrix *tempResult = matrix_new(4,4);
-    zeroMatrix(tempResult);
+
     setSection(tempResult, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0, temp3x1), temp));
     setSection(tempResult, 0, 2, 3, 3, getSection(z, 0, 2, 0, 0, temp3x1));
     //getSetSection(z, result,0,2,0,0,0,2,3,5);

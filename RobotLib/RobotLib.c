@@ -1332,7 +1332,7 @@ matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta
     const gsl_multiroot_fsolver_type *T;
     gsl_multiroot_fsolver *s;
 
-    T = gsl_multiroot_fsolver_dnewton;
+    T = gsl_multiroot_fsolver_hybrid;
     //s = gsl_multiroot_fsolver_allc(T, 6);
     int status;
     size_t iter = 0;
