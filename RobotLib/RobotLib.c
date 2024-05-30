@@ -608,6 +608,8 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
     matrix_free(tempR6n3);
     matrix_free(f_t);
     //printMatrix(adj_R6(f));
+    printMatrix(result->f_s);
+    printMatrix(result->eta_s);
     return result;
 }
 
@@ -884,9 +886,9 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
 
 
     //todo there has to be a better way to do this
-//    for(int i = 0; i < body->N; i++){
-//        matrix_free(g[i]);
-//    }
+    for(int i = 0; i < body->N; i++){
+        matrix_free(g[i]);
+    }
     matrix_free(temp6xNn1);
     matrix_free(temp6xNn2);
     matrix_free(tempR6n1);

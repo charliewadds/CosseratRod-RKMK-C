@@ -190,7 +190,7 @@ class matrixCall:
 
 
 class robotCall:
-    def call_ode(eta, f, eta_h, f_h, f_sh, K, C, M, c0, f_0, Fd_ext, result):
+    def call_ode(eta, f, eta_h, f_h, f_sh, K, C, M, c0, f_0, Fd_ext):
         eta_ptr = makeMatrix(eta)
         f_ptr = makeMatrix(f)
         eta_h_ptr = makeMatrix(eta_h)
@@ -204,21 +204,24 @@ class robotCall:
         Fd_ext_ptr = makeMatrix(Fd_ext)
 
 
-        out = makeOdeOutput()
+        out = ctypes.pointer(makeOdeOutput())
 
-        result_ptr = robotLib.COSS_ODE(eta_ptr, f_ptr, eta_h_ptr, f_h_ptr, f_sh_ptr, K_ptr, C_ptr, M_ptr, ctypes.c_double(c0), f_0_ptr, Fd_ext_ptr, out)
+        robotLib.COSS_ODE(eta_ptr, f_ptr, eta_h_ptr, f_h_ptr, f_sh_ptr, K_ptr, C_ptr, M_ptr, ctypes.c_double(c0), f_0_ptr, Fd_ext_ptr, out)
 
-# Now `result_ptr` is a pointer to ODE_output structure
-        ode_output_ptr = ctypes.cast(result_ptr, ctypes.POINTER(ODE_output))
+        ode_output_f_s = ctypes.cast(out.contents.f_s, ctypes.POINTER(matrix)).contents
+        ode_output_eta_s = ctypes.cast(out.contents.eta_s, ctypes.POINTER(matrix)).contents
 
-# Dereference the pointer to access the ODE_output structure
-        ode_output_f_s = ctypes.cast(ode_output_ptr.contents.f_s, ctypes.POINTER(matrix))
-        ode_output_eta_s = ctypes.cast(ode_output_ptr.contents.eta_s, ctypes.POINTER(matrix))
-
-        result_numpy_f_s = np.zeros((ode_output_f_s.numRows, ode_output_f_s.numCols), dtype=np.float64)
+        result_numpy_f_s = np.zeros((ode_output_f_s.numRows, ode_output_f_s.numCols), dtype=np.double)
 
         for i in range(ode_output_f_s.numRows):
-            for j in range(result.numCols):
-                result_numpy_f_s[i, j] = result.data[i][j]
+            for j in range(ode_output_f_s.numCols):
+                result_numpy_f_s[i, j] = ode_output_f_s.data[i][j]
 
-        return
+
+        result_numpy_eta_s = np.zeros((ode_output_f_s.numRows, ode_output_f_s.numCols), dtype=np.double)
+
+        for i in range(ode_output_eta_s.numRows):
+            for j in range(ode_output_eta_s.numCols):
+                result_numpy_eta_s[i, j] = ode_output_eta_s.data[i][j]
+
+        return result_numpy_eta_s, result_numpy_f_s

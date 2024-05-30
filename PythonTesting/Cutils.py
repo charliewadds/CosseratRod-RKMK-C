@@ -90,13 +90,7 @@ class ODE_output(ctypes.Structure):
 
 
 
-def makeOdeOutput():
-    # Create an instance of ODE_output
-    ode_output = None
 
-
-
-    return ode_output
 
 def makeMatrix(m):
     try:
@@ -120,9 +114,16 @@ def makeMatrix(m):
 
     # Create a Matrix instance
     matrix_c = matrix()
-    matrix_c.numRows = rows
-    matrix_c.numCols = cols
+    matrix_c.numRows = ctypes.c_uint8(int(rows))
+    matrix_c.numCols = ctypes.c_uint8(int(cols))
     matrix_c.data = row_pointers
     matrix_c.square = 1 if rows == cols else 0
 
     return matrix_c
+def makeOdeOutput():
+    # Create an instance of ODE_output
+    ode_output = ODE_output()
+    ode_output.eta_s = ctypes.pointer(makeMatrix(np.zeros((6, 1))))
+    ode_output.f_s = ctypes.pointer(makeMatrix(np.zeros((6, 1))))
+
+    return ode_output

@@ -8,8 +8,8 @@ from termcolor import colored
 print("starting matlab")
 eng = matlab.engine.start_matlab()
 print("matlab started")
-eng.cd(r'/Users/charliewadds/MATLAB/github/MultiBody-Dynamics-LG/Library', nargout=0)
-eng.addpath(r'/Users/charliewadds/MATLAB/github/MultiBody-Dynamics-LG/Library', nargout=0)
+eng.cd(r'/Users/charliewadds/MATLAB/projects/ASRoMGit/Library', nargout=0)
+eng.addpath(r'/Users/charliewadds/MATLAB/projects/ASRoMGit//Library', nargout=0)
 
 from callFns import *
 
@@ -478,29 +478,36 @@ class testRobot:
 
 
 
-        matlabResult = matlab_engine.Coss_ODE(eta, f, eta_h, f_h, f_sh, K, C, M, c0, f_0, Fd_ext)
+        matlabOut = matlab_engine.COSS_ODE_TEST(eta, f, eta_h, f_h, f_sh, K, C, M, c0, f_0, Fd_ext)
 
 
-        c_result = makeOdeOutput()
+
         # Call the C function
-        c_result = robotCall.call_ode(eta, f, eta_h, f_h, f_sh, K, C, M, c0, f_0, Fd_ext, c_result)
+        c_result, c_result1 = robotCall.call_ode(eta, f, eta_h, f_h, f_sh, K, C, M, c0, f_0, Fd_ext)
 
         print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
-        print("testing COSS_ODE in C against Coss_ODE in MATLAB")
+        print("testing COSS_ODE f_s in C against Coss_ODE f_s in MATLAB")
         print("------------------------------------------------------")
 
-
-
-
-
         # Compare results (you might need to adjust the tolerance based on the expected numerical accuracy)
-        np.testing.assert_allclose(c_result, matlabResult, rtol=1e-5, atol=1e-8)
+        np.testing.assert_allclose(c_result[0:2,0], matlabOut[0], rtol=1e-5, atol=1e-8)
 
 
         print("TEST PASSED")
         print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
 
-testLieGroup.test_all(testLieGroup,eng);#todo I havent used python in a while, this is not the right way to do this
+        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
+        print("testing COSS_ODE eta_s in C against Coss_ODE eta_s in MATLAB")
+        print("------------------------------------------------------")
+
+        # Compare results (you might need to adjust the tolerance based on the expected numerical accuracy)
+        np.testing.assert_allclose(c_result_eta_s, matlabOut[1], rtol=1e-5, atol=1e-8)
+
+
+        print("TEST PASSED")
+        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
+
+#testLieGroup.test_all(testLieGroup,eng);#todo I havent used python in a while, this is not the right way to do this
 # testMatrix.test_matrix_mul(eng)
 #testMatrix.test_matrix_solve(eng)
-#testRobot.test_coss_ode(eng)
+testRobot.test_coss_ode(eng)
