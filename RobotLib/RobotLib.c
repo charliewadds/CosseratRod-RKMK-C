@@ -608,8 +608,8 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
     matrix_free(tempR6n3);
     matrix_free(f_t);
     //printMatrix(adj_R6(f));
-    printMatrix(result->f_s);
-    printMatrix(result->eta_s);
+//    printMatrix(result->f_s);
+//    printMatrix(result->eta_s);
     return result;
 }
 
