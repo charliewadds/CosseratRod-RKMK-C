@@ -1077,8 +1077,6 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
             if(F_dist != NULL){
                 matrix_free(F_dist);
             }
-
-            //matrix_free(F_dist);
             F_dist = zeros(6, curr_body->object->flex->N);
 
 
