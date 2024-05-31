@@ -836,11 +836,12 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
         //f_sh = ( c1* (BODY.f_prev(:,i+1) - BODY.f_prev(:,i) ) + ...
         //                 c2*(BODY.f_pprev(:,i+1) - BODY.f_pprev(:,i)) ) / ds;
         //todo should this be i and i-1 or something because matlab is 1 indexed?
-
+        matrix_scalar_mul(matrix_sub(getSection(body->f_prev, 0,5,i+1,i+1, tempR6n1), getSection(body->f_prev, 0,5,i,i, tempR6n2),tempR6n1),c1, tempR6n1);
+        matrix_scalar_mul(matrix_sub(getSection(body->f_pprev, 0,5,i+1,i+1, tempR6n2), getSection(body->f_pprev, 0,5,i,i, tempR6n3), tempR6n2),c2, tempR6n2);
         elemDiv(
             matrix_add(
-                matrix_scalar_mul(matrix_sub(getSection(body->f_prev, 0,5,i+1,i+1, tempR6n1), getSection(body->f_prev, 0,5,i,i, tempR6n2),tempR6n1),c1, tempR6n1),
-                matrix_scalar_mul(matrix_sub(getSection(body->f_pprev, 0,5,i+1,i+1, tempR6n2), getSection(body->f_pprev, 0,5,i,i, tempR6n3), tempR6n2),c2, tempR6n2),
+                tempR6n1,
+                tempR6n2,
                 tempR6n1),
                 ds,
                 f_sh
