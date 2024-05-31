@@ -2,16 +2,10 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_C_STANDARD 11)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=leak")
 project(CosseratRod_RKMK_C C)
-# Set optimization flags for C compiler
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
-# Set architectures for macOS
-#if(APPLE)
-#set(CMAKE_OSX_ARCHITECTURES "arm64") # Add any other architectures you need, separated by semicolons
-#set(CMAKE_VS_PLATFORM_TOOLSET_HOST_ARCHITECTURE "arm64")
-#endif()
-#set(CMAKE_PREFIX_PATH "/opt/homebrew")
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 set(CMAKE_PREFIX_PATH "/usr/local/bin")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
 link_directories("/opt/homebrew/lib")
 include_directories("/opt/homebrew/include")
 #find_package(GSL REQUIRED)
@@ -22,8 +16,7 @@ include_directories(RobotLib)
 include_directories(FDM)
 include_directories(Tests)
 
-#link_directories("/opt/homebrew/lib")
-#include_directories("/opt/homebrew/include")
+
 
 # Source files for libraries
 set(LIE_GROUP_SOURCES LieGroup/LieGroup.c)

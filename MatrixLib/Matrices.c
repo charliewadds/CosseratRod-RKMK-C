@@ -163,16 +163,25 @@ matrix *matrix_scalar_mul(matrix *m, double scalar, matrix *result){
     assert(result->numRows == m->numRows);
     assert(result->numCols == m->numCols);
 
-    matrix *temp = matrix_new(result->numRows, result->numCols);
+
+    matrix *temp;
+    if(m == result){
+        temp = matrix_new(result->numRows, result->numCols);
+    }else{
+        temp = result;
+        //zeroMatrix(temp);
+    }
 
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
             temp->data[i][j] = m->data[i][j] * scalar;
         }
     }
+    if(m == result){
+        copyMatrix(temp, result);
+        matrix_free(temp);
+    }
 
-    copyMatrix(temp, result);
-    matrix_free(temp);
     return result;
 }
 
@@ -241,42 +250,6 @@ matrix *matrix_inverse(matrix *m, matrix *result){
     gsl_matrix_free(gsl_m);
     gsl_permutation_free(p);
 
-//    for(int i = 0; i < result->numRows; i++){
-//        for(int j = 0; j < result->numCols; j++){
-//            assert(!isnan(result->data[i][j]));
-//        }
-//    }
-
-
-//    matrix *result = matrix_new(m->numRows, m->numCols);
-//    double det = Det(m);
-//    assert(det != 0);
-//    for(int i = 0; i < m->numRows; i++){
-//        for(int j = 0; j < m->numCols; j++){
-//            matrix *sub = matrix_new(m->numRows - 1, m->numCols - 1);
-//            for(int k = 0; k < m->numRows; k++){
-//                for(int l = 0; l < m->numCols; l++){
-//                    if(k < i){
-//                        if(l < j){
-//                            sub->data[k][l] = m->data[k][l];
-//                        }else if(l > j){
-//                            sub->data[k][l-1] = m->data[k][l];
-//                        }
-//                    }else if(k > i){
-//                        if(l < j){
-//                            sub->data[k-1][l] = m->data[k][l];
-//                        }else if(l > j){
-//                            sub->data[k-1][l-1] = m->data[k][l];
-//                        }
-//                    }
-//                }
-//            }
-//            result->data[i][j] = pow(-1, i+j) * Det(sub) / det;
-//            matrix_free(sub);
-//        }
-//    }
-
-
     return result;
 }
 
@@ -317,15 +290,24 @@ matrix *matrix_transpose(matrix *m, matrix *result){
     assert(result->numRows == m->numCols);
     assert(result->numCols == m->numRows);
 
-    matrix *temp = matrix_new(result->numRows, result->numCols);
+
+    matrix *temp;
+    if(m == result){
+        temp = matrix_new(result->numRows, result->numCols);
+    }else{
+        temp = result;
+        //zeroMatrix(temp);
+    }
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
             temp->data[j][i] = m->data[i][j];
         }
     }
+    if(m == result){
+        copyMatrix(temp, result);
+        matrix_free(temp);
+    }
 
-    copyMatrix(temp, result);
-    matrix_free(temp);
 
     return result;
 }
@@ -429,10 +411,6 @@ void copyMatrix(matrix *m, matrix *result){
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
 
-//            if(isnan(m->data[i][j])){
-//                printf("NAN");
-//                assert(0);
-//            }
             result->data[i][j] = m->data[i][j];
         }
     }
@@ -444,7 +422,7 @@ void getSetSection(matrix *get, matrix *set, uint8_t getStartRow, uint8_t getEnd
     assert(setStartRow <= setEndRow && setStartCol <= setEndCol);
     assert(setEndRow < set->numRows && setEndCol < set->numCols);
 
-    // Iterate over the source matrix
+
     for (uint8_t i = 0; i <= getEndRow - getStartRow; i++) {
         for (uint8_t j = 0; j <= getEndCol - getStartCol; j++) {
             // Calculate indices for the source and destination matrices
@@ -518,8 +496,6 @@ matrix *matMult(matrix *m1, matrix *m2, matrix *result) {
             for (int k = 0; k < m1->numCols; k++) {
                 temp->data[i][j] += m1->data[i][k] * m2->data[k][j];
             }
-            // Ensure the calculated value is not NaN
-            //assert(!isnan(temp->data[i][j]));
         }
     }
 
