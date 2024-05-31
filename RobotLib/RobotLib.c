@@ -79,10 +79,11 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     matrix_free(temp4x4n1);
     matrix_free(temp4x4n2);
     matrix_free(temp4x4n3);
-
+    matrix_free(temp4x4n4);
     matrix_free(tempR6n1);
     matrix_free(tempR6n2);
     matrix_free(tempR6n3);
+    matrix_free(tempR6n4);
 
     return CoM2CoM;
 
@@ -1348,7 +1349,7 @@ matrix *Flex_MB_BCS_wrapper_PSO(matrix *x, void *params) {
 
 
 
-matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2) {
+int find_roots_newton(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2) {
     const gsl_multiroot_fsolver_type *T;
     gsl_multiroot_fsolver *s;
 
@@ -1391,7 +1392,13 @@ matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta
 
         status = gsl_multiroot_test_residual(s->f, 1e-9);
 
-    } while (status == GSL_CONTINUE && iter < 100);//increase this later
+    } while (status == GSL_CONTINUE && iter < 15);
+
+    if (status) {
+        printf("STATUS: %d\n", status);
+        printf("STATUS: %s\n", gsl_strerror(status));
+    }
+
     printf("took %zu iterations\n", iter);
     //assert(!isnan(s->f->data[0]));
     // Extract solution
@@ -1401,7 +1408,69 @@ matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta
     }
 
     gsl_multiroot_fsolver_free(s);
-    return InitGuess;
+    return status;
+}
+
+int find_roots_hybrid(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2) {
+    const gsl_multiroot_fsolver_type *T;
+    gsl_multiroot_fsolver *s;
+
+    T = gsl_multiroot_fsolver_hybrid;
+    //s = gsl_multiroot_fsolver_allc(T, 6);
+    int status;
+    size_t iter = 0;
+
+    const size_t n = 6; // Number of variables
+
+
+
+    // Set parameters
+
+    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
+    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, &params};
+    //f.params = &params;
+
+    // Define initial guess
+    double x_init[6];
+
+    for (int i = 0; i < 6; ++i) {
+        x_init[i] = InitGuess->data[i][0];
+    }
+
+    gsl_vector_view x_vec = gsl_vector_view_array(x_init, n);
+    s = gsl_multiroot_fsolver_alloc(T, n);
+    gsl_multiroot_fsolver_set(s, &f, &x_vec.vector);
+
+    do {
+        iter++;
+        status = gsl_multiroot_fsolver_iterate(s);
+
+        if (status) {
+            printf("STATUS: %s\n", gsl_strerror(status));
+            break;
+        }
+
+
+
+        status = gsl_multiroot_test_residual(s->f, 1e-9);
+
+    } while (status == GSL_CONTINUE && iter < 15);
+
+    if (status) {
+        printf("STATUS: %d\n", status);
+        printf("STATUS: %s\n", gsl_strerror(status));
+    }
+
+    printf("took %zu iterations\n", iter);
+    //assert(!isnan(s->f->data[0]));
+    // Extract solution
+    //matrix *solution = zeros(6, 1);
+    for (int i = 0; i < 6; ++i) {
+        InitGuess->data[i][0] = gsl_vector_get(s->x, i);
+    }
+
+    gsl_multiroot_fsolver_free(s);
+    return status;
 }
 
 int jacobian_numerical(const gsl_vector *x, void *params, gsl_matrix *J) {
@@ -1453,7 +1522,7 @@ matrix *find_roots_deriv(matrix *InitGuess, Robot *robot, matrix *Theta, matrix 
     const gsl_multiroot_fdfsolver_type *T;
     gsl_multiroot_fdfsolver *s;
 
-    //T = gsl_multiroot_fsolver_hybrid;
+    //T = gsl_multiroot_fdfsolver_gnewton;
     //s = gsl_multiroot_fsolver_allc(T, 6);
     int status;
     size_t iter = 0;
@@ -1587,18 +1656,19 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     printf("____________InitGuess_______________________\n");
     printMatrix(InitGuess);
-    InitGuess = find_roots(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+    int status = find_roots_newton(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
 
+    if(status == -2){
+        printf("Newton's method failed to converge\n");
+        status = find_roots_hybrid(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+    }
 
     //printf("\nINIT_GUESS post\n");
     //printMatrix(Theta);
     printf("_______________SOLUTION______________________\n");
     printMatrix(InitGuess);
     printf("___________________________________________\n\n");
-    //printf("ans");
-    //printMatrix(Flex_MB_BCS(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2));
 
-    //TODO JOINT TWIST R6 IS SET TO ZERO IN FIND_ROOTS (PROBABLY IN BCS_MB_FLEX)!!!!!!!!!!!!!!!!!!!!
     eye(g_ref[0]);
     eye(g_act_wrt_prev[0]);
 
@@ -1853,10 +1923,14 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         matrix_free(tempR6n3);
         matrix_free(tempR6n4);
 
+        matrix_free(temp6x6n1);
+        matrix_free(temp6x6n2);
         matrix_free(tempR6n1t);
 
         matrix_free(temp4x4n1);
+        matrix_free(F_dist);
 
+        matrix_free(d_eta);
         return out;
 
 }

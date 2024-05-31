@@ -752,7 +752,7 @@ matrix *matrix_sub(matrix *m1, matrix *m2, matrix *result){
     }
 
     copyMatrix(temp, result);
-    free(temp);
+    matrix_free(temp);
     return result;
 }
 //this only works for column vectors right now

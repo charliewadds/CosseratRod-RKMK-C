@@ -441,7 +441,7 @@ int main() {
     matrix *theta_dot = zeros(5, 1);
 
     double dt = 0.025;
-    int timeStep = 100;
+    int timeStep = 3;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -558,8 +558,10 @@ int main() {
 
 
         matrixToFile(plotRobotConfig(robot, theta, 100), "RigidRandyPlot.csv");
+        matrix_free(angles);
     }
     printf("DONE");
+
 
     matrix_free(tempBodiesx1);
     matrix_free(tempLinkx1);
