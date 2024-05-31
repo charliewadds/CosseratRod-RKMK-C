@@ -118,8 +118,14 @@ matrix *matrix_add(matrix *m1, matrix *m2, matrix *result){
     assert(result->numRows == m1->numRows);
     assert(result->numCols == m1->numCols);
 
-    matrix *temp = matrix_new(result->numRows, result->numCols);
-    copyMatrix(m1, temp);
+    matrix *temp;
+    if(m1 == result || m2 == result){
+        temp = matrix_new(result->numRows, result->numCols);
+        copyMatrix(m1, temp);
+    }else{
+        temp = result;
+        //zeroMatrix(temp);
+    }
 
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m1->numCols; j++){
@@ -127,8 +133,11 @@ matrix *matrix_add(matrix *m1, matrix *m2, matrix *result){
         }
     }
 
-    copyMatrix(temp, result);
-    matrix_free(temp);
+    if(m1 == result || m2 == result){
+        copyMatrix(temp, result);
+        matrix_free(temp);
+    }
+
     return result;
 
 }
@@ -491,8 +500,15 @@ matrix *matMult(matrix *m1, matrix *m2, matrix *result) {
     // Ensure the result matrix has the correct dimensions
     assert((result->numRows == m1->numRows && result->numCols == m2->numCols) || (result->numRows == m1->numCols && result->numCols == m2->numRows));
 
-    matrix *temp = matrix_new(result->numRows, result->numCols);
 
+    matrix *temp;
+
+    if(m1 == result || m2 == result) {
+        temp = matrix_new(result->numRows, result->numCols);
+    }else{
+        temp = result;
+        zeroMatrix(temp);
+    }
     // Initialize the temporary/result matrix to zero
     //zeroMatrix(temp);
 
@@ -507,8 +523,11 @@ matrix *matMult(matrix *m1, matrix *m2, matrix *result) {
         }
     }
 
-    copyMatrix(temp, result);
-    matrix_free(temp);
+    if(m1 == result || m2 == result){
+        copyMatrix(temp, result);
+        matrix_free(temp);
+    }
+
 
 
     return result;
@@ -586,15 +605,25 @@ matrix *scalarMatDiv(matrix *m, double scalar, matrix *result){
         assert(0);
         return result;
     }
-    matrix *temp = matrix_new(result->numRows, result->numCols);
+    matrix *temp;
+    if(m == result) {
+        temp = matrix_new(result->numRows, result->numCols);
+    }else{
+        temp = result;
+        //zeroMatrix(temp);
+    }
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
             temp->data[i][j] = m->data[i][j] / scalar;
 
         }
     }
-    copyMatrix(temp, result);
-    matrix_free(temp);
+
+    if(m == result){
+        copyMatrix(temp, result);
+        matrix_free(temp);
+    }
+
     return result;
 
 }
@@ -711,27 +740,34 @@ char* matrixToJson(matrix *m, char *version){
 
 matrix *matrixPow(matrix *m, int power, matrix *result){
     assert(m->square == 1);
-
-    matrix *temp = matrix_new(m->numRows, m->numCols);
+    matrix *temp;
+    if(m == result){
+        temp = matrix_new(m->numRows, m->numCols);
+    }else{
+        temp = result;
+    }
     copyMatrix(m, temp);
 
     // If power is 1, result should be the same as the original matrix
     if(power == 1){
-        copyMatrix(m, result);
-        matrix_free(temp);
-        return result;
-    }
+        copyMatrix(m, temp);
 
-    for(int i = 1; i < power; i++){
+    }else {
         matrix *tempResult = matrix_new(m->numRows, m->numCols);
-        matMult(m, temp, tempResult); // Multiply original matrix with temp
-        copyMatrix(tempResult, temp); // Update temp with the result
+        for (int i = 1; i < power; i++) {
+            zeroMatrix(tempResult);
+            matMult(m, temp, tempResult); // Multiply original matrix with temp
+            copyMatrix(tempResult, temp); // Update temp with the result
+
+        }
         matrix_free(tempResult); // Free the intermediate result
     }
-
     // Copy the final result into the output matrix
-    copyMatrix(temp, result);
-    matrix_free(temp);
+    if(m == result){
+        copyMatrix(temp, result);
+        matrix_free(temp);
+    }
+
     return result;
 }
 matrix *matrix_sub(matrix *m1, matrix *m2, matrix *result){
@@ -742,7 +778,14 @@ matrix *matrix_sub(matrix *m1, matrix *m2, matrix *result){
     assert(result->numRows == m1->numRows);
     assert(result->numCols == m1->numCols);
 
-    matrix *temp = matrix_new(m1->numRows, m1->numCols);
+    matrix *temp;
+    if(m1 == result || m2 == result){
+        temp = matrix_new(result->numRows, result->numCols);
+        //copyMatrix(result, temp);
+    }else{
+        temp = result;
+        //zeroMatrix(temp);
+    }
 
 
     for(int i = 0; i < m1->numRows; i++){
@@ -751,8 +794,10 @@ matrix *matrix_sub(matrix *m1, matrix *m2, matrix *result){
         }
     }
 
-    copyMatrix(temp, result);
-    matrix_free(temp);
+    if(m1 == result || m2 == result){
+        copyMatrix(temp, result);
+        matrix_free(temp);
+    }
     return result;
 }
 //this only works for column vectors right now
@@ -766,38 +811,6 @@ matrix *matrix_sub_broadcast(matrix *m1, matrix *vect){
         }
     }
     return result;
-}
-double slowDet(matrix *m){
-    assert(m->square == 1);
-    matrix *sub = matrix_new(m->numRows - 1, m->numCols - 1);
-    if(m->numRows == 1){
-        matrix_free(sub);
-        return m->data[0][0];
-    }else if(m->numRows == 2){
-        matrix_free(sub);
-        return m->data[0][0] * m->data[1][1] - m->data[0][1] * m->data[1][0];
-    }else{
-        double result = 0;
-        for(int i = 0; i < m->numRows; i++){
-            sub = matrix_new(m->numRows - 1, m->numCols - 1);
-            for(int j = 1; j < m->numRows; j++){
-                for(int k = 0; k < m->numCols; k++){
-                    if(k < i){
-                        sub->data[j-1][k] = m->data[j][k];
-                    }else if(k > i){
-                        sub->data[j-1][k-1] = m->data[j][k];
-                    }
-                }
-            }
-            result += pow(-1, i) * m->data[0][i] * slowDet(sub);
-
-        }
-
-        matrix_free(sub);
-        return result;
-    }
-
-
 }
 
 double Det(matrix *m) {
@@ -841,6 +854,8 @@ matrix *elemDiv(matrix *m1, double scalar, matrix *result){
         assert(0);
         return result;
     }
+
+
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m1->numCols; j++){
             result->data[i][j] = m1->data[i][j] / scalar;

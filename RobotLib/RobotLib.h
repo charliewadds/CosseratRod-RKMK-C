@@ -171,7 +171,12 @@ matrix *COSS_ODE_Dsc(matrix *y, matrix *y_h, matrix *f_sh, flexBody *Body, doubl
 typedef struct COSS_ODE_OUT_s{
     matrix *eta_s;
     matrix *f_s;
+    matrix *temp6x6n1;
+    matrix *temp6x6n2;
 
+    matrix *tempR6n1;
+    matrix *tempR6n2;
+    matrix *tempR6n3;
 
 }COSS_ODE_OUT;
 

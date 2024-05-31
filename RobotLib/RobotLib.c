@@ -528,12 +528,7 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
 //        assert(0);
 //    }
 
-    if(result == NULL){
-        printf("result is null\n");
 
-        result = odeAlloc();
-        printf("pointer address is %p\n", result);
-    }
     matrix *f_t = matrix_new(6,1);
     matrix_add(matrix_scalar_mul(f, c0, f_t), f_h, f_t);     // Local Time Discretization for history in Local Coordinates
 
@@ -543,36 +538,31 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
 
     //holy shit, this is ugly, hope it works, update, it doesn't
 
-    matrix *temp6x6n1 = matrix_new(6,6);
-    matrix *temp6x6n2 = matrix_new(6,6);
-
-    matrix *tempR6n1 = matrix_new(6,1);
-    matrix *tempR6n2 = matrix_new(6,1);
-    matrix *tempR6n3 = matrix_new(6,1);
 
 
-    matrix_scalar_mul(C, c0, temp6x6n2);
-    matrix_add(temp6x6n2, K, temp6x6n1);
+
+    matrix_scalar_mul(C, c0, result->temp6x6n2);
+    matrix_add(result->temp6x6n2, K, result->temp6x6n1);
     //66n2 available
     //temp6x6n1 = (K + C*c0)
 
-    matMult(M, eta_t, tempR6n1);
+    matMult(M, eta_t, result->tempR6n1);
     //tempR6n1 = M*eta_t
 
 
-    matrix_transpose(adj_R6(eta, temp6x6n2), temp6x6n2);
+    matrix_transpose(adj_R6(eta, result->temp6x6n2), result->temp6x6n2);
     //temp6x6n2 = (adj(eta)')
-    matMult(M, eta, tempR6n3);
+    matMult(M, eta, result->tempR6n3);
     //tempR6n3 = M*eta
-    matMult(temp6x6n2, tempR6n3, tempR6n2);
+    matMult(result->temp6x6n2, result->tempR6n3, result->tempR6n2);
     //tempR6n2 = (adj(eta)')*M*eta
     //tempR6n3 is available
 
-    matMult(C, f_sh, tempR6n3);
+    matMult(C, f_sh, result->tempR6n3);
     //tempR6n3 = C*f_sh
 
-    matrix_sub(tempR6n1, tempR6n2, tempR6n2);
-    matrix_sub(tempR6n2, tempR6n3, tempR6n1);
+    matrix_sub(result->tempR6n1, result->tempR6n2, result->tempR6n2);
+    matrix_sub(result->tempR6n2, result->tempR6n3, result->tempR6n1);
     //tempR6n1 = M*eta_t - (adj(eta)')*M*eta - C*f_sh
     //tempR6n3 is available
     //tempR6n2 is available
@@ -580,33 +570,33 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
     //---------second half of bracket----------------------
     //(adj(f)')*(K*(f - f_0) + C*f_t) + Fd_ext)
 
-    matrix_transpose(adj_R6(f, temp6x6n2), temp6x6n2);
+    matrix_transpose(adj_R6(f, result->temp6x6n2), result->temp6x6n2);
     //temp6x6n2 = (adj(f)')
-    matrix_sub(f, f_0, tempR6n3);
+    matrix_sub(f, f_0, result->tempR6n3);
     //tempR6n3 = f - f_0
 
-    matMult(K, tempR6n3, tempR6n3);
+    matMult(K, result->tempR6n3, result->tempR6n3);
     //tempR6n3 = K*(f - f_0)
 
-    matMult(C, f_t, tempR6n2);
+    matMult(C, f_t, result->tempR6n2);
     //tempR6n2 = C*f_t
 
-    matrix_add(tempR6n3, tempR6n2, tempR6n2);
+    matrix_add(result->tempR6n3, result->tempR6n2, result->tempR6n2);
     //tempR6n2 = K*(f - f_0) + C*f_t
 
-    matMult(temp6x6n2, tempR6n2, tempR6n3);
+    matMult(result->temp6x6n2, result->tempR6n2, result->tempR6n3);
     //tempR6n3 = (adj(f)')*(K*(f - f_0)+ C*f_t)
 
-    matrix_add(tempR6n3, Fd_ext, tempR6n3);
+    matrix_add(result->tempR6n3, Fd_ext, result->tempR6n3);
     //tempR6n3 = (adj(f)')*(K*(f - f_0)+ C*f_t) + Fd_ext
 
-    matrix_add(tempR6n1, tempR6n3, tempR6n1);
+    matrix_add(result->tempR6n1, result->tempR6n3, result->tempR6n1);
     //tempR6n1 = M*eta_t - (adj(eta)')*M*eta - C*f_sh + (adj(f)')*(K*(f - f_0)+ C*f_t) + Fd_ext
 
-    matrix_solve(temp6x6n1, tempR6n1, result->f_s);
+    matrix_solve(result->temp6x6n1, result->tempR6n1, result->f_s);
 
 
-    matrix_add(f_t, matMult(adj_R6(eta, temp6x6n1), f, tempR6n1), result->eta_s);
+    matrix_add(f_t, matMult(adj_R6(eta, result->temp6x6n1), f, result->tempR6n1), result->eta_s);
 //    if(isnan(result->eta_s->data[1][0]) || isnan(result->eta_s->data[0][0])){
 //        printf("eta is nan\n");
 //        assert(0);
@@ -614,11 +604,6 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
 
     matrix_free(eta_t);
 
-    matrix_free(temp6x6n1);
-    matrix_free(temp6x6n2);
-    matrix_free(tempR6n1);
-    matrix_free(tempR6n2);
-    matrix_free(tempR6n3);
     matrix_free(f_t);
     //printMatrix(adj_R6(f));
 //    printMatrix(result->f_s);
@@ -776,12 +761,26 @@ COSS_ODE_OUT *odeAlloc(){
     COSS_ODE_OUT *out = malloc(sizeof(COSS_ODE_OUT));
     out->eta_s = zeros(6,1);
     out->f_s = zeros(6,1);
+
+    out->temp6x6n1 = matrix_new(6,6);
+    out->temp6x6n2 = matrix_new(6,6);
+
+    out->tempR6n1 = matrix_new(6,1);
+    out->tempR6n2 = matrix_new(6,1);
+    out->tempR6n3 = matrix_new(6,1);
     return out;
 }
 void freeCOSS_ODE_OUT(COSS_ODE_OUT *out){
     if(out != NULL) {
         matrix_free(out->eta_s);
         matrix_free(out->f_s);
+
+        matrix_free(out->temp6x6n1);
+        matrix_free(out->temp6x6n2);
+
+        matrix_free(out->tempR6n1);
+        matrix_free(out->tempR6n2);
+        matrix_free(out->tempR6n3);
         free(out);
     }
 }
@@ -1658,10 +1657,10 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     printMatrix(InitGuess);
     int status = find_roots_newton(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
 
-    if(status == -2){
-        printf("Newton's method failed to converge\n");
-        status = find_roots_hybrid(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
-    }
+//    if(status == -2){
+//        printf("Newton's method failed to converge\n");
+//        status = find_roots_hybrid(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+//    }
 
     //printf("\nINIT_GUESS post\n");
     //printMatrix(Theta);

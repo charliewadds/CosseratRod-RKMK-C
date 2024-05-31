@@ -143,21 +143,30 @@ matrix *hat_R3(matrix *z, matrix *result){
     assert(result->numRows == 3);
     assert(result->numCols == 3);
     //matrix *T = zeros(3,3);
+    matrix *temp;
+    if(z == result) {
+        temp = matrix_new(3, 3);
+    }else{
+        temp = result;
+        zeroMatrix(temp);
+    }
 
-        matrix *temp = matrix_new(3, 3);
-        temp->data[0][1] = z->data[2][0] * -1;
-        temp->data[0][2] = z->data[1][0];
 
-        temp->data[1][0] = z->data[2][0];
-        temp->data[1][2] = z->data[0][0] * -1;
+    temp->data[0][1] = z->data[2][0] * -1;
+    temp->data[0][2] = z->data[1][0];
 
-        temp->data[2][0] = z->data[1][0] * -1;
-        temp->data[2][1] = z->data[0][0];
+    temp->data[1][0] = z->data[2][0];
+    temp->data[1][2] = z->data[0][0] * -1;
 
+    temp->data[2][0] = z->data[1][0] * -1;
+    temp->data[2][1] = z->data[0][0];
+
+    if(z == result){
         copyMatrix(temp, result);
         matrix_free(temp);
+    }
 
-        return result;
+    return result;
 
 }
 
@@ -168,10 +177,17 @@ matrix *hat_R6(matrix *z, matrix *result){
     assert(result->numRows == 4);
     assert(result->numCols == 4);
 
+
     matrix *temp = matrix_new(3,3);
     matrix *temp3x1 = matrix_new(3,1);
 
-    matrix *tempResult = matrix_new(4,4);
+    matrix *tempResult;
+    if(z == result){
+        tempResult = matrix_new(4,4);
+    }else{
+        tempResult = result;
+        zeroMatrix(tempResult);
+    }
 
     setSection(tempResult, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0, temp3x1), temp));
     setSection(tempResult, 0, 2, 3, 3, getSection(z, 0, 2, 0, 0, temp3x1));
@@ -182,7 +198,13 @@ matrix *hat_R6(matrix *z, matrix *result){
     matrix_free(temp);
     matrix_free(temp3x1);
     copyMatrix(tempResult, result);
-    matrix_free(tempResult);
+    //matrix_free(tempResult);
+
+    if(z == result){
+        copyMatrix(tempResult, result);
+        matrix_free(tempResult);
+    }
+
     return result;
 }
 
@@ -216,14 +238,20 @@ matrix *unhat_SO3(matrix *zhat, matrix *result){
 
     assert(result->numRows == 3);
     assert(result->numCols == 1);
-
-    matrix *temp = matrix_new(3,1);
+    matrix *temp;
+    if(zhat == result) {
+        temp = matrix_new(3, 1);
+    }else{
+        temp = result;
+    }
     temp->data[0][0] = zhat->data[2][1];
     temp->data[1][0] = zhat->data[0][2];
     temp->data[2][0] = zhat->data[1][0];
 
-    copyMatrix(temp, result);
-    matrix_free(temp);
+    if(zhat == result){
+        copyMatrix(temp, result);
+        matrix_free(temp);
+    }
 
     return result;
 }
@@ -260,7 +288,14 @@ matrix *adj(matrix *T, matrix *result) {
 
 
 
-    matrix *tempRes = matrix_new(6,6);
+    matrix *tempRes;
+
+    if(T == result){
+        tempRes = matrix_new(6,6);
+    }else{
+        tempRes = result;
+        zeroMatrix(tempRes);
+    }
     // Create submatrices
     matrix *r = matrix_new(3, 3);
     getSection(T, 0, 2, 0, 2, r);
@@ -286,8 +321,10 @@ matrix *adj(matrix *T, matrix *result) {
     matrix_free(r);
     matrix_free(temp);
 
-    copyMatrix(tempRes, result);
-    matrix_free(tempRes);
+    if(T == result){
+        copyMatrix(tempRes, result);
+        matrix_free(tempRes);
+    }
     //matrix_free(tempIn);
 
     return result;
@@ -326,10 +363,13 @@ matrix *adj_R6(matrix *z, matrix *result){
 
     assert(result->numRows == 6);
     assert(result->numCols == 6);
-
-
-    matrix *tempOut = matrix_new(6,6);
-
+    matrix *tempOut;
+    if(z == result) {
+        tempOut = matrix_new(6, 6);
+    }else{
+        tempOut = result;
+        zeroMatrix(tempOut);
+    }
     matrix *gu = matrix_new(3,1);
     getSection(z, 0, 2, 0, 0, gu);
 
@@ -346,8 +386,11 @@ matrix *adj_R6(matrix *z, matrix *result){
     matrix_free(gu);
     matrix_free(temp);
 
-    copyMatrix(tempOut, result);
-    matrix_free(tempOut);
+    if(z == result){
+        copyMatrix(tempOut, result);
+        matrix_free(tempOut);
+    }
+
 
 
     return result;
@@ -367,10 +410,14 @@ matrix *expm_SO3(matrix *m, matrix *result){
 
     assert(result->numRows == 3);
     assert(result->numCols == 3);
+    matrix *tempOut;
 
-
-    matrix *tempOut = matrix_new(3,3);
-
+    if(m == result) {
+        tempOut = matrix_new(3, 3);
+    }else{
+        tempOut = result;
+        //zeroMatrix(tempOut);
+    }
     matrix *temp = matrix_new(3,1);
     double mag = norm(unhat_SO3(m, temp));
 
@@ -401,8 +448,11 @@ matrix *expm_SO3(matrix *m, matrix *result){
     matrix_free(temp_3x3n1);
     matrix_free(temp_3x3n2);
 
-    copyMatrix(tempOut, result);
-    matrix_free(tempOut);
+    if(m == result){
+        copyMatrix(tempOut, result);
+        matrix_free(tempOut);
+    }
+
     return result;
 }
 
@@ -412,7 +462,13 @@ matrix *expm_SE3(matrix *G, matrix *result) {
     assert(G->numRows == 4 && G->numCols == 4);
     assert(result->numRows == 4 && result->numCols == 4);
 
-    matrix *temp = matrix_new(4, 4);
+    matrix *temp ;
+    if(G == result){
+        temp = matrix_new(4, 4);
+    }else{
+        temp = result;
+
+    }
 
     //G = tempG;
 
@@ -459,9 +515,10 @@ matrix *expm_SE3(matrix *G, matrix *result) {
     matrix_free(temp3x1);
     matrix_free(temp3x3);
     matrix_free(A);
-
-    copyMatrix(temp, result);
-    matrix_free(temp);
+    if(G == result){
+        copyMatrix(temp, result);
+        matrix_free(temp);
+    }
 
 
     return result;
