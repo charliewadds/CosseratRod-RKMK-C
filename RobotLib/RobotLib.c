@@ -147,7 +147,14 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
     //matrix *temp4x4n2 = matrix_new(4,4);
 
     matrix *temp6x6n1 = matrix_new(6,6);
-    adj(expm_SE3(matrix_scalar_mul(hat_R6(childCoM, temp4x4n1),-1, temp4x4n1), temp4x4n1), temp6x6n1);
+
+
+    hat_R6(childCoM, temp4x4n1);
+    matrix_scalar_mul(temp4x4n1,-1, temp4x4n1);
+    expm_SE3(temp4x4n1, temp4x4n1);
+
+    adj(temp4x4n1, temp6x6n1);
+
     matrix *temp6x6n2 = matrix_new(6,6);
     //matrix *temp6x6n3 = matrix_new(6,6);
 
@@ -173,7 +180,12 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
     matrix *temp6x1n3 = matrix_new(6,1);
 
     matrix *eta = matrix_new(6,1);
-    matrix_add(matMult( adj(g_act_wrt_prev, temp6x6n1), eta_old, temp6x1n1), matrix_scalar_mul(newTwist, joint->velocity, temp6x1n2), eta);
+
+    matMult( adj(g_act_wrt_prev, temp6x6n1), eta_old, temp6x1n1);
+
+
+    matrix_scalar_mul(newTwist, joint->velocity, temp6x1n2);
+    matrix_add(temp6x1n1, temp6x1n2, eta);
 
 
     matrix *d_eta = matrix_new(6,1);
@@ -1330,7 +1342,7 @@ matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta
     const gsl_multiroot_fsolver_type *T;
     gsl_multiroot_fsolver *s;
 
-    T = gsl_multiroot_fsolver_hybrid;
+    T = gsl_multiroot_fsolver_dnewton;
     //s = gsl_multiroot_fsolver_allc(T, 6);
     int status;
     size_t iter = 0;
@@ -1369,7 +1381,7 @@ matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta
 
         status = gsl_multiroot_test_residual(s->f, 1e-9);
 
-    } while (status == GSL_CONTINUE && iter < 5);//increase this later
+    } while (status == GSL_CONTINUE && iter < 100);//increase this later
     //assert(!isnan(s->f->data[0]));
     // Extract solution
     //matrix *solution = zeros(6, 1);
@@ -1561,12 +1573,17 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     //printMatrix(matrix_sub(ones(6,1),InitGuess));
     //printMatrix(Flex_MB_BCS(InitGuess, robot, *F_ext, c0,c1,c2 ));
     //assert(!isnan(InitGuess->data[0][0]));
+
+    printf("____________InitGuess_______________________\n");
+    printMatrix(InitGuess);
     InitGuess = find_roots(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
 
 
     //printf("\nINIT_GUESS post\n");
     //printMatrix(Theta);
+    printf("_______________SOLUTION______________________\n");
     printMatrix(InitGuess);
+    printf("___________________________________________\n\n");
     //printf("ans");
     //printMatrix(Flex_MB_BCS(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2));
 
@@ -1586,11 +1603,24 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     flexDyn *dyn = flexDynAlloc();
 
 
-    matrix *etaPrev = matrix_new(6, 21);
-    matrix *etaPPrev = matrix_new(6, 21);
+    matrix **etaPrev = malloc(sizeof(matrix) * (numBody + 2));
+    for(int i = 0; i < numBody + 2; i++){//todo this could be numFlex I think
+        etaPrev[i] = zeros(6,21);
+    }
 
-    matrix *fPrev = matrix_new(6, 21);
-    matrix *fPPrev = matrix_new(6, 21);
+    matrix **etaPPrev = malloc(sizeof(matrix) * (numBody + 2));
+    for(int i = 0; i < numBody + 2; i++){//todo this could be numFlex I think
+        etaPPrev[i] = zeros(6,21);
+    }
+
+    matrix **fPrev = malloc(sizeof(matrix) * (numBody + 2));
+    for(int i = 0; i < numBody + 2; i++){//todo this could be numFlex I think
+        fPrev[i] = zeros(6,21);
+    }
+    matrix **fPPrev = malloc(sizeof(matrix) * (numBody + 2));
+    for(int i = 0; i < numBody + 2; i++){//todo this could be numFlex I think
+        fPPrev[i] = zeros(6,21);
+    }
 
 
     matrix *tempR6n1 = matrix_new(6,1);
@@ -1619,8 +1649,12 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 //        printMatrix(CoM2CoM);
 //        printf("g_ref[i - 1]");
 //        printMatrix(g_ref[i - 1]);
+        zeroMatrix(tempR6n1);
+
+        getSection(eta, 0, 5, i - 1, i - 1, tempR6n1);
+
         actuateRigidJoint(g_ref[i - 1], CoM2CoM, joint,
-                                getSection(eta, 0, 5, i - 1, i - 1, tempR6n1), getSection(d_eta, 0, 5, i - 1, i - 1, tempR6n1), kin);
+                                tempR6n1, getSection(d_eta, 0, 5, i - 1, i - 1, tempR6n2), kin);
 
         copyMatrix(kin->g_act_wrt_prev, g_act_wrt_prev[i]);
         //g_act_wrt_prev[i] = kin->g_act_wrt_prev;
@@ -1679,15 +1713,15 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
 
             //update history terms AFTER calculations
-            copyMatrix(body->object->flex->f_prev, fPPrev);
+            copyMatrix(body->object->flex->f_prev, fPPrev[i]);
             //fPPrev[i] = body->object->flex->f_prev;
-            copyMatrix(dyn->f, fPrev);
+            copyMatrix(dyn->f, fPrev[i]);
             //fPrev[i] = dyn->f;
 
-            copyMatrix(body->object->flex->eta_prev, etaPPrev);//double che
+            copyMatrix(body->object->flex->eta_prev, etaPPrev[i]);//double che
             //etaPPrev[i] = *body->object->flex->eta_prev;//double check this
 
-            copyMatrix(dyn->eta, etaPrev);
+            copyMatrix(dyn->eta, etaPrev[i]);
             //etaPrev[i] = *dyn->eta;
 
 
@@ -1774,11 +1808,11 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         for (int i = 1; i < numBody + 2; i++) {
             Object *body = robot->objects[2 * i ];
             if(body->type == 1) {
-                copyMatrix(etaPrev, body->object->flex->eta_prev);
-                copyMatrix(etaPPrev, body->object->flex->eta_pprev);
+                copyMatrix(etaPrev[i], body->object->flex->eta_prev);
+                copyMatrix(etaPPrev[i], body->object->flex->eta_pprev);
 
-                copyMatrix(fPrev, body->object->flex->f_prev);
-                copyMatrix(fPPrev, body->object->flex->f_pprev);
+                copyMatrix(fPrev[i], body->object->flex->f_prev);
+                copyMatrix(fPPrev[i], body->object->flex->f_pprev);
                 //body->object->flex->f_prev = fPrev[i];
                 //body->object->flex->f_pprev = fPPrev[i];
 
