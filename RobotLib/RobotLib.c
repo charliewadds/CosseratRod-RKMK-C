@@ -1382,6 +1382,7 @@ matrix *find_roots(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta
         status = gsl_multiroot_test_residual(s->f, 1e-9);
 
     } while (status == GSL_CONTINUE && iter < 100);//increase this later
+    printf("took %zu iterations\n", iter);
     //assert(!isnan(s->f->data[0]));
     // Extract solution
     //matrix *solution = zeros(6, 1);
