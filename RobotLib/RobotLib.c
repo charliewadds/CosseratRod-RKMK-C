@@ -1113,8 +1113,16 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
             /*
              * F_temp = F(:,i) + transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i)- ROBOT{2*i-1}.Mass*d_eta(:,i);
              */
-            matrix_sub(matrix_add(getSection(F, 0,5,i,i, tempR6n1), matMult(matrix_transpose(adj_R6(getSection(eta,0,5,i,i, tempR6n2), temp6x6n1), temp6x6n1), matMult(curr_body->object->rigid->mass, getSection(eta,0,5,i,i, tempR6n3), tempR6n3), tempR6n2), tempR6n1)
-                    ,matMult(curr_body->object->rigid->mass, getSection(d_eta,0,5,i,i, tempR6n2), tempR6n3), F_temp);
+            getSection(F, 0,5,i,i, tempR6n1);
+            matrix_transpose(adj_R6(getSection(eta,0,5,i,i, tempR6n2), temp6x6n1), temp6x6n1);
+            matMult(curr_body->object->rigid->mass, getSection(eta,0,5,i,i, tempR6n3), tempR6n3);
+            matMult(temp6x6n1, tempR6n3, tempR6n2);
+            matrix_add(tempR6n1, tempR6n2, tempR6n1);
+
+
+            matMult(curr_body->object->rigid->mass, getSection(d_eta,0,5,i,i, tempR6n2), tempR6n3);
+            matrix_sub(tempR6n1
+                    ,tempR6n3, F_temp);
 //            F_temp = *matrix_sub(matrix_add(
 //                    getSection(F, 0,5,i,i),
 //                    matMult(matrix_transpose(adj_R6(getSection(eta,0,5,i,i))), matMult(curr_body->object->rigid->mass,getSection(eta,0,5,i,i)))
