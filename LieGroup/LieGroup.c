@@ -144,20 +144,21 @@ matrix *hat_R3(matrix *z, matrix *result){
     assert(result->numCols == 3);
     //matrix *T = zeros(3,3);
 
-    matrix *temp = matrix_new(3,3);
-    temp->data[0][1] = z->data[2][0] * -1;
-    temp->data[0][2] = z->data[1][0];
+        matrix *temp = matrix_new(3, 3);
+        temp->data[0][1] = z->data[2][0] * -1;
+        temp->data[0][2] = z->data[1][0];
 
-    temp->data[1][0] = z->data[2][0];
-    temp->data[1][2] = z->data[0][0] * -1;
+        temp->data[1][0] = z->data[2][0];
+        temp->data[1][2] = z->data[0][0] * -1;
 
-    temp->data[2][0] = z->data[1][0] * -1;
-    temp->data[2][1] = z->data[0][0];
+        temp->data[2][0] = z->data[1][0] * -1;
+        temp->data[2][1] = z->data[0][0];
 
-    copyMatrix(temp, result);
-    matrix_free(temp);
+        copyMatrix(temp, result);
+        matrix_free(temp);
 
-    return result;
+        return result;
+
 }
 
 matrix *hat_R6(matrix *z, matrix *result){
@@ -347,6 +348,7 @@ matrix *adj_R6(matrix *z, matrix *result){
 
     copyMatrix(tempOut, result);
     matrix_free(tempOut);
+
 
     return result;
 }
