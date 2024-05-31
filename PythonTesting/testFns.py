@@ -507,7 +507,7 @@ class testRobot:
         print("TEST PASSED")
         print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
 
-#testLieGroup.test_all(testLieGroup,eng);#todo I havent used python in a while, this is not the right way to do this
+testLieGroup.test_all(testLieGroup,eng);#todo I havent used python in a while, this is not the right way to do this
 # testMatrix.test_matrix_mul(eng)
 #testMatrix.test_matrix_solve(eng)
 testRobot.test_coss_ode(eng)

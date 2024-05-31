@@ -546,13 +546,13 @@ int main() {
                 currJointIndex++;
             }
         }
-//        matrix *angles = zeros(robot->numObjects+1,200);
-//        for(int j = 0; j < robot->numObjects; j++){
-//            if(robot->objects[j]->type == 2){
-//                angles->data[j][i] = robot->objects[j]->object->joint->position;
-//
-//            }
-//        }
+        matrix *angles = zeros(robot->numObjects+1,200);
+        for(int j = 0; j < robot->numObjects; j++){
+            if(robot->objects[j]->type == 2){
+                angles->data[j][i] = robot->objects[j]->object->joint->position;
+
+            }
+        }
 
 
 
