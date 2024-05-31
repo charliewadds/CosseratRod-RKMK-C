@@ -40,9 +40,8 @@ add_library(RobotLib STATIC ${ROBOT_LIB_SOURCES})
 add_library(TestLib STATIC ${TEST_SOURCE})
 add_library(FDM STATIC ${FDM_SOURCE})
 # Main executable
-add_executable(CosseratRod_RKMK_C testing.c)
+
 add_executable(runTests runTests.c)
-add_executable(rigidKin RunMeRigidKinCW.c)
 add_executable(InvDyn RunMeInvDyn.c)
 add_executable(playground playground.c)
 # Link libraries to the executable
@@ -56,9 +55,8 @@ install(TARGETS MatrixLib LieGroup RobotLib TestLib FDM
 )
 
 
-target_link_libraries(CosseratRod_RKMK_C MatrixLib LieGroup RobotLib FDM -lm)
+
 target_link_libraries(InvDyn -lm -lgsl -lgslcblas MatrixLib LieGroup RobotLib)
 
 target_link_libraries(runTests TestLib MatrixLib LieGroup RobotLib FDM -lm)
-target_link_libraries(rigidKin TestLib MatrixLib LieGroup RobotLib FDM -lm -lgsl -lgslcblas)
 target_link_libraries(playground MatrixLib LieGroup RobotLib FDM -lm -lgsl -lgslcblas -lm)
