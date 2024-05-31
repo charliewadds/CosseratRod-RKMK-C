@@ -198,7 +198,7 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
     copyMatrix(g_cur, result->g_cur);
     //result->g_cur = g_cur;
     //memcpy(result->g_act_wrt_prev, g_cur_wrt_prev, sizeof(matrix));
-    copyMatrix(g_cur_wrt_prev, result->g_act_wrt_prev);
+    copyMatrix(g_act_wrt_prev, result->g_act_wrt_prev);
     //result->g_act_wrt_prev = g_act_wrt_prev;
     //memcpy(result->eta, eta, sizeof(matrix));
     copyMatrix(eta, result->eta);
