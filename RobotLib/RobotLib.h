@@ -171,7 +171,12 @@ matrix *COSS_ODE_Dsc(matrix *y, matrix *y_h, matrix *f_sh, flexBody *Body, doubl
 typedef struct COSS_ODE_OUT_s{
     matrix *eta_s;
     matrix *f_s;
+    matrix *temp6x6n1;
+    matrix *temp6x6n2;
 
+    matrix *tempR6n1;
+    matrix *tempR6n2;
+    matrix *tempR6n3;
 
 }COSS_ODE_OUT;
 
@@ -258,17 +263,11 @@ void robotFree(Robot *robot);
  */
 typedef struct IDM_MB_RE_OUT_t{
 
-    //<6x7> matrix in the example code, should be actuation forces
+
     matrix *F;
-
-    //<1x4> matrix in example code, should be constraint
     matrix *C;
-
-    //<6x7> matrix in example code, should be body velocities
     matrix *v;
 
-    //robot copy with updated joint positions todo should this just update the robot?
-    Robot *robot_new;
 
 }IDM_MB_RE_OUT;
 

@@ -2,7 +2,7 @@
 // Created by Charlie Wadds on 2024-04-09.
 //
 
-
+#include <time.h>
 #include "RobotLib.h"
 //
 // Created by Charlie Wadds on 2024-03-17.
@@ -437,11 +437,17 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 
 int main() {
+
+    clock_t start, end;
+    double cpu_time_used;
+
+    start = clock();
+
     matrix *theta = zeros(5, 1);
     matrix *theta_dot = zeros(5, 1);
 
     double dt = 0.025;
-    int timeStep = 3;
+    int timeStep = 100;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -460,7 +466,7 @@ int main() {
 
     matrix *theta_ddot = zeros(5, timeStep);
 
-    matrix *tempTStep = matrix_new(1, timeStep);
+    matrix *tempTStep = matrix_new(1, timeStep+1);
 
     //todo should be a loop for num bodies
     for(int i = 0; i < 5; i++){
@@ -507,7 +513,7 @@ int main() {
 
     //matrix *EE_POS = zeros(3, timeStep);
 
-
+    matrix *angles = zeros(((robot->numObjects-1)/2)+1,timeStep);
     IDM_MB_RE_OUT *idm = malloc(sizeof(IDM_MB_RE_OUT));
     matrix *tempLinkx1 = matrix_new(5,1);
     for(int i = 0; i < timeStep; i++){
@@ -546,10 +552,13 @@ int main() {
                 currJointIndex++;
             }
         }
-        matrix *angles = zeros(robot->numObjects+1,200);
+
+        int curr = 0;
         for(int j = 0; j < robot->numObjects; j++){
             if(robot->objects[j]->type == 2){
-                angles->data[j][i] = robot->objects[j]->object->joint->position;
+                curr ++;
+                printf("Joint %d: %f\n", j, robot->objects[j]->object->joint->position);
+                angles->data[curr][i] = robot->objects[j]->object->joint->position;
 
             }
         }
@@ -557,11 +566,11 @@ int main() {
 
 
 
-        matrixToFile(plotRobotConfig(robot, theta, 100), "RigidRandyPlot.csv");
-        matrix_free(angles);
+        //matrixToFile(plotRobotConfig(robot, theta, 100), "RigidRandyPlot.csv")
     }
     printf("DONE");
-
+    matrixToFile(angles, "RigidRandyAngles.csv");
+    //robotToFile(robot, "testRobotOut.json");
 
     matrix_free(tempBodiesx1);
     matrix_free(tempLinkx1);
@@ -582,4 +591,8 @@ int main() {
     matrix_free(theta);
     matrix_free(theta_dot);
     matrix_free(theta_ddot);
+
+    end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("Time: %f\n", cpu_time_used);
 }
