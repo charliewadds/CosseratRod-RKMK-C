@@ -689,18 +689,16 @@ void robotToFile(Robot *robot, char *filename){
         printf("Error opening file!\n");
         exit(1);
     }
+
     fprintf(f, "[");
     for(int i = 0; i<robot->numObjects; i++) {
-        if(i == robot->numObjects - 1) {
+            printf("Writing object %d\n", i);
+            printf("Object type: %d\n", robot->objects[i]->type);
+            printf("Object name: %s\n", robot->objects[i]->object->rigid->name);
             char *temp = objToJson(robot->objects[i]);
-            fprintf(f, "%s", temp);
+            fprintf(f, "%s},{", temp);
             free(temp);
-        }else {
-            char* temp = objToJson(robot->objects[i]);
-            fprintf(f, "%s,", temp);
-            free(temp);
-        }
-        }
+    }
     fprintf(f, "]");
 
     fclose(f);
@@ -1907,7 +1905,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         out->C = Ct;
         out->F = F;
         out->v = eta;
-        out->robot_new = robot;
+        //out->robot_new = robot;
 
 
         for(int i = 0; i < numBody + 2; i++){

@@ -370,6 +370,7 @@ matrix *adj_R6(matrix *z, matrix *result){
         tempOut = result;
         zeroMatrix(tempOut);
     }
+
     matrix *gu = matrix_new(3,1);
     getSection(z, 0, 2, 0, 0, gu);
 

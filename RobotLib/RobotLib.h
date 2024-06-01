@@ -263,17 +263,11 @@ void robotFree(Robot *robot);
  */
 typedef struct IDM_MB_RE_OUT_t{
 
-    //<6x7> matrix in the example code, should be actuation forces
+
     matrix *F;
-
-    //<1x4> matrix in example code, should be constraint
     matrix *C;
-
-    //<6x7> matrix in example code, should be body velocities
     matrix *v;
 
-    //robot copy with updated joint positions todo should this just update the robot?
-    Robot *robot_new;
 
 }IDM_MB_RE_OUT;
 
