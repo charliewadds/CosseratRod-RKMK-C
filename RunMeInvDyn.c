@@ -466,7 +466,7 @@ int main() {
 
     matrix *theta_ddot = zeros(5, timeStep);
 
-    matrix *tempTStep = matrix_new(1, timeStep+1);
+    matrix *tempTStep = matrix_new(1, timeStep);
 
     //todo should be a loop for num bodies
     for(int i = 0; i < 5; i++){
