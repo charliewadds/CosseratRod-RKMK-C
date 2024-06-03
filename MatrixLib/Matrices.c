@@ -453,13 +453,13 @@ matrix *matMult(matrix *m1, matrix *m2, matrix *result) {
         zeroMatrix(temp);
     }
     // Initialize the temporary/result matrix to zero
-    zeroMatrix(temp);
+    //zeroMatrix(temp);
 
     // Perform the matrix multiplication
     for (int i = 0; i < m1->numRows; i++) {
         for (int j = 0; j < m2->numCols; j++) {
             for (int k = 0; k < m1->numCols; k++) {
-                temp->data[(i * temp->numCols) + j] += m1->data[(i * m1->numCols) + k] * m2->data[(i * m2->numCols) + k];
+                temp->data[(i * temp->numCols) + j] += m1->data[(i * m1->numCols) + k] * m2->data[(k * m2->numCols) + j];
             }
         }
     }
