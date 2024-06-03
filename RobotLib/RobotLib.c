@@ -1604,10 +1604,19 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     //printMatrix(Flex_MB_BCS(InitGuess, robot, *F_ext, c0,c1,c2 ));
     //assert(!isnan(InitGuess->data[0][0]));
 
-    printf("____________InitGuess_______________________\n");
-    printMatrix(InitGuess);
-    int status = find_roots_newton(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+    matrix *tempGuess = matrix_new(6, 1);
+    copyMatrix(InitGuess, tempGuess);
+    int status = find_roots_hybrid(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
 
+    if(status != 0){
+        printf("hybrid method failed to converge, trying newton\n");
+        status = find_roots_newton(tempGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+        copyMatrix(tempGuess, InitGuess);
+
+        if(status != 0){
+            printf("both failed!");
+        }
+    }
 //    if(status == -2){
 //        printf("Newton's method failed to converge\n");
 //        status = find_roots_hybrid(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
