@@ -9,126 +9,8 @@
 
 
 
-//CONSTRUCTORS
-//______________________________________________________________________
-SO3 *new_SO3(matrix *R){
-    SO3 *T = (SO3 *)malloc(sizeof(SO3));
-    T->R = R;
-    return T;
-}
 
 
-SO3 *new_SO3_zeros(){
-    matrix *R = zeros(3,3);
-    SO3 *T = (SO3 *) malloc(sizeof(SO3));
-    T->R = R;
-    return T;
-}
-void free_SO3(SO3 *T){
-    matrix_free(T->R);
-    free(T);
-}
-
-
-
-
-SE3 *new_SE3(matrix *R, matrix *P){
-    SE3 *T = (SE3 *)malloc(sizeof(SE3));
-    T->R = new_SO3(R);
-
-    T->P = P;
-    T->T = matrix_new(4,4);
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; j < 3; j++){
-            T->T->data[i][j] = R->data[i][j];
-        }
-    }
-    for(int i = 0; i < 3; i++){
-        T->T->data[i][3] = P->data[i][0];
-    }
-    T->T->data[3][0] = 0;
-    T->T->data[3][1] = 0;
-    T->T->data[3][2] = 0;
-    T->T->data[3][3] = 1;
-    return T;
-}
-
-
-SE3 *new_SE3_T(matrix *T){
-    SE3 *new = (SE3 *)malloc(sizeof(SE3));
-    new->R = new_SO3_zeros();
-    getSection(T, 0, 2, 0, 2, new->R->R);
-    getSection(T, 0, 2, 3, 3, new->P);
-    new->T = T;
-    return new;
-}
-SE3 *new_SE3_zeros(){
-    SO3 *R = new_SO3_zeros();
-    matrix *P = matrix_new(3,1);
-    SE3 *T = (SE3 *)malloc(sizeof(SE3));
-    T->R = R;
-    T->P = P;
-    T->T = matrix_new(4,4);
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; j < 3; j++){
-            T->T->data[i][j] = R->R->data[i][j];
-        }
-    }
-    for(int i = 0; i < 3; i++){
-        T->T->data[i][3] = P->data[i][0];
-    }
-    T->T->data[3][0] = 0;
-    T->T->data[3][1] = 0;
-    T->T->data[3][2] = 0;
-    T->T->data[3][3] = 1;
-
-    matrix_free(P);
-    free_SO3(R);
-    return T;
-}
-
-void free_SE3(SE3 *T){
-    free_SO3(T->R);
-    matrix_free(T->P);
-    matrix_free(T->T);
-    free(T);
-}
-
-
-//combine 3x3 rotation matrix and 3x1 position vector into 4x4 transformation matrix
-matrix *T_from_PR(matrix* restrict R, matrix* restrict P){
-    matrix *T = matrix_new(4,4);
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; j < 3; j++){
-            T->data[i][j] = R->data[i][j];
-        }
-    }
-    for(int i = 0; i < 3; i++){
-        T->data[i][3] = P->data[i][0];
-    }
-    T->data[3][0] = 0;
-    T->data[3][1] = 0;
-    T->data[3][2] = 0;
-    T->data[3][3] = 1;
-    return T;
-}
-
-matrix *T_from_PR_SO3(SO3 *R, matrix *P){
-    matrix *T = matrix_new(4,4);
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; j < 3; j++){
-            T->data[i][j] = R->R->data[i][j];
-        }
-    }
-    for(int i = 0; i < 3; i++){
-        T->data[i][3] = P->data[i][0];
-    }
-    T->data[3][0] = 0;
-    T->data[3][1] = 0;
-    T->data[3][2] = 0;
-    T->data[3][3] = 1;
-    return T;
-}
 //_________________________________________________________________________________________________________
 
 
@@ -152,14 +34,14 @@ matrix *hat_R3(matrix *z, matrix *result){
     }
 
 
-    temp->data[0][1] = z->data[2][0] * -1;
-    temp->data[0][2] = z->data[1][0];
+    temp->data[(0 * temp->numCols) + 1] = z->data[(2 * temp->numCols) * 0] * -1;
+    temp->data[(0 * temp->numCols) + 2] = z->data[(1 * temp->numCols) * 0];
 
-    temp->data[1][0] = z->data[2][0];
-    temp->data[1][2] = z->data[0][0] * -1;
+    temp->data[(1 *temp->numCols)+0] = z->data[(2 * temp->numCols) * 0];
+    temp->data[(1 *temp->numCols)+2] = z->data[(0 * temp->numCols) * 0] * -1;
 
-    temp->data[2][0] = z->data[1][0] * -1;
-    temp->data[2][1] = z->data[0][0];
+    temp->data[(2 *temp->numCols)+0] = z->data[(1 * temp->numCols) * 0] * -1;
+    temp->data[(2 *temp->numCols)+1] = z->data[(0 * temp->numCols) * 0];
 
     if(z == result){
         copyMatrix(temp, result);
@@ -244,9 +126,9 @@ matrix *unhat_SO3(matrix *zhat, matrix *result){
     }else{
         temp = result;
     }
-    temp->data[0][0] = zhat->data[2][1];
-    temp->data[1][0] = zhat->data[0][2];
-    temp->data[2][0] = zhat->data[1][0];
+    temp->data[(0 * temp->numCols) + 0] = zhat->data[(2 * zhat->numCols) + 1];
+    temp->data[(1 * temp->numCols) + 0] = zhat->data[(0 * zhat->numCols) + 2];
+    temp->data[(2 * temp->numCols) + 0] = zhat->data[(1 * zhat->numCols) + 0];
 
     if(zhat == result){
         copyMatrix(temp, result);
@@ -256,23 +138,7 @@ matrix *unhat_SO3(matrix *zhat, matrix *result){
     return result;
 }
 
-matrix *unhat_SE3(matrix *zhat, matrix *result){
-    //matrix *z = matrix_new(6,1);
-    assert(result->numRows == 6);
-    assert(result->numCols == 1);
 
-
-    result->data[0] = zhat->data[0];
-    result->data[1] = zhat->data[1];
-    result->data[2] = zhat->data[2];
-
-    //todo this would be cleaner if I used unhat_SO3
-    result->data[3] = & zhat->data[2][1];
-    result->data[4] = & zhat->data[0][2];
-    result->data[5] = & zhat->data[1][0];
-
-    return result;
-}
 //_________________________________________________________________________________________________________
 
 //ADJOINT
@@ -509,7 +375,7 @@ matrix *expm_SE3(matrix *G, matrix *result) {
     matMult(A, Gu, temp3x1);
     setSection(temp, 0, 2, 3, 3, temp3x1);
 
-    temp->data[3][3] = 1;
+    temp->data[(3 * temp->numCols) + 3] = 1;
 
     matrix_free(Gw);
     matrix_free(Gu);
@@ -555,7 +421,7 @@ matrix *expm_SE3_chain(matrix *m) {
     setSection(m, 0, 2, 0, 2, expm_SO3(gW, temp3x3));
     setSection(m, 0, 2, 3, 3, matMult(A, gU, temp3x3));
     setSection(m , 3, 3, 0, 3, zeros(1,4));
-    m->data[3][3] = 1;
+    m->data[(3 * m->numCols) + 3] = 1;
 
 
     matrix_free(gW);

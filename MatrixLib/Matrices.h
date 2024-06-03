@@ -19,7 +19,7 @@ typedef struct matrix_double_s {
     //there is probably some memory trickery that can be done here to make this more efficient
     uint8_t numRows;
     uint8_t numCols;
-    double **data;
+    double *data;
     uint8_t square;
 
 

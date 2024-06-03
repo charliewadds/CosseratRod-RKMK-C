@@ -11,7 +11,7 @@ gsl_matrix *matrix_to_gsl(matrix *matrix, gsl_matrix *out){
     //gsl_matrix *m = gsl_matrix_alloc(matrix->numRows, matrix->numCols);
     for(int i = 0; i < matrix->numRows; i++){
         for(int j = 0; j < matrix->numCols; j++){
-            gsl_matrix_set(out, i, j, matrix->data[i][j]);
+            gsl_matrix_set(out, i, j, matrix->data[(i * matrix->numCols) + j]);
         }
     }
     return out;
@@ -21,7 +21,7 @@ gsl_matrix *copy_matrix_to_gsl(matrix *matrix, gsl_matrix *out){
     //gsl_matrix *m = gsl_matrix_alloc(matrix->numRows, matrix->numCols);
     for(int i = 0; i < matrix->numRows; i++){
         for(int j = 0; j < matrix->numCols; j++){
-            gsl_matrix_set(out, i, j, matrix->data[i][j]);
+            gsl_matrix_set(out, i, j, matrix->data[(i * matrix->numCols) + j]);
         }
     }
     return out;
@@ -47,7 +47,7 @@ matrix *gsl_to_matrix(gsl_matrix *gsl_matrix, matrix *result){
     //zeroMatrix(result);
     for(int i = 0; i < result->numRows; i++){
         for(int j = 0; j < result->numCols; j++){
-            result->data[i][j] = gsl_matrix_get(gsl_matrix, i, j);
+            result->data[(i * result->numCols) + j] = gsl_matrix_get(gsl_matrix, i, j);
         }
     }
     return result;
@@ -57,40 +57,10 @@ matrix *matrix_new(uint8_t num_rows, uint8_t num_cols) {
     assert(num_rows != 0);
     assert(num_cols != 0);
 
-    // Allocate memory for the matrix struct
     matrix *m = malloc(sizeof(matrix));
-    if (m == NULL) {
-        fprintf(stderr, "Failed to allocate memory for matrix structure.\n");
-        return NULL;
-    }
-
-    m->numCols = num_cols;
     m->numRows = num_rows;
-    m->square = (num_cols == num_rows) ? 1 : 0;
-
-    // Allocate memory for the row pointers
-    m->data = malloc(m->numRows * sizeof(*(m->data)));
-    if (m->data == NULL) {
-        fprintf(stderr, "Failed to allocate memory for matrix rows.\n");
-        free(m);
-        return NULL;
-    }
-
-    // Allocate memory for each row and initialize to zero
-    for (int i = 0; i < num_rows; i++) {
-        m->data[i] = calloc(num_cols, sizeof(**m->data));
-        memset(m->data[i], 0, num_cols * sizeof(**m->data));
-        if (m->data[i] == NULL) {
-            fprintf(stderr, "Failed to allocate memory for matrix row %d.\n", i);
-            // Free previously allocated rows
-            for (int j = 0; j < i; j++) {
-                free(m->data[j]);
-            }
-            free(m->data);
-            free(m);
-            return NULL;
-        }
-    }
+    m->numCols = num_cols;
+    m->data = calloc((num_rows*num_cols), sizeof(double));
 
     return m;
 }
@@ -100,11 +70,6 @@ matrix *matrix_new(uint8_t num_rows, uint8_t num_cols) {
 void matrix_free(matrix *m) {
     assert(m != NULL);
 
-    for (int i = 0; i < m->numRows; i++) {
-        if (m->data[i] != NULL) {
-            free(m->data[i]);
-        }
-    }
     free(m->data);
     free(m);
 }
@@ -129,7 +94,7 @@ matrix *matrix_add(matrix *m1, matrix *m2, matrix *result){
 
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m1->numCols; j++){
-            temp->data[i][j] = m1->data[i][j] + m2->data[i][j];
+            temp->data[(i * temp->numCols) + j] = m1->data[(i * m1->numCols) + j] + m2->data[(i * m2->numCols) + j];
         }
     }
 
@@ -174,7 +139,7 @@ matrix *matrix_scalar_mul(matrix *m, double scalar, matrix *result){
 
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            temp->data[i][j] = m->data[i][j] * scalar;
+            temp->data[(i * temp->numCols) + j] = m->data[(i * m->numCols) + j] * scalar;
         }
     }
     if(m == result){
@@ -189,7 +154,7 @@ matrix *matrix_scalar_mul_chain(matrix *m, double scalar){
     matrix *result = matrix_new(m->numRows, m->numCols);
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            result->data[i][j] = m->data[i][j] * scalar;
+            result->data[(i * result->numCols) + j] = m->data[(i * m->numCols) + j] * scalar;
         }
     }
     matrix_free(m);
@@ -208,7 +173,7 @@ int *matrix_shape(matrix *m){
 
     shape[0] = m->numCols;
     shape[1] = m->numRows;
-
+    free(shape);
     return shape;
 }
 
@@ -263,7 +228,7 @@ double dot(matrix *m1, matrix *m2){
 
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m2->numCols; j++){
-            result += m1->data[i][j] * m2->data[j][i];
+            result += m1->data[(i * m1->numCols) + j] * m2->data[(i * m2->numCols) + j];
         }
     }
 
@@ -278,7 +243,7 @@ matrix *cross(matrix *m1, matrix *m2, matrix *result){
 
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m2->numCols; j++){
-            result->data[i][j] = m1->data[i][j] * m2->data[j][i];
+            result->data[(i * result->numCols) + j] = m1->data[(i * m1->numCols) + j] * m2->data[(i * m2->numCols) + j];
         }
     }
 
@@ -300,7 +265,7 @@ matrix *matrix_transpose(matrix *m, matrix *result){
     }
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            temp->data[j][i] = m->data[i][j];
+            temp->data[(i * temp->numCols) + j] = m->data[(i * m->numCols) + j];
         }
     }
     if(m == result){
@@ -317,30 +282,29 @@ matrix *matrix_transpose(matrix *m, matrix *result){
 matrix *eye(matrix *result){
 
     assert(result->numRows == result->numCols);
-    //matrix *m = matrix_new(n,n);
 
+    memset(result->data, 0, result->numRows * result->numCols * sizeof(double));
     for(int i = 0; i < result->numRows; i++){
-        memset(result->data[i], 0, result->numRows * sizeof(int));  // Set the whole row to zero
-        result->data[i][i] = 1;
+        result->data[(i * result->numCols) + i] = 1;
     }
     return result;
 }
 
-matrix *matrix_diag(matrix *A){//todo this is wrong
-    assert(A->numRows == A->numCols);
-    matrix *m = matrix_new(A->numRows, 1);
-    for(int i = 0; i < A->numRows; i++){
-        m->data[i][0] = A->data[i][i];
-    }
-    return m;
-
-}
+//matrix *matrix_diag(matrix *A){//todo this is wrong
+//    assert(A->numRows == A->numCols);
+//    matrix *m = matrix_new(A->numRows, 1);
+//    for(int i = 0; i < A->numRows; i++){
+//        m->data[i][0] = A->data[i][i];
+//    }
+//    return m;
+//
+//}
 
 matrix *matrix_rand(uint8_t num_rows, uint8_t num_cols){
     matrix *m = matrix_new(num_rows, num_cols);
     for(int i = 0; i < num_rows; i++){
         for(int j = 0; j < num_cols; j++){
-            m->data[i][j] = (double)rand() / RAND_MAX;
+            m->data[(i * m->numCols) + j] = (double)rand() / RAND_MAX;
         }
     }
     return m;
@@ -350,7 +314,7 @@ double matrix_sumSelf(matrix *m){
     double result = 0;
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            result += m->data[i][j];
+            result += m->data[(i * m->numCols) + j];
         }
     }
     return result;
@@ -359,7 +323,7 @@ matrix *zeros(uint8_t num_rows, uint8_t num_cols){
     matrix *m = matrix_new(num_rows, num_cols);
     for(int i = 0; i < num_rows; i++){
         for(int j = 0; j < num_cols; j++){
-            m->data[i][j] = 0;
+            m->data[(i * m->numCols) + j] = 0;
         }
     }
     return m;
@@ -369,7 +333,7 @@ matrix *zeros(uint8_t num_rows, uint8_t num_cols){
 matrix *zeroMatrix(matrix *m){
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            m->data[i][j] = 0;
+            m->data[(i * m->numCols) + j] = 0;
         }
     }
     return m;
@@ -379,7 +343,7 @@ matrix *ones(uint8_t num_rows, uint8_t num_cols){
     matrix *m = matrix_new(num_rows, num_cols);
     for(int i = 0; i < num_rows; i++){
         for(int j = 0; j < num_cols; j++){
-            m->data[i][j] = 1;
+            m->data[(i * m->numCols) + j] = 1;
         }
     }
     return m;
@@ -396,7 +360,7 @@ void setSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, u
 
     for(int i = startRow; i <= endRow; i++){
         for(int j = startCol; j <= endCol; j++){
-            m->data[i][j] = section->data[i - startRow][j - startCol];
+            m->data[(i * m->numCols) + j] = section->data[((i-startRow) * m->numCols) + (j-startCol)];
         }
     }
 
@@ -411,7 +375,7 @@ void copyMatrix(matrix *m, matrix *result){
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
 
-            result->data[i][j] = m->data[i][j];
+            result->data[(i * m->numCols) + j] = m->data[(i * m->numCols) + j];
         }
     }
 }
@@ -432,7 +396,7 @@ void getSetSection(matrix *get, matrix *set, uint8_t getStartRow, uint8_t getEnd
             uint8_t dest_j = setStartCol + j;
 
             // Copy data from the source to the destination matrix
-            set->data[dest_i][dest_j] = get->data[src_i][src_j];
+            set->data[(dest_i * set->numCols) + dest_j] = get->data[(src_i * get->numCols) + src_j];
         }
     }
 }
@@ -450,8 +414,8 @@ matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol
 
     for(int i = startRow; i <= endRow; i++){
         for(int j = startCol; j <= endCol; j++){
-            result->data[i - startRow][j - startCol] = m->data[i][j];
-            assert(result->data[i - startRow][j - startCol] != NAN);
+            result->data[((i-startRow) * m->numCols) + (j- startCol)] = m->data[(i * m->numCols) + j];
+
         }
     }
     result->numRows = (endRow - startRow)+1;
@@ -460,11 +424,11 @@ matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol
     return result;
 }
 
-matrix *matrix_sin(matrix *m){
+matrix *matrix_sin(matrix *m){//todo update to use result matrix
     matrix *result = matrix_new(m->numRows, m->numCols);
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            result->data[i][j] =(double) sinl(m->data[i][j]);
+            result->data[(i * result->numCols) + j] =(double) sinl(m->data[(i * m->numCols) + j]);
         }
     }
     return result;
@@ -494,7 +458,7 @@ matrix *matMult(matrix *m1, matrix *m2, matrix *result) {
     for (int i = 0; i < m1->numRows; i++) {
         for (int j = 0; j < m2->numCols; j++) {
             for (int k = 0; k < m1->numCols; k++) {
-                temp->data[i][j] += m1->data[i][k] * m2->data[k][j];
+                temp->data[(i * temp->numCols) + j] += m1->data[(i * m1->numCols) + j] * m2->data[(i * m2->numCols) + j];
             }
         }
     }
@@ -520,7 +484,7 @@ matrix *matMult_chain(matrix *m1, matrix *m2){
         for(int j = 0; j < m2->numCols; j++){
             for(int k = 0; k < m1->numCols; k++){
 
-                result->data[i][j] += m1->data[i][k] * m2->data[k][j];
+                result->data[(i * result->numCols) + j] += m1->data[(i * m1->numCols) + j] * m2->data[(i * m2->numCols) + j];
                 //assert(result->data[i][j] != NAN);
             }
         }
@@ -531,35 +495,35 @@ matrix *matMult_chain(matrix *m1, matrix *m2){
     return result;
 }
 
-matrix *matMult_alloc(matrix m1, matrix m2){
+//matrix *matMult_alloc(matrix m1, matrix m2){
+//
+//    assert(m1.numCols == m2.numRows);
+//    matrix *result = matrix_new(m1.numRows, m2.numCols);
+//    for(int i = 0; i < m1.numRows; i++){
+//        for(int j = 0; j < m2.numCols; j++){
+//            for(int k = 0; k < m1.numCols; k++){
+//
+//                result->data[(i * result->numCols) + j] += m1.data[i][k] * m2.data[k][j];
+//                //assert(result->data[i][j] != NAN);
+//            }
+//        }
+//    }
+//
+//    return result;
+//}
 
-    assert(m1.numCols == m2.numRows);
-    matrix *result = matrix_new(m1.numRows, m2.numCols);
-    for(int i = 0; i < m1.numRows; i++){
-        for(int j = 0; j < m2.numCols; j++){
-            for(int k = 0; k < m1.numCols; k++){
-
-                result->data[i][j] += m1.data[i][k] * m2.data[k][j];
-                //assert(result->data[i][j] != NAN);
-            }
-        }
-    }
-
-    return result;
-}
-
-matrix *matrix_outerProduct(matrix *m1, matrix *m2){
-    assert(m1->numCols == m2->numRows);
-    assert(m1->numRows == m2->numCols);
-    matrix *result = matrix_new(m1->numRows, m2->numCols);
-    for(int i = 0; i < m1->numRows; i++){
-        for(int j = 0; j < m2->numCols; j++){
-            result->data[i][j] = m1->data[i][j] * m2->data[j][i];
-        }
-    }
-    return result;
-
-}
+//matrix *matrix_outerProduct(matrix *m1, matrix *m2){
+//    assert(m1->numCols == m2->numRows);
+//    assert(m1->numRows == m2->numCols);
+//    matrix *result = matrix_new(m1->numRows, m2->numCols);
+//    for(int i = 0; i < m1->numRows; i++){
+//        for(int j = 0; j < m2->numCols; j++){
+//            result->data[i][j] = m1->data[i][j] * m2->data[j][i];
+//        }
+//    }
+//    return result;
+//
+//}
 
 matrix *matMult_elem(matrix *m1, matrix *m2){
     assert(m1->numCols == m2->numCols);
@@ -567,7 +531,7 @@ matrix *matMult_elem(matrix *m1, matrix *m2){
     matrix *result = matrix_new(m1->numRows, m1->numCols);
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m1->numCols; j++){
-            result->data[i][j] = m1->data[i][j] * m2->data[i][j];
+            result->data[(i * result->numCols) + j] = m1->data[(i * m1->numCols) + j] * m2->data[(i * m2->numCols) + j];
         }
     }
 
@@ -590,7 +554,7 @@ matrix *scalarMatDiv(matrix *m, double scalar, matrix *result){
     }
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            temp->data[i][j] = m->data[i][j] / scalar;
+            temp->data[(i * temp->numCols) + j] = m->data[(i * m->numCols) + j] / scalar;
 
         }
     }
@@ -610,7 +574,7 @@ double norm(matrix *m){
 
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            result += m->data[i][j] * m->data[i][j];
+            result += m->data[(i * m->numCols) + j] * m->data[(i * m->numCols) + j];
         }
     }
 
@@ -626,7 +590,7 @@ void printMatrix(matrix *m){
    for(int i = 0; i < m->numRows; i++){
         printf("|");
         for(int j = 0; j < m->numCols; j++){
-            printf("%.15f ", m->data[i][j]);
+            printf("%.15f ", m->data[(i * m->numCols) + j]);
         }
         printf("|\n");
     }
@@ -642,7 +606,7 @@ void matrixToFile(matrix *m, char *filename){
 
     for (int i = 0; i < m->numRows; i++){
         for (int j = 0; j < m->numCols; j++){
-            fprintf(f, "%.12f, ", m->data[i][j]);
+            fprintf(f, "%.12f, ", m->data[(i * m->numCols) + j]);
         }
         fprintf(f, "\n");
     }
@@ -665,30 +629,30 @@ char* matrixToJson(matrix *m, char *version){
             if(m->numRows == 1 || m->numCols == 1) {
                 if(j == m->numCols - 1 && i == m->numRows - 1) {
 
-                    if(m->data[i][j] >99999){
-                        sprintf(result, "%s%.18e", result, m->data[i][j]);
+                    if(m->data[(i * m->numCols) + j] >99999){
+                        sprintf(result, "%s%.18e", result, m->data[(i * m->numCols) + j]);
                     }else {
-                        sprintf(result, "%s%.18f", result, m->data[i][j]);
+                        sprintf(result, "%s%.18f", result, m->data[(i * m->numCols) + j]);
                     }
                 }else{
-                    if(m->data[i][j] >99999){
-                        sprintf(result, "%s%.18e,", result, m->data[i][j]);
+                    if(m->data[(i * m->numCols) + j] >99999){
+                        sprintf(result, "%s%.18e,", result, m->data[(i * m->numCols) + j]);
                     }else {
-                        sprintf(result, "%s%.18f,", result, m->data[i][j]);
+                        sprintf(result, "%s%.18f,", result, m->data[(i * m->numCols) + j]);
                     }
                 }
             } else {
                 if(j == m->numCols - 1) {
-                    if(m->data[i][j] >99999){
-                        sprintf(result, "%s%.18e", result, m->data[i][j]);
+                    if(m->data[(i * m->numCols) + j] >99999){
+                        sprintf(result, "%s%.18e", result, m->data[(i * m->numCols) + j]);
                     }else {
-                        sprintf(result, "%s%.18f", result, m->data[i][j]);
+                        sprintf(result, "%s%.18f", result, m->data[(i * m->numCols) + j]);
                     }
                 }else {
-                    if(m->data[i][j] >99999){
-                        sprintf(result, "%s%.18e,", result, m->data[i][j]);
+                    if(m->data[(i * m->numCols) + j] >99999){
+                        sprintf(result, "%s%.18e,", result, m->data[(i * m->numCols) + j]);
                     }else {
-                        sprintf(result, "%s%.18f,", result, m->data[i][j]);
+                        sprintf(result, "%s%.18f,", result, m->data[(i * m->numCols) + j]);
                     }
                 }
             }
@@ -766,7 +730,7 @@ matrix *matrix_sub(matrix *m1, matrix *m2, matrix *result){
 
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m1->numCols; j++){
-            temp->data[i][j] = m1->data[i][j] - m2->data[i][j];
+            temp->data[(i * temp->numCols) + j] = m1->data[(i * temp->numCols) + j] - m2->data[(i * temp->numCols) + j];
         }
     }
 
@@ -776,18 +740,18 @@ matrix *matrix_sub(matrix *m1, matrix *m2, matrix *result){
     }
     return result;
 }
-//this only works for column vectors right now
-matrix *matrix_sub_broadcast(matrix *m1, matrix *vect){
-    assert(m1->numRows == vect->numRows);
-    matrix *result = matrix_new(m1->numRows, m1->numCols);
-
-    for(int i = 0; i < m1->numRows; i++){
-        for(int j = 0; j < m1->numCols; j++){
-            result->data[i][j] = m1->data[i][j] - vect->data[i][0];
-        }
-    }
-    return result;
-}
+////this only works for column vectors right now
+//matrix *matrix_sub_broadcast(matrix *m1, matrix *vect){
+//    assert(m1->numRows == vect->numRows);
+//    matrix *result = matrix_new(m1->numRows, m1->numCols);
+//
+//    for(int i = 0; i < m1->numRows; i++){
+//        for(int j = 0; j < m1->numCols; j++){
+//            result->data[i][j] = m1->data[i][j] - vect->data[i][0];
+//        }
+//    }
+//    return result;
+//}
 
 double Det(matrix *m) {
     gsl_matrix *gsl_m = gsl_matrix_alloc(m->numRows, m->numCols);
@@ -817,7 +781,7 @@ double matrixRatio(matrix *m1, matrix *m2){
     double result = 0;
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m1->numCols; j++){
-            result += m1->data[i][j] / m2->data[i][j];
+            result += m1->data[(i * m1->numCols) + j] / m2->data[(i * m2->numCols) + j];
         }
     }
     return result;
@@ -834,60 +798,14 @@ matrix *elemDiv(matrix *m1, double scalar, matrix *result){
 
     for(int i = 0; i < m1->numRows; i++){
         for(int j = 0; j < m1->numCols; j++){
-            result->data[i][j] = m1->data[i][j] / scalar;
+            result->data[(i * result->numCols) + j] = m1->data[(i * result->numCols) + j] / scalar;
         }
     }
     return result;
 }
 
 
-//This finds the largest eigenvector of a matrix (todo this uses power iteration, does it always land on the largest?)
-matrix *eigenvector(matrix *A, int iterations) {
-    int *shape = matrix_shape(A);
-    int n;
-    int m;
-    if (shape[0] > shape[1]) {
-        n = shape[0];
-        m = shape[1];
-    } else {
-        n = shape[1];
-        m = shape[0];
-    }
 
-    double vals[n];
-    matrix *b_k = matrix_new(n, m);//eigen vector
-    matrix *b_k1 = matrix_new(n, m);
-
-
-//    b_k->data[0][0] = (double) rand() / RAND_MAX;
-//    b_k->data[1][0] = (double) rand() / RAND_MAX;
-//    b_k->data[2][0] = (double) rand() / RAND_MAX;
-
-    for(int i = 0; i < n; i++){
-        for(int j = 0; j < m; j++) {
-            b_k->data[i][j] = (double) rand() / RAND_MAX;
-        }
-    }
-    double b_k1_norm;
-
-    while (iterations >= 0) {
-        matMult(A, b_k, b_k1);
-
-        //printMatrix(b_k1);
-
-        b_k1_norm = norm(b_k1);
-
-
-        scalarMatDiv(b_k1, b_k1_norm, b_k);
-
-        iterations--;
-    }
-
-    free(b_k1);
-    free(shape);
-    return b_k;
-
-}
 void printGSLMatrix(gsl_matrix *m){
     for(int i = 0; i < m->size1; i++){
         printf("|");
@@ -898,21 +816,5 @@ void printGSLMatrix(gsl_matrix *m){
     }
 }
 
-double eigenvalue(matrix *A, int iterations){
-    matrix *v = eigenvector(A, iterations);
-    matrix *vT = matrix_new(v->numCols, v->numRows);
-    matrix_transpose(v, vT);
-    matrix *vTv = matrix_new(v->numCols, v->numCols);
-    matMult(vT, v, vTv);
-
-    matrix *temp = matrix_new(v->numCols, v->numCols);
-    double result = matrixRatio(matMult(vT, matMult(A,v, temp), temp), vTv );//todo does this work??
-
-    matrix_free(v);
-    matrix_free(vT);
-    matrix_free(vTv);
-    matrix_free(temp);
-    return result;
-}
 
 

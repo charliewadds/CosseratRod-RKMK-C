@@ -418,7 +418,7 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
         //assert(robot->objects[(i*2)+2]->type == 0 || robot->objects[(i*2)+2]->type == 1);
         if(1){
 
-            matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[i][0]), temp6n1), temp4x4n1), temp4x4n1), g);
+            matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[(i * theta->numCols)]), temp6n1), temp4x4n1), temp4x4n1), g);
 
             //setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
             getSetSection(g, POS, 0, 2, 3, 3, 0, 2, iii, iii);
@@ -1254,12 +1254,12 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
 
     // Convert x to matrix format
     matrix *x_matrix = zeros(6, 1);
-    x_matrix->data[0][0] = x_arr[0];
-    x_matrix->data[1][0] = x_arr[1];
-    x_matrix->data[2][0] = x_arr[2];
-    x_matrix->data[3][0] = x_arr[3];
-    x_matrix->data[4][0] = x_arr[4];
-    x_matrix->data[5][0] = x_arr[5];
+    x_matrix->data[(0 * x_matrix->numCols)] = x_arr[0];
+    x_matrix->data[(1 * x_matrix->numCols)] = x_arr[1];
+    x_matrix->data[(2 * x_matrix->numCols)] = x_arr[2];
+    x_matrix->data[(3 * x_matrix->numCols)] = x_arr[3];
+    x_matrix->data[(4 * x_matrix->numCols)] = x_arr[4];
+    x_matrix->data[(5 * x_matrix->numCols)] = x_arr[5];
 
     // Call Flex_MB_BCS function
     matrix *result = Flex_MB_BCS(x_matrix, robot, *F_ext, c0, c1, c2);
@@ -1267,7 +1267,7 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
     // Fill f with the residuals
     for (int i = 0; i < 6; ++i) {
         //printf("result: %f\n", result->data[i][0]);
-        gsl_vector_set(f, i, result->data[i][0] );
+        gsl_vector_set(f, i, result->data[(i * result->numCols)] );
     }
 
     // Free memory
@@ -1296,53 +1296,6 @@ matrix *Flex_MB_BCS_wrapper_PSO(matrix *x, void *params) {
 
 }
 
-//matrix *find_roots_PSO(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2) {
-//    int numParticles = 10;
-//    matrix **particlePos = malloc(sizeof(matrix *) * numParticles);
-//    matrix **particleVect = malloc(sizeof(matrix *) * numParticles);
-//    Flex_MB_BCS_params params = {InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
-//
-//    // Initialize particle positions randomly
-//    for (int i = 0; i < numParticles; i++) {
-//        particlePos[i] = matrix_rand(6, 1);
-//        particleVect[i] = zeros(6, 1);
-//    }
-//
-//
-//
-//    double stepSize = 0.0000001; // Step size for PSO
-//
-//    int maxIter = 100; // Maximum number of iterations
-//
-//    int bestIndex = 0; // Index of the best particle
-//    double bestValue = 1000000; // Value of the best particle
-//    // PSO iteration loop
-//    matrix error;
-//    for (int iter = 0; iter < maxIter; iter++) {
-//        for (int i = 0; i < numParticles; i++) {
-//            error = *Flex_MB_BCS_wrapper_PSO(particlePos[i], &params);
-//            if(norm(&error) < bestValue) {
-//                bestValue = norm(&error);
-//                bestIndex = i;
-//                printMatrix(&error);
-//                printf("\n");
-//            }else{
-//                // Update particle position
-//                particleVect[i] = matrix_sub(particlePos[bestIndex], particlePos[i]);
-//                particlePos[i] = matrix_add(particlePos[i], matrix_scalar_mul(elemDiv(particleVect[i],matrix_sumSelf(matMult_elem(particleVect[i],particleVect[i]))), stepSize));
-//
-//            }
-//
-//
-//        }
-//    }
-//
-//
-//
-//    return particlePos[bestIndex]; // Return NULL for now, replace with the best solution found by PSO
-//}
-
-
 
 
 
@@ -1369,7 +1322,7 @@ int find_roots_newton(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
     double x_init[6];
 
     for (int i = 0; i < 6; ++i) {
-        x_init[i] = InitGuess->data[i][0];
+        x_init[i] = InitGuess->data[i * InitGuess->numCols];
     }
 
     gsl_vector_view x_vec = gsl_vector_view_array(x_init, n);
@@ -1401,7 +1354,7 @@ int find_roots_newton(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
     // Extract solution
     //matrix *solution = zeros(6, 1);
     for (int i = 0; i < 6; ++i) {
-        InitGuess->data[i][0] = gsl_vector_get(s->x, i);
+        InitGuess->data[i * InitGuess->numCols] = gsl_vector_get(s->x, i);
     }
 
     gsl_multiroot_fsolver_free(s);
@@ -1431,7 +1384,7 @@ int find_roots_hybrid(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
     double x_init[6];
 
     for (int i = 0; i < 6; ++i) {
-        x_init[i] = InitGuess->data[i][0];
+        x_init[i] = InitGuess->data[i * InitGuess->numCols];
     }
 
     gsl_vector_view x_vec = gsl_vector_view_array(x_init, n);
@@ -1463,7 +1416,7 @@ int find_roots_hybrid(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
     // Extract solution
     //matrix *solution = zeros(6, 1);
     for (int i = 0; i < 6; ++i) {
-        InitGuess->data[i][0] = gsl_vector_get(s->x, i);
+        InitGuess->data[i * InitGuess->numCols] = gsl_vector_get(s->x, i);
     }
 
     gsl_multiroot_fsolver_free(s);
@@ -1535,7 +1488,7 @@ matrix *find_roots_deriv(matrix *InitGuess, Robot *robot, matrix *Theta, matrix 
     double x_init[6];
 
     for (int i = 0; i < 6; ++i) {
-        x_init[i] = InitGuess->data[i][0];
+        x_init[i] = InitGuess->data[i * InitGuess->numCols];
     }
 
     gsl_vector_view x_vec = gsl_vector_view_array(x_init, n);
@@ -1575,7 +1528,7 @@ matrix *find_roots_deriv(matrix *InitGuess, Robot *robot, matrix *Theta, matrix 
     // Extract solution
     matrix *solution = zeros(6, 1);
     for (int i = 0; i < 6; ++i) {
-        solution->data[i][0] = gsl_vector_get(s->x, i);
+        solution->data[i * solution->numCols] = gsl_vector_get(s->x, i);
     }
 
     gsl_multiroot_fdfsolver_free(s);

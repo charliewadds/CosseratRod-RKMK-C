@@ -32,7 +32,7 @@ Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 
     matrix *linkTwist = zeros(6,1);
-    linkTwist->data[2][0] = 1;
+    linkTwist->data[(2 * linkTwist->numCols) + 0] = 1;
 
     matrix_scalar_mul(linkTwist, linkLen, linkTwist);
 
@@ -92,16 +92,16 @@ Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 
     matrix *r6_2 = zeros(6,1);
-    r6_2->data[2][0] = 1;
+    r6_2->data[(2 * r6_2->numCols) + 0] = 1;
 
     matrix *r6_3 = zeros(6,1);
-    r6_3->data[3][0] = 1;
+    r6_3->data[(3 * r6_3->numCols) + 0] = 1;
 
     matrix *r6_4 = zeros(6,1);
-    r6_4->data[4][0] = 1;
+    r6_4->data[(4 * r6_4->numCols) + 0] = 1;
 
     matrix *r6_5 = zeros(6,1);
-    r6_5->data[5][0] = 1;
+    r6_5->data[(5 * r6_5->numCols) + 0] = 1;
 
     double *lims = malloc(sizeof(double) * 2);
     lims[0] = -M_PI;
@@ -115,27 +115,27 @@ Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Joint_1->type = 2;
     Joint_1->object = malloc(sizeof(union object_u));
 
-    Joint_1->object->joint = newRigidJoint("Joint_1", r6_5, theta->data[0][0], theta_dot->data[0][0], theta_ddot->data[0][0], lims, 0, base, Body_1);
+    Joint_1->object->joint = newRigidJoint("Joint_1", r6_5, theta->data[(0 * theta->numCols) + 0], theta_dot->data[(0 * theta_dot->numCols) + 0], theta_ddot->data[(0 * theta_ddot->numCols) + 0], lims, 0, base, Body_1);
 
     Object *Joint_2 = malloc(sizeof(Object));
     Joint_2->type = 2;
     Joint_2->object = malloc(sizeof(union object_u));
-    Joint_2->object->joint = newRigidJoint("Joint_2", r6_3, theta->data[1][0], theta_dot->data[1][0], theta_ddot->data[1][0], lims, pihalf, Body_1, Body_2);
+    Joint_2->object->joint = newRigidJoint("Joint_2", r6_3, theta->data[(1 * theta->numCols) + 0], theta_dot->data[(1 * theta_dot->numCols) + 0], theta_ddot->data[(1 * theta_ddot->numCols) + 0], lims, pihalf, Body_1, Body_2);
 
     Object *Joint_3= malloc(sizeof(Object));
     Joint_3->type = 2;
     Joint_3->object = malloc(sizeof(union object_u));
-    Joint_3->object->joint = newRigidJoint("Joint_3", r6_4, theta->data[2][0], theta_dot->data[2][0], theta_ddot->data[2][0], lims, 0, Body_2, Body_3);
+    Joint_3->object->joint = newRigidJoint("Joint_3", r6_4, theta->data[(2 * theta->numCols) + 0], theta_dot->data[(2 * theta_dot->numCols) + 0], theta_ddot->data[(2 * theta_ddot->numCols) + 0], lims, 0, Body_2, Body_3);
 
     Object *Joint_4= malloc(sizeof(Object));
     Joint_4->type = 2;
     Joint_4->object = malloc(sizeof(union object_u));
-    Joint_4->object->joint = newRigidJoint("Joint_4", r6_3, theta->data[3][0], theta_dot->data[3][0], theta_ddot->data[3][0], lims, 0, Body_3, Body_4);
+    Joint_4->object->joint = newRigidJoint("Joint_4", r6_3, theta->data[(3 * theta->numCols) + 0], theta_dot->data[(3 * theta_dot->numCols) + 0], theta_ddot->data[(3 * theta_ddot->numCols) + 0], lims, 0, Body_3, Body_4);
 
     Object *Joint_5= malloc(sizeof(Object));
     Joint_5->type = 2;
     Joint_5->object = malloc(sizeof(union object_u));
-    Joint_5->object->joint = newRigidJoint("Joint_5", r6_2, theta->data[4][0], theta_dot->data[4][0], theta_ddot->data[4][0], lims, 0, Body_4, Body_5);
+    Joint_5->object->joint = newRigidJoint("Joint_5", r6_2, theta->data[(4 * theta->numCols) + 0], theta_dot->data[(4 * theta_dot->numCols) + 0], theta_ddot->data[(4 * theta_ddot->numCols) + 0], lims, 0, Body_4, Body_5);
 
     double zero[2] = {0,0};
 
@@ -193,7 +193,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 
     linkTwist = matrix_new(6,1);
-    linkTwist->data[2][0] = 1;
+    linkTwist->data[(2 * linkTwist->numCols) + 0] = 1;
     matrix_scalar_mul(linkTwist, linkLen, linkTwist);
 
 
@@ -216,7 +216,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
     double L_0 = 0.4;
     matrix *F_0 = zeros(6,1);
-    F_0->data[2][0] = 1;
+    F_0->data[(2 * F_0->numCols) + 0] = 1;
     double rho = 75e1;
     double mu = 1e5;
     double r = 0.1;
@@ -228,30 +228,30 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
     //diag(2I,I,I)
     matrix *J = zeros(3,3);
-    J->data[0][0] = 2*I;
-    J->data[1][1] = I;
-    J->data[2][2] = I;
+    J->data[(0 * J->numCols) + 0] = 2*I;
+    J->data[(1 * J->numCols) + 1] = I;
+    J->data[(2 * J->numCols) + 2] = I;
 
     matrix *Kbt = zeros(3,3);
-    Kbt->data[0][0] = 2*G*I;
-    Kbt->data[1][1] = E*I;
-    Kbt->data[2][2] = E*I;
+    Kbt->data[(0 * Kbt->numCols) + 0] = 2*G*I;
+    Kbt->data[(1 * Kbt->numCols) + 1] = E*I;
+    Kbt->data[(2 * Kbt->numCols) + 2] = E*I;
 
     matrix *Kse = zeros(3,3);
-    Kse->data[0][0] = E*A;
-    Kse->data[1][1] = G*A;
-    Kse->data[2][2] = G*A;
+    Kse->data[(0 * Kse->numCols) + 0] = E*A;
+    Kse->data[(1 * Kse->numCols) + 1] = G*A;
+    Kse->data[(2 * Kse->numCols) + 2] = G*A;
 
     matrix *Cse = zeros(3,3);
-    Cse->data[0][0] = 3*A;
-    Cse->data[1][1] = A;
-    Cse->data[2][2] = A;
+    Cse->data[(0 * Cse->numCols) + 0] = 3*A;
+    Cse->data[(1 * Cse->numCols) + 1] = A;
+    Cse->data[(2 * Cse->numCols) + 2] = A;
     matrix_scalar_mul(Cse, mu, Cse);
 
     matrix *Cbt = zeros(3,3);
-    Cbt->data[0][0] = 2*I;
-    Cbt->data[1][1] = I;
-    Cbt->data[2][2] = I;
+    Cbt->data[(0 * Cbt->numCols) + 0] = 2*I;
+    Cbt->data[(1 * Cbt->numCols) + 1] = I;
+    Cbt->data[(2 * Cbt->numCols) + 2] = I;
     matrix_scalar_mul(Cbt, mu, Cbt);
 
     matrix *K = zeros(6,6);
@@ -296,7 +296,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Body_4->type = 1;
     Body_4->object = malloc(sizeof(union object_u));
     Body_4->object->flex = newFlexBody("Body_4",Mf,  K,C, F_0, N, L_0);
-    Body_4->object->flex->F_0->data[2][0] = 1;
+    Body_4->object->flex->F_0->data[(2 * Body_4->object->flex->F_0->numCols) + 0] = 1;
 
     Object *Body_5 =  malloc(sizeof(struct object_s));
     Body_5->type = 0;
@@ -310,16 +310,16 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 
     matrix *r6_2 = zeros(6,1);
-    r6_2->data[2][0] = 1;
+    r6_2->data[(2 * r6_2->numCols) + 0] = 1;
 
     matrix *r6_3 = zeros(6,1);
-    r6_3->data[3][0] = 1;
+    r6_3->data[(3 * r6_3->numCols) + 0] = 1;
 
     matrix *r6_4 = zeros(6,1);
-    r6_4->data[4][0] = 1;
+    r6_4->data[(4 * r6_4->numCols) + 0] = 1;
 
     matrix *r6_5 = zeros(6,1);
-    r6_5->data[5][0] = 1;
+    r6_5->data[(5 * r6_5->numCols) + 0] = 1;
 
     double *lims = malloc(sizeof(double) * 2);
     lims[0] = -M_PI;
@@ -357,27 +357,27 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     robotList[1]->type = 2;
     robotList[1]->object = malloc(sizeof(union object_u));
 
-    robotList[1]->object->joint = newRigidJoint("Joint_1", r6_5, theta->data[0][0], theta_dot->data[0][0], theta_ddot->data[0][0], lims, 0, base, Body_1);
+    robotList[1]->object->joint = newRigidJoint("Joint_1", r6_5, theta->data[(0 * theta->numCols) + 0], theta_dot->data[(0 * theta_dot->numCols) + 0], theta_ddot->data[(0 * theta_ddot->numCols) + 0], lims, 0, base, Body_1);
 
     //Object *Joint_2 = malloc(sizeof(Object));
     robotList[3]->type = 2;
     robotList[3]->object = malloc(sizeof(union object_u));
-    robotList[3]->object->joint = newRigidJoint("Joint_2", r6_3, theta->data[1][0], theta_dot->data[1][0], theta_ddot->data[1][0], lims, pihalf, Body_1, Body_2);
+    robotList[3]->object->joint = newRigidJoint("Joint_2", r6_3, theta->data[(1 * theta->numCols) + 0], theta_dot->data[(1 * theta_dot->numCols) + 0], theta_ddot->data[(1 * theta_ddot->numCols) + 0], lims, pihalf, Body_1, Body_2);
 
     //Object *Joint_3= malloc(sizeof(Object));
     robotList[5]->type = 2;
     robotList[5]->object = malloc(sizeof(union object_u));
-    robotList[5]->object->joint = newRigidJoint("Joint_3", r6_4, theta->data[2][0], theta_dot->data[2][0], theta_ddot->data[2][0], lims, 0, Body_2, Body_3);
+    robotList[5]->object->joint = newRigidJoint("Joint_3", r6_4, theta->data[(2 * theta->numCols) + 0], theta_dot->data[(2 * theta_dot->numCols) + 0], theta_ddot->data[(2 * theta_ddot->numCols) + 0], lims, 0, Body_2, Body_3);
 
     //Object *Joint_4= malloc(sizeof(Object));
     robotList[7]->type = 2;
     robotList[7]->object = malloc(sizeof(union object_u));
-    robotList[7]->object->joint = newRigidJoint("Joint_4", r6_3, theta->data[3][0], theta_dot->data[3][0], theta_ddot->data[3][0], lims, 0, Body_3, Body_4);
+    robotList[7]->object->joint = newRigidJoint("Joint_4", r6_3, theta->data[(3 * theta->numCols) + 0], theta_dot->data[(3 * theta_dot->numCols) + 0], theta_ddot->data[(3 * theta_ddot->numCols) + 0], lims, 0, Body_3, Body_4);
 
     //Object *Joint_5 = malloc(sizeof(Object));
     robotList[9]->type = 2;
     robotList[9]->object = malloc(sizeof(union object_u));
-    robotList[9]->object->joint = newRigidJoint("Joint_5", r6_2, theta->data[4][0], theta_dot->data[4][0], theta_ddot->data[4][0], lims, 0, Body_4, Body_5);
+    robotList[9]->object->joint = newRigidJoint("Joint_5", r6_2, theta->data[(4 * theta->numCols) + 0], theta_dot->data[(4 * theta_dot->numCols) + 0], theta_ddot->data[(4 * theta_ddot->numCols) + 0], lims, 0, Body_4, Body_5);
 
     double zero[2] = {0,0};
     zeroMatrix(r6_2);//this is just so I dont need to create another matrix
@@ -451,49 +451,40 @@ int main() {
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
-    t1->data[0][0] = dt;
+    t1->data[(0 * t1->numCols) + 0] = dt;
     for (int i = 1; i < timeStep; i++) {
-        t1->data[0][i] = t1->data[0][i-1] + dt;
+        t1->data[(0 * t1->numCols) + i] = t1->data[(0 * t1->numCols) + (i-1)] + dt;
 
     }
 
     matrix *shape = zeros(5, 1);//todo this is the bymber of joints I think, this should come from either the setup file or a config json or something
-    shape->data[0][0] = 0.4;
-    shape->data[1][0] = -0.5 * 0.4;
-    shape->data[2][0] = 0.5 * 0.4;
-    shape->data[3][0] = -0.7 * 0.4;
-    shape->data[4][0] = 0.1 * -0.4;
+    shape->data[(0 * shape->numCols) + 0] = 0.4;
+    shape->data[(1 * shape->numCols) + 0] = -0.5 * 0.4;
+    shape->data[(2 * shape->numCols) + 0] = 0.5 * 0.4;
+    shape->data[(3 * shape->numCols) + 0] = -0.7 * 0.4;
+    shape->data[(4 * shape->numCols) + 0] = 0.1 * -0.4;
 
     matrix *theta_ddot = zeros(5, timeStep);
 
     matrix *tempTStep = matrix_new(1, timeStep);
 
-    //todo should be a loop for num bodies
     for(int i = 0; i < 5; i++){
-        //matrix *tempTStep = matrix_new(1, timeStep);
+
         zeroMatrix(tempTStep);
-        matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[i], tempTStep);
-        memcpy(theta_ddot->data[i],tempTStep->data[0],  sizeof *theta_ddot->data[i] * timeStep);
-        //copyMatrix(tempTStep, theta_ddot->data[i])
+        matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),shape->data[(i * shape->numCols)], tempTStep);
+        //memcpy(theta_ddot->data[i],tempTStep->data[0],  sizeof * theta_ddot->data[i] * timeStep);
+        setSection(theta_ddot, i, i, 0, timeStep-1, tempTStep);
+
     }
-//    matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[0], tempTStep);//todo check shapes
-//    memcpy(theta_ddot.data[0],tempTStep->data[0],  sizeof *theta_ddot.data[0] * timeStep);
-//
-//    matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[1], tempTStep);
-//    memcpy(tempTStep->data[0], theta_ddot.data[1], sizeof *theta_ddot.data[1] * timeStep);
-//
-//    theta_ddot.data[2] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[2], tempTStep)->data[0];
-//    theta_ddot.data[3] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[3], tempTStep)->data[0];
-//    theta_ddot.data[4] = matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),*shape->data[4], tempTStep)->data[0];
 
     matrix *F_ext = zeros(6, 1);
     matrix *F_0 = zeros(6, 1);
-    F_0->data[0][0] = 0;
-    F_0->data[1][0] = 0;
-    F_0->data[2][0] = 1;
-    F_0->data[3][0] = 0;
-    F_0->data[4][0] = 0;
-    F_0->data[5][0] = 0;
+    F_0->data[(0 * F_0->numCols)] = 0;
+    F_0->data[(1 * F_0->numCols)] = 0;
+    F_0->data[(2 * F_0->numCols)] = 1;
+    F_0->data[(3 * F_0->numCols)] = 0;
+    F_0->data[(4 * F_0->numCols)] = 0;
+    F_0->data[(5 * F_0->numCols)] = 0;
 
     //matrix *temp1xRowsM1 = matrix_new(5, timeStep);
     matrix *tempBodiesx1 = matrix_new(5, 1);
@@ -505,7 +496,7 @@ int main() {
 
     matrix *t = zeros(1, timeStep);
     for(int i = 0; i < timeStep; i++){
-        t->data[0][i] = i*dt;
+        t->data[(0 * t->numCols) + i] = i*dt;
     }
     matrix *C = zeros(5, timeStep);//todo 5 should be num bodies
     matrix *T_H = zeros(5, timeStep);//todo 5 should be num bodies
@@ -546,9 +537,9 @@ int main() {
         int currJointIndex = 0;
         for(int j = 1; j < 10; j+= 2 ) {//todo j should start at firstjoint an
             if (robot->objects[j]->type == 2) {
-                robot->objects[j]->object->joint->position = theta->data[currJointIndex][0];
-                robot->objects[j]->object->joint->velocity = theta_dot->data[currJointIndex][0];
-                robot->objects[j]->object->joint->acceleration = theta_ddot->data[currJointIndex][i];
+                robot->objects[j]->object->joint->position = theta->data[(currJointIndex * theta->numCols)];
+                robot->objects[j]->object->joint->velocity = theta_dot->data[(currJointIndex * theta_dot->numCols)];
+                robot->objects[j]->object->joint->acceleration = theta_ddot->data[(currJointIndex * theta_ddot->numCols) + i];
                 currJointIndex++;
             }
         }
@@ -558,7 +549,7 @@ int main() {
             if(robot->objects[j]->type == 2){
                 curr ++;
                 printf("Joint %d: %f\n", j, robot->objects[j]->object->joint->position);
-                angles->data[curr][i] = robot->objects[j]->object->joint->position;
+                angles->data[(curr * angles->numCols) + i] = robot->objects[j]->object->joint->position;
 
             }
         }
