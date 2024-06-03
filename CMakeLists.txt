@@ -39,7 +39,7 @@ add_executable(InvDyn RunMeInvDyn.c)
 add_executable(playground playground.c)
 # Link libraries to the executable
 # Link GSL libraries with MatrixLib
-target_link_libraries(MatrixLib PRIVATE -lgsl -lgslcblas)
+target_link_libraries(MatrixLib PRIVATE -lm -lgsl -lgslcblas)
 target_link_libraries(LieGroup PRIVATE MatrixLib)
 target_link_libraries(RobotLib PRIVATE -lgsl -lgslcblas MatrixLib LieGroup)
 

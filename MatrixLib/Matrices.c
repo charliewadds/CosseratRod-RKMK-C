@@ -61,7 +61,9 @@ matrix *matrix_new(uint8_t num_rows, uint8_t num_cols) {
     m->numRows = num_rows;
     m->numCols = num_cols;
     m->data = calloc((num_rows*num_cols), sizeof(double));
-
+    if(num_rows == num_cols) {
+        m->square = 1;
+    }
     return m;
 }
 
@@ -360,7 +362,7 @@ void setSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, u
 
     for(int i = startRow; i <= endRow; i++){
         for(int j = startCol; j <= endCol; j++){
-            m->data[(i * m->numCols) + j] = section->data[((i-startRow) * m->numCols) + (j-startCol)];
+            m->data[(i * m->numCols) + j] = section->data[((i-startRow) * section->numCols) + (j-startCol)];
         }
     }
 
@@ -414,7 +416,7 @@ matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol
 
     for(int i = startRow; i <= endRow; i++){
         for(int j = startCol; j <= endCol; j++){
-            result->data[((i-startRow) * m->numCols) + (j- startCol)] = m->data[(i * m->numCols) + j];
+            result->data[((i-startRow) * result->numCols) + (j- startCol)] = m->data[(i * m->numCols) + j];
 
         }
     }
