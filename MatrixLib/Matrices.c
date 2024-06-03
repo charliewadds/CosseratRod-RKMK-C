@@ -181,21 +181,18 @@ int *matrix_shape(matrix *m){
 
 
 
-//this might need a transpose on the inverse
+
 matrix *matrix_solve(matrix *A, matrix *b, matrix *result){
     assert(A->numRows == b->numRows);
     assert(A->numCols == A->numRows);
-    //matrix *result = matrix_new(A->numRows, 1);
 
 
+    assert(Det(A) != 0);
+    //assert(Det(b) != 0);
 
     matrix *A_inv = matrix_new(A->numRows, A->numCols);
     matrix_inverse(A, A_inv);
-
-
-
     matMult(A_inv, b, result);
-
     matrix_free(A_inv);
 
     return result;
@@ -204,6 +201,8 @@ matrix *matrix_solve(matrix *A, matrix *b, matrix *result){
 matrix *matrix_inverse(matrix *m, matrix *result){
     assert(m->square == 1);
 
+
+    //assert(Det(m) != 0);
     gsl_matrix *gsl_m = gsl_matrix_alloc(m->numRows, m->numCols);
     matrix_to_gsl(m, gsl_m);
     gsl_permutation *p = gsl_permutation_alloc(m->numRows);
@@ -454,13 +453,13 @@ matrix *matMult(matrix *m1, matrix *m2, matrix *result) {
         zeroMatrix(temp);
     }
     // Initialize the temporary/result matrix to zero
-    //zeroMatrix(temp);
+    zeroMatrix(temp);
 
     // Perform the matrix multiplication
     for (int i = 0; i < m1->numRows; i++) {
         for (int j = 0; j < m2->numCols; j++) {
             for (int k = 0; k < m1->numCols; k++) {
-                temp->data[(i * temp->numCols) + j] += m1->data[(i * m1->numCols) + j] * m2->data[(i * m2->numCols) + j];
+                temp->data[(i * temp->numCols) + j] += m1->data[(i * m1->numCols) + k] * m2->data[(i * m2->numCols) + k];
             }
         }
     }

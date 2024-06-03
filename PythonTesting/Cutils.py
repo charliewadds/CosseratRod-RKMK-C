@@ -7,7 +7,7 @@ class matrix(ctypes.Structure):
     _fields_ = [
         ('numRows', ctypes.c_uint8),
         ('numCols', ctypes.c_uint8),
-        ('data', ctypes.POINTER(ctypes.POINTER(ctypes.c_double))),
+        ('data', ctypes.POINTER(ctypes.c_double)),
         ('square', ctypes.c_uint8)
     ]
 class rigidBody(ctypes.Structure):
@@ -97,29 +97,21 @@ def makeMatrix(m):
         rows = m.shape[0]
     except IndexError:
         rows = 1
+
     try:
         cols = m.shape[1]
     except IndexError:
         cols = 1
 
-    # Create row pointers
-    row_pointers = (ctypes.POINTER(ctypes.c_double) * rows)()
-
-    for i in range(rows):
-        # Convert each row to a pointer to doubles
-        try:
-            row_pointers[i] = m[i, :].ctypes.data_as(ctypes.POINTER(ctypes.c_double))
-        except IndexError:
-            row_pointers[i] = m.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
-
     # Create a Matrix instance
     matrix_c = matrix()
     matrix_c.numRows = ctypes.c_uint8(int(rows))
     matrix_c.numCols = ctypes.c_uint8(int(cols))
-    matrix_c.data = row_pointers
+    matrix_c.data = m.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
     matrix_c.square = 1 if rows == cols else 0
 
     return matrix_c
+
 def makeOdeOutput():
     # Create an instance of ODE_output
     ode_output = ODE_output()

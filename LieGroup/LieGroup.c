@@ -25,28 +25,18 @@ matrix *hat_R3(matrix *z, matrix *result){
     assert(result->numRows == 3);
     assert(result->numCols == 3);
     //matrix *T = zeros(3,3);
-    matrix *temp;
-    if(z == result) {
-        temp = matrix_new(3, 3);
-    }else{
-        temp = result;
-        zeroMatrix(temp);
-    }
 
 
-    temp->data[(0 * temp->numCols) + 1] = z->data[(2 * temp->numCols) * 0] * -1;
-    temp->data[(0 * temp->numCols) + 2] = z->data[(1 * temp->numCols) * 0];
 
-    temp->data[(1 *temp->numCols)+0] = z->data[(2 * temp->numCols) * 0];
-    temp->data[(1 *temp->numCols)+2] = z->data[(0 * temp->numCols) * 0] * -1;
+    result->data[(0 * result->numCols) + 1] = z->data[(2 * z->numCols)] * -1;
+    result->data[(0 * result->numCols) + 2] = z->data[(1 * z->numCols)];
 
-    temp->data[(2 *temp->numCols)+0] = z->data[(1 * temp->numCols) * 0] * -1;
-    temp->data[(2 *temp->numCols)+1] = z->data[(0 * temp->numCols) * 0];
+    result->data[(1 *result->numCols)+0] = z->data[(2 * z->numCols)];
+    result->data[(1 *result->numCols)+2] = z->data[(0 * z->numCols)] * -1;
 
-    if(z == result){
-        copyMatrix(temp, result);
-        matrix_free(temp);
-    }
+    result->data[(2 *result->numCols)+0] = z->data[(1 * z->numCols)] * -1;
+    result->data[(2 *result->numCols)+1] = z->data[(0 * z->numCols)];
+
 
     return result;
 
@@ -152,7 +142,10 @@ matrix *adj(matrix *T, matrix *result) {
     assert(result->numCols == 6);
 
 
-
+//    [0.07247618 0.12745597 0.64657566 0.70431103]
+//    [0.36749106 0.67756713 0.97582436 0.55378821]
+//    [0.20491832 0.86476807 0.42959704 0.97524496]
+//    [0.69906914 0.44438659 0.85453082 0.67142751]
 
     matrix *tempRes;
 

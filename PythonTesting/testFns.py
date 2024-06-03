@@ -459,55 +459,12 @@ class testMatrix:
 
 
 
-class testRobot:
-    def test_coss_ode(matlab_engine):
-
-
-        #testing agains numpy
-        eta = np.random.rand(6, 1)
-        f = np.random.rand(6, 1)
-        eta_h = np.random.rand(6, 1)
-        f_h = np.random.rand(6, 1)
-        f_sh = np.random.rand(6, 1)
-        K = np.random.rand(6, 6)
-        C = np.random.rand(6, 6)
-        M = np.random.rand(6, 6)
-        c0 = 60.0
-        f_0 = np.random.rand(6, 1)
-        Fd_ext = np.random.rand(6, 1)
-
-
-
-        matlabOut = matlab_engine.COSS_ODE_TEST(eta, f, eta_h, f_h, f_sh, K, C, M, c0, f_0, Fd_ext)
-
-
-
-        # Call the C function
-        c_result, c_result1 = robotCall.call_ode(eta, f, eta_h, f_h, f_sh, K, C, M, c0, f_0, Fd_ext)
-
-        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
-        print("testing COSS_ODE f_s in C against Coss_ODE f_s in MATLAB")
-        print("------------------------------------------------------")
-
-        # Compare results (you might need to adjust the tolerance based on the expected numerical accuracy)
-        np.testing.assert_allclose(c_result[0:2,0], matlabOut[0], rtol=1e-5, atol=1e-8)
-
-
-        print("TEST PASSED")
-        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
-
-        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
-        print("testing COSS_ODE eta_s in C against Coss_ODE eta_s in MATLAB")
-        print("------------------------------------------------------")
-
-        # Compare results (you might need to adjust the tolerance based on the expected numerical accuracy)
-        np.testing.assert_allclose(c_result_eta_s, matlabOut[1], rtol=1e-5, atol=1e-8)
-
-
-        print("TEST PASSED")
-        print("|||||||||||||||||||||||||||||||||||||||||||||||||||||||\n\n\n")
-
-testLieGroup.test_all(testLieGroup,eng);#todo I havent used python in a while, this is not the right way to do this
+#
 # testMatrix.test_matrix_mul(eng)
 #testMatrix.test_matrix_solve(eng)
-testRobot.test_coss_ode(eng)
+# testMatrix.test_matrix_add_sq(eng)
+# testMatrix.test_matrix_add3(eng)
+# testMatrix.test_matrix_sub(eng)
+testMatrix.test_matrix_mul(eng)
+testLieGroup.test_all(testLieGroup,eng);#todo I havent used python in a while, this is not the right way to do this
+

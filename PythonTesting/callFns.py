@@ -23,7 +23,7 @@ class lieGroupCall:
         result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
         for i in range(result_ptr.numRows):
             for j in range(result_ptr.numCols):
-                result_numpy[i, j] = result_ptr.data[i][j]
+                result_numpy[i, j] = result_ptr.data[(i * result_ptr.numCols) + j]
 
         return result_numpy
     def call_hatR6(v, result_ptr):
@@ -34,8 +34,7 @@ class lieGroupCall:
         result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
         for i in range(result_ptr.numRows):
             for j in range(result_ptr.numCols):
-                result_numpy[i, j] = result_ptr.data[i][j]
-
+                result_numpy[i, j] = result_ptr.data[(i * result_ptr.numCols) + j]
         return result_numpy
 
 
@@ -48,7 +47,7 @@ class lieGroupCall:
         result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
         for i in range(result_ptr.numRows):
             for j in range(result_ptr.numCols):
-                result_numpy[i, j] = result_ptr.data[i][j]
+                result_numpy[i, j] = result_ptr.data[(i * result_ptr.numCols) + j]
 
         return result_numpy
 
@@ -62,7 +61,7 @@ class lieGroupCall:
         result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
         for i in range(result_ptr.numRows):
             for j in range(result_ptr.numCols):
-                result_numpy[i, j] = result_ptr.data[i][j]
+                result_numpy[i, j] = result_ptr.data[(i * result_ptr.numCols) + j]
 
         return result_numpy
 
@@ -75,7 +74,7 @@ class lieGroupCall:
         result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
         for i in range(result_ptr.numRows):
             for j in range(result_ptr.numCols):
-                result_numpy[i, j] = result_ptr.data[i][j]
+                result_numpy[i, j] = result_ptr.data[(i * result_ptr.numCols) + j]
 
         return result_numpy
 
@@ -88,8 +87,7 @@ class lieGroupCall:
             result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
             for i in range(result_ptr.numRows):
                 for j in range(result_ptr.numCols):
-                    result_numpy[i, j] = result_ptr.data[i][j]
-
+                    result_numpy[i, j] = result_ptr.data[(i * result_ptr.numCols) + j]
             return result_numpy
 
     def call_expm_SE3(v, result_ptr):
@@ -101,7 +99,7 @@ class lieGroupCall:
         result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
         for i in range(result_ptr.numRows):
             for j in range(result_ptr.numCols):
-                result_numpy[i, j] = result_ptr.data[i][j]
+                result_numpy[i, j] = result_ptr.data[(i * result_ptr.numCols) + j]
 
         return result_numpy
 
@@ -116,7 +114,7 @@ class matrixCall:
         result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
         for i in range(result_ptr.numRows):
             for j in range(result_ptr.numCols):
-                result_numpy[i, j] = result_ptr.data[i][j]
+                result_numpy[i, j] = result_ptr.data[(i * result_ptr.numCols) + j]
 
         return result_numpy
 
@@ -131,7 +129,7 @@ class matrixCall:
         result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
         for i in range(result_ptr.numRows):
             for j in range(result_ptr.numCols):
-                result_numpy[i, j] = result_ptr.data[i][j]
+                result_numpy[i, j] = result_ptr.data[(i * result_ptr.numCols) + j]
 
         return result_numpy
 
@@ -144,7 +142,7 @@ class matrixCall:
         result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
         for i in range(result_ptr.numRows):
             for j in range(result_ptr.numCols):
-                result_numpy[i, j] = result_ptr.data[i][j]
+                result_numpy[i, j] = result_ptr.data[(i * result_ptr.numCols) + j]
 
         return result_numpy
 
@@ -156,7 +154,7 @@ class matrixCall:
         result_numpy = np.zeros((result_ptr.numRows, result_ptr.numCols), dtype=np.float64)
         for i in range(result_ptr.numRows):
             for j in range(result_ptr.numCols):
-                result_numpy[i, j] = result_ptr.data[i][j]
+                result_numpy[i, j] = result_ptr.data[(i * result_ptr.numCols) + j]
 
         return result_numpy
 
@@ -170,7 +168,7 @@ class matrixCall:
 
         for i in range(result_ptr.numRows):
             for j in range(result_ptr.numCols):
-                result_numpy[i, j] = result_ptr.data[i][j]
+                result_numpy[i, j] = result_ptr.data[(i * result_ptr.numCols) + j]
 
         return result_numpy
 
@@ -184,44 +182,8 @@ class matrixCall:
 
         for i in range(result_ptr.numRows):
             for j in range(result_ptr.numCols):
-                result_numpy[i, j] = result_ptr.data[i][j]
+                result_numpy[i, j] = result_ptr.data[(i * result_ptr.numCols) + j]
 
         return result_numpy
 
 
-class robotCall:
-    def call_ode(eta, f, eta_h, f_h, f_sh, K, C, M, c0, f_0, Fd_ext):
-        eta_ptr = makeMatrix(eta)
-        f_ptr = makeMatrix(f)
-        eta_h_ptr = makeMatrix(eta_h)
-        f_h_ptr = makeMatrix(f_h)
-        f_sh_ptr = makeMatrix(f_sh)
-        K_ptr = makeMatrix(K)
-        C_ptr = makeMatrix(C)
-        M_ptr = makeMatrix(M)
-
-        f_0_ptr = makeMatrix(f_0)
-        Fd_ext_ptr = makeMatrix(Fd_ext)
-
-
-        out = ctypes.pointer(makeOdeOutput())
-
-        robotLib.COSS_ODE(eta_ptr, f_ptr, eta_h_ptr, f_h_ptr, f_sh_ptr, K_ptr, C_ptr, M_ptr, ctypes.c_double(c0), f_0_ptr, Fd_ext_ptr, out)
-
-        ode_output_f_s = ctypes.cast(out.contents.f_s, ctypes.POINTER(matrix)).contents
-        ode_output_eta_s = ctypes.cast(out.contents.eta_s, ctypes.POINTER(matrix)).contents
-
-        result_numpy_f_s = np.zeros((ode_output_f_s.numRows, ode_output_f_s.numCols), dtype=np.double)
-
-        for i in range(ode_output_f_s.numRows):
-            for j in range(ode_output_f_s.numCols):
-                result_numpy_f_s[i, j] = ode_output_f_s.data[i][j]
-
-
-        result_numpy_eta_s = np.zeros((ode_output_f_s.numRows, ode_output_f_s.numCols), dtype=np.double)
-
-        for i in range(ode_output_eta_s.numRows):
-            for j in range(ode_output_eta_s.numCols):
-                result_numpy_eta_s[i, j] = ode_output_eta_s.data[i][j]
-
-        return result_numpy_eta_s, result_numpy_f_s
