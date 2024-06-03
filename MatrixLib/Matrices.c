@@ -266,7 +266,7 @@ matrix *matrix_transpose(matrix *m, matrix *result){
     }
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            temp->data[(i * temp->numCols) + j] = m->data[(i * m->numCols) + j];
+            temp->data[(j * temp->numCols) + i] = m->data[(i * m->numCols) + j];
         }
     }
     if(m == result){
