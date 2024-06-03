@@ -3,9 +3,9 @@ set(CMAKE_C_STANDARD 11)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=leak")
 project(CosseratRod_RKMK_C C)
 
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 set(CMAKE_PREFIX_PATH "/usr/local/bin")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
 link_directories("/opt/homebrew/lib")
 include_directories("/opt/homebrew/include")
 #find_package(GSL REQUIRED)
