@@ -404,11 +404,11 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double v
 
 matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
-    matrix *POS = zeros(3,11);//todo this is a hack, I need to make this dynamic
+    matrix *POS = zeros(3,90);//todo this is a hack, I need to make this dynamic
     matrix *g = matrix_new(4,4);
     eye(g);
 
-    int iii = 1;//num points plotted
+    int iii = 0;//num points plotted
     //int i_R = 1;
     matrix *temp6n1 = matrix_new(6,1);
     matrix *temp4x4n1 = matrix_new(4,4);
@@ -416,7 +416,7 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
     for(int i = 0; i < (robot->numObjects - 2)/2; i++){
         currObj =  robot->objects[(i*2)+1]->object;
         //assert(robot->objects[(i*2)+2]->type == 0 || robot->objects[(i*2)+2]->type == 1);
-        if(1){
+        if(currObj->joint->child->type == 0){
 
             matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[(i * theta->numCols)]), temp6n1), temp4x4n1), temp4x4n1), g);
 
@@ -437,26 +437,24 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
             iii++;
 
        }
-//        else if(robot->objects[(i*2)]->type == 1){
-//            //todo add flex
-//            g = matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[i][0])))));
-//            double ds = currObj->joint->child->body->flex->L / currObj->joint->child->body->flex->N;
-//
-//            for(int j = 0; j < currObj->joint->child->body->flex->N * numStep; j++){
-//                int index = (int)floor(j/numStep)+1;
-//                g = matMult(g,
-//                            expm_SE3(
-//                                    hat_R6(
-//                                            matrix_scalar_mul(getSection(robot->objects[(i*2)]->object->flex->f_prev,0,5, index, index), (ds/numStep))
-//                                            )
-//                                    )
-//                            );
-//
-//                setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
-//                iii++;
-//
-//            }
-//        }
+        else if(currObj->joint->child->type == 1){
+
+
+            matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[(i * theta->numCols)]), temp6n1), temp4x4n1), temp4x4n1), g);
+
+            double ds = currObj->joint->child->body->flex->L / currObj->joint->child->body->flex->N;
+
+            for(int j = 0; j < currObj->joint->child->body->flex->N * numStep; j++){
+                int index = ceil(j/numStep);
+                if(currObj->joint->child->type )
+                temp6n1 = getSection(currObj->joint->child->body->flex->f_prev, 0, 5, index, index, temp6n1);
+                expm_SE3(hat_R6(matrix_scalar_mul(temp6n1, ds/numStep, temp6n1), temp4x4n1), temp4x4n1);
+                g = matMult(g, temp4x4n1, g);
+                getSetSection(g, POS, 0, 2, 3, 3, 0, 2, iii, iii);
+                iii +=1;
+
+            }
+        }
     }
 
     //free(currObj);
@@ -696,7 +694,9 @@ void robotToFile(Robot *robot, char *filename){
             printf("Object type: %d\n", robot->objects[i]->type);
             printf("Object name: %s\n", robot->objects[i]->object->rigid->name);
             char *temp = objToJson(robot->objects[i]);
-            fprintf(f, "%s},{", temp);
+            fprintf(f, "%s\n", temp);
+            fprintf(f,",");
+            fflush(f);
             free(temp);
     }
     fprintf(f, "]");
@@ -1886,6 +1886,5 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         return out;
 
 }
-
 
 
