@@ -1354,7 +1354,7 @@ int find_roots_newton(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
 
         status = gsl_multiroot_test_residual(s->f, 1e-9);
 
-    } while (status == GSL_CONTINUE && iter < 15);
+    } while (status == GSL_CONTINUE && iter < 10);
 
     if (status) {
         printf("STATUS: %d\n", status);
@@ -1416,7 +1416,7 @@ int find_roots_hybrid(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
 
         status = gsl_multiroot_test_residual(s->f, 1e-9);
 
-    } while (status == GSL_CONTINUE && iter < 15);
+    } while (status == GSL_CONTINUE && iter < 10);
 
     if (status) {
         printf("STATUS: %d\n", status);
@@ -1533,7 +1533,7 @@ matrix *find_roots_deriv(matrix *InitGuess, Robot *robot, matrix *Theta, matrix 
         }
 
 
-        status = gsl_multiroot_test_residual(s->f, 1e-12);
+        status = gsl_multiroot_test_residual(s->f, 1e-9);
     } while (status == GSL_CONTINUE && iter < 10);
     printf("done\n");
 
@@ -1622,7 +1622,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     if(status != 0){
         printf("hybrid method failed to converge, trying newton\n");
-        status = find_roots_hybrid(tempGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+        status = find_roots_newton(tempGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
         copyMatrix(tempGuess, InitGuess);
 
         if(status != 0){
