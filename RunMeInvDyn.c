@@ -548,7 +548,7 @@ int main() {
         for(int j = 0; j < robot->numObjects; j++){
             if(robot->objects[j]->type == 2){
                 curr ++;
-                printf("Joint %d: %f\n", j, robot->objects[j]->object->joint->position);
+                //printf("Joint %d: %f\n", j, robot->objects[j]->object->joint->position);
                 angles->data[(curr * angles->numCols) + i] = robot->objects[j]->object->joint->position;
 
             }

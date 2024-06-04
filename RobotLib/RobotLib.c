@@ -1277,25 +1277,13 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
     return GSL_SUCCESS;//todo is this right?
 }
 
-// Define the function whose roots we want to find
-matrix *Flex_MB_BCS_wrapper_PSO(matrix *x, void *params) {
-    Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
 
 
+int find_roots_levmarqrt(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2) {
 
 
-    // Extracting parameters
-    //matrix *InitGuess = p->InitGuess;
-    Robot *robot = p->robot;
-    matrix *F_ext = p->F_ext;
-    double c0 = p->c0;
-    double c1 = p->c1;
-    double c2 = p->c2;
-
-    return Flex_MB_BCS(x, robot, *F_ext, c0, c1, c2);
 
 }
-
 
 
 
@@ -1610,12 +1598,16 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     if(status != 0){
         printf("hybrid method failed to converge, trying newton\n");
-        status = find_roots_newton(tempGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+        status = find_roots_hybrid(tempGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
         copyMatrix(tempGuess, InitGuess);
 
         if(status != 0){
-            printf("both failed!");
+            printf("both failed!\n\n");
+        }else{
+            printf("newton succeeded\n\n");
         }
+    }else{
+        printf("hybrid succeeded\n\n");
     }
 //    if(status == -2){
 //        printf("Newton's method failed to converge\n");
@@ -1624,9 +1616,9 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     //printf("\nINIT_GUESS post\n");
     //printMatrix(Theta);
-    printf("_______________SOLUTION______________________\n");
-    printMatrix(InitGuess);
-    printf("___________________________________________\n\n");
+//    printf("_______________SOLUTION______________________\n");
+//    printMatrix(InitGuess);
+//    printf("___________________________________________\n\n");
 
     eye(g_ref[0]);
     eye(g_act_wrt_prev[0]);
