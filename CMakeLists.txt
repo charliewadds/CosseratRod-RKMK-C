@@ -5,11 +5,11 @@ project(CosseratRod_RKMK_C C)
 cmake_policy(SET CMP0079 NEW)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
-set(CMAKE_PREFIX_PATH "/usr/local/bin")
+set(ENV{OPENBLAS_NUM_THREADS} 1)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
-link_directories("/opt/homebrew/lib")
-include_directories("/opt/homebrew/include")
+#link_directories("/opt/homebrew/lib")
+#include_directories("/opt/homebrew/include")
 #find_package(GSL REQUIRED)
 # Include directories
 include_directories(LieGroup)
@@ -17,6 +17,7 @@ include_directories(MatrixLib)
 include_directories(RobotLib)
 include_directories(FDM)
 include_directories(Tests)
+include_directories(gsl)
 
 
 
@@ -39,6 +40,7 @@ add_library(RobotLib STATIC ${ROBOT_LIB_SOURCES})
 add_library(TestLib STATIC ${TEST_SOURCE})
 add_library(FDM STATIC ${FDM_SOURCE})
 
+add_subdirectory(gsl)
 add_subdirectory(levmar-2.6)
 # Main executable
 message(STATUS "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
@@ -48,10 +50,10 @@ add_executable(playground playground.c)
 # Link libraries to the executable
 # Link GSL libraries with MatrixLib
 #target_link_libraries(levmar PRIVATE levmar-2.6/build/liblevmar.a)
-target_link_libraries(MatrixLib PRIVATE -lm -lgsl -lgslcblas)
-target_link_libraries(LieGroup PRIVATE MatrixLib)
+target_link_libraries(MatrixLib PRIVATE -lm gsl gslcblas)
+target_link_libraries(LieGroup PRIVATE MatrixLib gsl)
 
-target_link_libraries(RobotLib PRIVATE -lgsl -lgslcblas levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)
+target_link_libraries(RobotLib PRIVATE gsl levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)
 
 install(TARGETS MatrixLib LieGroup RobotLib TestLib FDM
         LIBRARY DESTINATION /Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/sharedLibs
@@ -59,7 +61,7 @@ install(TARGETS MatrixLib LieGroup RobotLib TestLib FDM
 
 
 
-target_link_libraries(InvDyn -lm -lgsl -lgslcblas MatrixLib LieGroup RobotLib)
+target_link_libraries(InvDyn -lm gsl  MatrixLib LieGroup RobotLib)
 
 target_link_libraries(runTests TestLib MatrixLib LieGroup RobotLib FDM -lm)
-target_link_libraries(playground MatrixLib LieGroup RobotLib FDM -lm -lgsl -lgslcblas -lm)
+target_link_libraries(playground MatrixLib LieGroup RobotLib FDM -lm gsl -lm)

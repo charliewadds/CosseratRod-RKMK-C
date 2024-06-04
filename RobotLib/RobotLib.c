@@ -8,7 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-
+#include "../gsl/multiroots/gsl_multiroots.h"
+#include "../gsl/vector/gsl_vector.h"
 
 matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     matrix *parentCoM;
@@ -1618,7 +1619,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     matrix *tempGuess = matrix_new(6, 1);
     copyMatrix(InitGuess, tempGuess);
-    int status = find_roots_hybrid(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+    int status = find_roots_levmarqrt(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
 
     if(status != 0){
         printf("hybrid method failed to converge, trying newton\n");

@@ -6,9 +6,9 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_multiroots.h>
-
+//#include <gsl-/gsl_matrix.h>
+//#include <gsl/gsl_multiroots.h>
+#include "../gsl/matrix/gsl_matrix.h"
 
 
 
