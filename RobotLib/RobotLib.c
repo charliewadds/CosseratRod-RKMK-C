@@ -3,6 +3,7 @@
 //
 
 #include "RobotLib.h"
+#include "../levmar-2.6/levmar.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1277,12 +1278,35 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
     return GSL_SUCCESS;//todo is this right?
 }
 
+void Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params) {
+    Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
+
+    matrix *initGuess = matrix_new(6, 1);
+    for (int i = 0; i < 6; ++i) {
+        initGuess->data[i * initGuess->numCols] = x[i];
+    }
+
+    matrix *result = Flex_MB_BCS(initGuess, p->robot, *p->F_ext, p->c0, p->c1, p->c2);
+
+    for (int i = 0; i < 6; ++i) {
+        f[i] = result->data[i * result->numCols];
+    }
+
+}
 
 
 int find_roots_levmarqrt(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2) {
 
+    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
+    //dlevmar_dif(meyer, p, x, m, n, 1000, opts, info, work, covar, NULL); // no
+    double *p = malloc(6 * sizeof(double));
+    for (int i = 0; i < 6; ++i) {
+        p[i] = InitGuess->data[i * InitGuess->numCols];
+    }
+    double x[6];
 
-
+    dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, p, 6, 6, 1000, NULL, NULL, NULL, NULL, &params);
+    return 0;
 }
 
 
@@ -1616,9 +1640,9 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     //printf("\nINIT_GUESS post\n");
     //printMatrix(Theta);
-//    printf("_______________SOLUTION______________________\n");
-//    printMatrix(InitGuess);
-//    printf("___________________________________________\n\n");
+    printf("_______________SOLUTION______________________\n");
+    printMatrix(InitGuess);
+    printf("___________________________________________\n\n");
 
     eye(g_ref[0]);
     eye(g_act_wrt_prev[0]);
