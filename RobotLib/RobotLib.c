@@ -1307,9 +1307,10 @@ int find_roots_levmarqrt(matrix *InitGuess, Robot *robot, matrix *Theta, matrix 
     double x[6];
     double *info = (double *)malloc(10 * sizeof(double));
 
-    double *opts = {NULL, NULL, NULL, NULL, 1e-9};
+    double opts[5] = {1e-3, 1e-9, 1e-15, 1e-30, -1e-9};
     dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, p, 6, 6, 1000, opts, info, NULL, NULL, &params);
     printf("iters: %f\n", info[5]);
+    printf("reason for terminating: %f\n", info[6]);
     for (int i = 0; i < 6; ++i) {
         InitGuess->data[i * InitGuess->numCols] = p[i];
     }
