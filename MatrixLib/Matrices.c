@@ -136,9 +136,9 @@ matrix *matrix_scalar_mul(matrix *m, double scalar, matrix *result){
         temp = matrix_new(result->numRows, result->numCols);
     }else{
         temp = result;
-        //zeroMatrix(temp);
-    }
 
+    }
+    zeroMatrix(temp);
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
             temp->data[(i * temp->numCols) + j] = m->data[(i * m->numCols) + j] * scalar;

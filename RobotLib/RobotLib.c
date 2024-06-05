@@ -831,9 +831,7 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
     matrix *f_sh = matrix_new(6,1);
     COSS_ODE_OUT *ode = odeAlloc();
     for(int i = 0; i < body->N-1; i++) {
-        //f_sh = ( c1* (BODY.f_prev(:,i+1) - BODY.f_prev(:,i) ) + ...
-        //                 c2*(BODY.f_pprev(:,i+1) - BODY.f_pprev(:,i)) ) / ds;
-        //todo should this be i and i-1 or something because matlab is 1 indexed?
+
         matrix_scalar_mul(matrix_sub(getSection(body->f_prev, 0,5,i+1,i+1, tempR6n1), getSection(body->f_prev, 0,5,i,i, tempR6n2),tempR6n1),c1, tempR6n1);
         matrix_scalar_mul(matrix_sub(getSection(body->f_pprev, 0,5,i+1,i+1, tempR6n2), getSection(body->f_pprev, 0,5,i,i, tempR6n3), tempR6n2),c2, tempR6n2);
         matrix_add(tempR6n1,tempR6n2,tempR6n1);
@@ -1334,7 +1332,7 @@ int find_roots_newton(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
         status = gsl_multiroot_fsolver_iterate(s);
 
         if (status) {
-            printf("STATUS: %s\n", gsl_strerror(status));
+            //printf("STATUS: %s\n", gsl_strerror(status));
             break;
         }
 
@@ -1345,11 +1343,11 @@ int find_roots_newton(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
     } while (status == GSL_CONTINUE && iter < 15);
 
     if (status) {
-        printf("STATUS: %d\n", status);
-        printf("STATUS: %s\n", gsl_strerror(status));
+        //printf("STATUS: %d\n", status);
+        //printf("STATUS: %s\n", gsl_strerror(status));
     }
 
-    printf("took %zu iterations\n", iter);
+    //printf("took %zu iterations\n", iter);
     //assert(!isnan(s->f->data[0]));
     // Extract solution
     //matrix *solution = zeros(6, 1);
@@ -1396,7 +1394,7 @@ int find_roots_hybrid(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
         status = gsl_multiroot_fsolver_iterate(s);
 
         if (status) {
-            printf("STATUS: %s\n", gsl_strerror(status));
+            //printf("STATUS: %s\n", gsl_strerror(status));
             break;
         }
 
@@ -1407,11 +1405,11 @@ int find_roots_hybrid(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
     } while (status == GSL_CONTINUE && iter < 15);
 
     if (status) {
-        printf("STATUS: %d\n", status);
-        printf("STATUS: %s\n", gsl_strerror(status));
+        //printf("STATUS: %d\n", status);
+        //printf("STATUS: %s\n", gsl_strerror(status));
     }
 
-    printf("took %zu iterations\n", iter);
+    //printf("took %zu iterations\n", iter);
     //assert(!isnan(s->f->data[0]));
     // Extract solution
     //matrix *solution = zeros(6, 1);
@@ -1610,12 +1608,12 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     int status = find_roots_hybrid(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
 
     if(status == -2){
-        printf("hybrid method failed to converge\n");
+        printf("hybrid method failed to converge. Trying newton\n");
         status = find_roots_newton(tempGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
         copyMatrix(tempGuess, InitGuess);
+        if(status == -2){
+            printf("Newton method failed to converge\n");
     }
-
-    //printf("\nINIT_GUESS post\n");
     //printMatrix(Theta);
     printf("_______________SOLUTION______________________\n");
     printMatrix(InitGuess);
