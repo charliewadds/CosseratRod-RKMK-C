@@ -336,11 +336,12 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 
 
-    Body_2->object->flex->f_prev->data[2] = ones(1,N)->data[0];
-    Body_2->object->flex->f_pprev->data[2] = ones(1,N)->data[0];
-
-    Body_4->object->flex->f_prev->data[2] = ones(1,N)->data[0];
-    Body_4->object->flex->f_pprev->data[2] = ones(1,N)->data[0];
+    for(int i = 0; i < N; i++){
+        Body_2->object->flex->f_prev->data[2 * N + i] = 1;
+        Body_2->object->flex->f_pprev->data[2 * N + i] = 1;
+        Body_4->object->flex->f_prev->data[2 * N + i] = 1;
+        Body_4->object->flex->f_pprev->data[2 * N + i] = 1;
+    }
 
 
 
