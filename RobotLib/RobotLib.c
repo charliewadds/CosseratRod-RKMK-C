@@ -1315,7 +1315,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Robot *robot, matrix *Theta, matrix 
         InitGuess->data[i * InitGuess->numCols] = p[i];
     }
 
-    return 0;
+    return info[6];
 }
 
 
@@ -1627,17 +1627,17 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     matrix *tempGuess = matrix_new(6, 1);
     copyMatrix(InitGuess, tempGuess);
-    int status = find_roots_levmarqrt(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+    int status = find_roots_hybrid(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
 
     if(status != 0){
-        printf("hybrid method failed to converge, trying newton\n");
+        printf("Powell hybrid method failed to converge, trying levenberg\n");
         status = find_roots_newton(tempGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
         copyMatrix(tempGuess, InitGuess);
 
-        if(status != 0){
+        if(status != 6){
             printf("both failed!\n\n");
         }else{
-            printf("newton succeeded\n\n");
+            printf("levenberg-marquardt succeeded\n\n");
         }
     }else{
         //printf("hybrid succeeded\n\n");
