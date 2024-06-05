@@ -1614,20 +1614,9 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     double c0 = 1.5 / dt;//60
     double c1 = -2 / dt;//-80
     double c2 = .5 / dt;//20
-    //options = optimset('Display','OFF','TolFun',1e-9);
-
-    //todo does this need to find ALL roots or just the one 'nearest' to the initial guess?
-    //matrix *InitGuess = fsolve(@(InitGuess)Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, ...
-    //THETA_DDOT, F_ext, c0, c1, c2),InitGuess,options);
-    //printf("INIT_GUESS pre\n");
-
-    //printMatrix(matrix_sub(ones(6,1),InitGuess));
-    //printMatrix(Flex_MB_BCS(InitGuess, robot, *F_ext, c0,c1,c2 ));
-    //assert(!isnan(InitGuess->data[0][0]));
 
 
-    //matrix *tempGuess = matrix_new(6, 1);
-    //copyMatrix(InitGuess, tempGuess);
+    //todo start 3 threads at program start, shared matrix memory, basically a race condition to set shared int to pid of thread, whichever pid is first changes matrix to result
     int status = find_roots_hybrid(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
 
     if(status != 0){
