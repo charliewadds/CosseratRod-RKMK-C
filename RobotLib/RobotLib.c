@@ -1307,7 +1307,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Robot *robot, matrix *Theta, matrix 
     double x[6];
     double *info = (double *)malloc(10 * sizeof(double));
 
-    double opts[5] = {1e-3, 1e-9, 1e-9, 1e-9, 1e-6};
+    double opts[5] = {1e-3, 1e-15, 1e-9, 1e-9, 1e-6};
     dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, 6, 6, 1000, opts, info, NULL, NULL, &params);
     printf("iters: %f\n", info[5]);
     printf("reason for terminating: %f\n", info[6]);
@@ -1625,22 +1625,31 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     //printMatrix(Flex_MB_BCS(InitGuess, robot, *F_ext, c0,c1,c2 ));
     //assert(!isnan(InitGuess->data[0][0]));
 
-    matrix *tempGuess = matrix_new(6, 1);
-    copyMatrix(InitGuess, tempGuess);
+
+    //matrix *tempGuess = matrix_new(6, 1);
+    //copyMatrix(InitGuess, tempGuess);
     int status = find_roots_hybrid(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
 
     if(status != 0){
         printf("Powell hybrid method failed to converge, trying levenberg\n");
-        status = find_roots_levmarqrt(tempGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
-        copyMatrix(tempGuess, InitGuess);
+        status = find_roots_levmarqrt(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+
 
         if(status != 6){
-            printf("both failed!\n\n");
+            printf("levMar failed trying newton\n\n");
+            status = find_roots_newton(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+            if(status != 0){
+                printf("all failed");
+            }else {
+                //copyMatrix(tempGuess, InitGuess);
+                printf("newton succeeded\n\n");
+            }
         }else{
-            printf("levenberg-marquardt succeeded\n\n");
+                //copyMatrix(tempGuess, InitGuess);
+                printf("levenberg-marquardt succeeded\n\n");
         }
     }else{
-        //printf("hybrid succeeded\n\n");
+        printf("hybrid succeeded\n\n");
     }
 //    if(status == -2){
 //        printf("Newton's method failed to converge\n");
