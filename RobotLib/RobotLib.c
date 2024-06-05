@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "../gsl/multiroots/gsl_multiroots.h"
-#include "../gsl/vector/gsl_vector.h"
+#include <gsl/gsl_multiroots.h>
+#include <gsl/gsl_vector.h>
 
 matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     matrix *parentCoM;
@@ -1307,8 +1307,8 @@ int find_roots_levmarqrt(matrix *InitGuess, Robot *robot, matrix *Theta, matrix 
     double x[6];
     double *info = (double *)malloc(10 * sizeof(double));
 
-    double opts[5] = {1e-3, 1e-9, 1e-15, 1e-30, -1e-9};
-    dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, p, 6, 6, 1000, opts, info, NULL, NULL, &params);
+    double opts[5] = {1e-3, 1e-9, 1e-9, 1e-9, 1e-6};
+    dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, 6, 6, 1000, opts, info, NULL, NULL, &params);
     printf("iters: %f\n", info[5]);
     printf("reason for terminating: %f\n", info[6]);
     for (int i = 0; i < 6; ++i) {
@@ -1640,7 +1640,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
             printf("newton succeeded\n\n");
         }
     }else{
-        printf("hybrid succeeded\n\n");
+        //printf("hybrid succeeded\n\n");
     }
 //    if(status == -2){
 //        printf("Newton's method failed to converge\n");
@@ -1649,9 +1649,9 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     //printf("\nINIT_GUESS post\n");
     //printMatrix(Theta);
-    printf("_______________SOLUTION______________________\n");
+   // printf("_______________SOLUTION______________________\n");
     printMatrix(InitGuess);
-    printf("___________________________________________\n\n");
+   // printf("___________________________________________\n\n");
 
     eye(g_ref[0]);
     eye(g_act_wrt_prev[0]);
