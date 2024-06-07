@@ -29,9 +29,9 @@ set(FDM_SOURCE FDM/Discretization.c FDM/FDM.c
         RunMeInvDyn.c)
 
 # Create libraries
-add_library(MatrixLib SHARED ${MATRIX_LIB_SOURCES})
-add_library(LieGroup SHARED ${LIE_GROUP_SOURCES})
-add_library(RobotLib SHARED ${ROBOT_LIB_SOURCES})
+add_library(MatrixLib STATIC ${MATRIX_LIB_SOURCES})
+add_library(LieGroup STATIC ${LIE_GROUP_SOURCES})
+add_library(RobotLib STATIC ${ROBOT_LIB_SOURCES})
 add_library(TestLib STATIC ${TEST_SOURCE})
 add_library(FDM STATIC ${FDM_SOURCE})
 # Main executable

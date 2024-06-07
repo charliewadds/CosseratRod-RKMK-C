@@ -299,7 +299,7 @@ int main() {
 
     }
 
-    matrix *shape = zeros(5, 1);//todo this is the bymber of joints I think, this should come from either the setup file or a config json or something
+    matrix *shape = zeros(5, 1);
     shape->data[(0 * shape->numCols) + 0] = 0.4;
     shape->data[(1 * shape->numCols) + 0] = -0.5 * 0.4;
     shape->data[(2 * shape->numCols) + 0] = 0.5 * 0.4;
