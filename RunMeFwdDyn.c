@@ -353,7 +353,7 @@ int main() {
         matrix *f = matrix_new(6,1);
         getSection(robot->objects[2*BC_Start ]->object->flex->f_prev, 0, 5, 0, 0, f);
 
-        fdm = FDM_MB_RE(robot, theta, theta_dot, getSection(theta_ddot, 0, 4, i, i, tempLinkx1), F_ext, dt, F_0);
+        fdm = FDM_MB_RE(robot, theta, theta_dot, getSection(theta_ddot, 0, 4, i, i, tempLinkx1), F_ext, dt, F_0, InitGuess, );
         //printf("%f", robot->objects[11]->object->joint->limits[0]);
         setSection(C, 0, 4, i, i, fdm->C);
         copyMatrix(fdm->JointAcc, InitGuess);

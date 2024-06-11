@@ -1277,6 +1277,7 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
 
     // Extracting parameters
     //matrix *InitGuess = p->InitGuess;
+
     Robot *robot = p->robot;
     matrix *F_ext = p->F_ext;
     double c0 = p->c0;
@@ -1349,7 +1350,7 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params) {
 
 
 
-    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, &params};
+    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, params};
     //f.params = &params;
 
     // Define initial guess
@@ -1411,7 +1412,7 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params) {
     // Set parameters
 
 
-    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, &params};
+    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, params};
     //f.params = &params;
 
     // Define initial guess
@@ -1954,7 +1955,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     }
 
 
-FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *JointAcc) {
+FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *JointAcc, matrix *F_0, matrix *C_des) {
 
     int numBody = 5;//todo this should not be a magic number
     int BC_Start = getBCStart(robot);
@@ -2000,7 +2001,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     //printMatrix(Flex_MB_BCS(JointAcc, robot, *F_ext, c0,c1,c2 ));
     //assert(!isnan(JointAcc->data[0][0]));
 
-    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2, dt, NULL, NULL, 0};
+    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2, dt, C_des, F_0, 1};
     matrix *tempGuess = matrix_new(6, 1);
     copyMatrix(JointAcc, tempGuess);
     printf("____________JointAcc_______________________\n");
