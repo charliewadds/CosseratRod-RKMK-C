@@ -1717,6 +1717,8 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
         matrix *temp4x4n1 = matrix_new(4, 4);
 
+
+        matrix *tempC6n1 = matrix_new(1, 6);
         matrix *temp6x6n1 = matrix_new(6, 6);
         matrix *temp6x6n2 = matrix_new(6, 6);
 
@@ -1771,17 +1773,17 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
                     setSection(F, 0, 5, i, i, matMult(body->object->flex->stiff,
                                                       matrix_sub(InitGuess, body->object->flex->F_0, tempR6n1),
                                                       tempR6n1));
-//                for(int ii = 0; ii < F->numRows; ii++){
-//                    for(int j = 0; j < F->numCols; j++) {
-//                        assert(!isnan(F->data[ii][j]));
-//                    }
-//                }
                 } else {
                     setSection(F, 0, 5, i, i, F_temp);
                 }
-                F_dist = zeros(6, body->object->flex->N);
-                //todo F is wrong here because it comes from InitGuess which comes from the solver which does not work
 
+                tempC6n1 = matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempC6n1);
+                //setSection(C);
+                matrix *temp1 = matrix_new(1,1);
+                matMult(tempC6n1, joint->twistR6, temp1);
+                setSection(C, 0,0,i-1,i-1,temp1);
+
+                F_dist = zeros(6, body->object->flex->N);
                 flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i, tempR6n1), body->object->flex,
                          getSection(eta, 0, 5, i, i, tempR6n2), c0, c1, c2, dyn);
 
@@ -1820,13 +1822,12 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
                 if (i < numBody + 2) {
 
                     //setSection(C, 0,5, i - 1, i - 1, matMult(matrix_transpose(getSection(F, 0,5,i,i)), robot->objects[2*i-2]->object->joint->twistR6));
-                    for (int j = 0; j < C->numRows - 1; j++) {
 
-                        setSection(C, 0, C->numRows - 1, i - 1, i - 1,
-                                   matMult(matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempR6n1t),
-                                           joint->twistR6, tempR6n1));
+                    tempC6n1 = matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempC6n1);
+                    matrix *temp1 = matrix_new(1,1);
+                    matMult(tempC6n1, joint->twistR6, temp1);
+                    setSection(C, 0,0,i-1,i-1,temp1);
 
-                    }
                 }
 
                 if (body->type == 1) {//flex
