@@ -30,4 +30,4 @@ def compare_csv(file1, file2):
 
     np.savetxt("./matlab2.csv", m2['C_des'], delimiter=",", fmt='%.15f')
 
-compare_csv('cmake-build-debug/ControlSim2.csv', 'ControlSim2.mat')
+compare_csv('cmake-build-debug/Control_good.csv', 'ControlSim2.mat')

@@ -607,7 +607,11 @@ void matrixToFile(matrix *m, char *filename){
 
     for (int i = 0; i < m->numRows; i++){
         for (int j = 0; j < m->numCols; j++){
-            fprintf(f, "%.12f, ", m->data[(i * m->numCols) + j]);
+            if(j == m->numCols - 1)
+                fprintf(f, "%.12f", m->data[(i * m->numCols) + j]);
+            else
+                fprintf(f, "%.12f, ", m->data[(i * m->numCols) + j]);
+
         }
         fprintf(f, "\n");
     }
