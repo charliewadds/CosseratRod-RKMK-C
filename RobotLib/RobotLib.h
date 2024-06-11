@@ -25,7 +25,7 @@ typedef struct rigidBody_s{
 typedef struct flexBody_s{
     char *name;
     matrix *mass;//6x6 mass matrix
-    matrix *transform;//R6 transformation from start to end
+    matrix *transform;//R6 transformation from start to end todo this is for rigid only
     matrix *stiff;//6x6 stiffness matrix
     matrix *damping;//6x6 damping matrix
     matrix *F_0;//R6 force at start

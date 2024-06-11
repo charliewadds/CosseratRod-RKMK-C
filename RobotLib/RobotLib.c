@@ -8,8 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include <gsl/gsl_multiroots.h>
-#include <gsl/gsl_vector.h>
+
 
 matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     matrix *parentCoM;
@@ -406,11 +405,11 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double v
 
 matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
-    matrix *POS = zeros(3,11);//todo this is a hack, I need to make this dynamic
+    matrix *POS = zeros(3,90);//todo this is a hack, I need to make this dynamic
     matrix *g = matrix_new(4,4);
     eye(g);
 
-    int iii = 1;//num points plotted
+    int iii = 0;//num points plotted
     //int i_R = 1;
     matrix *temp6n1 = matrix_new(6,1);
     matrix *temp4x4n1 = matrix_new(4,4);
@@ -418,7 +417,7 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
     for(int i = 0; i < (robot->numObjects - 2)/2; i++){
         currObj =  robot->objects[(i*2)+1]->object;
         //assert(robot->objects[(i*2)+2]->type == 0 || robot->objects[(i*2)+2]->type == 1);
-        if(1){
+        if(currObj->joint->child->type == 0){
 
             matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[(i * theta->numCols)]), temp6n1), temp4x4n1), temp4x4n1), g);
 
@@ -439,26 +438,24 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
             iii++;
 
        }
-//        else if(robot->objects[(i*2)]->type == 1){
-//            //todo add flex
-//            g = matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[i][0])))));
-//            double ds = currObj->joint->child->body->flex->L / currObj->joint->child->body->flex->N;
-//
-//            for(int j = 0; j < currObj->joint->child->body->flex->N * numStep; j++){
-//                int index = (int)floor(j/numStep)+1;
-//                g = matMult(g,
-//                            expm_SE3(
-//                                    hat_R6(
-//                                            matrix_scalar_mul(getSection(robot->objects[(i*2)]->object->flex->f_prev,0,5, index, index), (ds/numStep))
-//                                            )
-//                                    )
-//                            );
-//
-//                setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
-//                iii++;
-//
-//            }
-//        }
+        else if(currObj->joint->child->type == 1){
+
+
+            matMult(g, expm_SE3(hat_R6( matrix_scalar_mul(currObj->joint->twistR6, (currObj->joint->homepos + theta->data[(i * theta->numCols)]), temp6n1), temp4x4n1), temp4x4n1), g);
+
+            double ds = currObj->joint->child->body->flex->L / currObj->joint->child->body->flex->N;
+
+            for(int j = 0; j < currObj->joint->child->body->flex->N * numStep; j++){
+                int index = ceil(j/numStep);
+                if(currObj->joint->child->type )
+                temp6n1 = getSection(currObj->joint->child->body->flex->f_prev, 0, 5, index, index, temp6n1);
+                expm_SE3(hat_R6(matrix_scalar_mul(temp6n1, ds/numStep, temp6n1), temp4x4n1), temp4x4n1);
+                g = matMult(g, temp4x4n1, g);
+                getSetSection(g, POS, 0, 2, 3, 3, 0, 2, iii, iii);
+                iii +=1;
+
+            }
+        }
     }
 
     //free(currObj);
@@ -698,7 +695,9 @@ void robotToFile(Robot *robot, char *filename){
             printf("Object type: %d\n", robot->objects[i]->type);
             printf("Object name: %s\n", robot->objects[i]->object->rigid->name);
             char *temp = objToJson(robot->objects[i]);
-            fprintf(f, "%s},{", temp);
+            fprintf(f, "%s\n", temp);
+            fprintf(f,",");
+            fflush(f);
             free(temp);
     }
     fprintf(f, "]");
@@ -833,9 +832,7 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
     matrix *f_sh = matrix_new(6,1);
     COSS_ODE_OUT *ode = odeAlloc();
     for(int i = 0; i < body->N-1; i++) {
-        //f_sh = ( c1* (BODY.f_prev(:,i+1) - BODY.f_prev(:,i) ) + ...
-        //                 c2*(BODY.f_pprev(:,i+1) - BODY.f_pprev(:,i)) ) / ds;
-        //todo should this be i and i-1 or something because matlab is 1 indexed?
+
         matrix_scalar_mul(matrix_sub(getSection(body->f_prev, 0,5,i+1,i+1, tempR6n1), getSection(body->f_prev, 0,5,i,i, tempR6n2),tempR6n1),c1, tempR6n1);
         matrix_scalar_mul(matrix_sub(getSection(body->f_pprev, 0,5,i+1,i+1, tempR6n2), getSection(body->f_pprev, 0,5,i,i, tempR6n3), tempR6n2),c2, tempR6n2);
         matrix_add(tempR6n1,tempR6n2,tempR6n1);
@@ -1425,7 +1422,7 @@ int find_roots_hybrid(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
 
         status = gsl_multiroot_test_residual(s->f, 1e-9);
 
-    } while (status == GSL_CONTINUE && iter < 10);
+    } while (status == GSL_CONTINUE && iter < 15);
 
     if (status) {
         printf("STATUS: %d\n", status);
@@ -1594,7 +1591,8 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     //todo implement 3d zeros()
     //todo this might not need +2, I dont remember if numBodies includes base and EE
-    matrix **g_ref = malloc(sizeof(matrix) * (numBody + 2));           //[SE(3) X N+2]  Transformation to i_th C-BCF from/in base BCF for RRC
+    matrix **g_ref = malloc(sizeof(matrix) * (numBody +
+                                              2));           //[SE(3) X N+2]  Transformation to i_th C-BCF from/in base BCF for RRC
     for (int i = 0; i < numBody + 2; i++) {
         g_ref[i] = zeros(4, 4);
     }
@@ -1614,7 +1612,12 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     double c0 = 1.5 / dt;//60
     double c1 = -2 / dt;//-80
     double c2 = .5 / dt;//20
+    //options = optimset('Display','OFF','TolFun',1e-9);
 
+    //todo does this need to find ALL roots or just the one 'nearest' to the initial guess?
+    //matrix *InitGuess = fsolve(@(InitGuess)Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, ...
+    //THETA_DDOT, F_ext, c0, c1, c2),InitGuess,options);
+    //printf("INIT_GUESS pre\n");
 
     //todo start 3 threads at program start, shared matrix memory, basically a race condition to set shared int to pid of thread, whichever pid is first changes matrix to result
     int status = find_roots_hybrid(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);

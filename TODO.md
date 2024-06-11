@@ -1,6 +1,6 @@
 # TO DO
 - [ ] Array sizes are written as static right now because it helped me with the math. they should be dynamic and I will change that soon
-- [ ] CopySection function would be nice. it would also speed things up a lot
+- [x] CopySection function would be nice. it would also speed things up a lot
 - [ ] The robot struct is a nightmare and needs to be rewritten. It is possibly the worst code I have ever written.
 - [ ] I think it would be faster to have global temporary matrices for functions to use for math instead of mallocing and freeing them every time.
   - this would be a nightmare if I end up using concurrency though
@@ -9,6 +9,7 @@
 - [ ] multiply fixed size matrices using NEON instructions
   - https://developer.arm.com/documentation/102467/0201/Example---matrix-multiplication
 - [ ] add shape and math descriptions to variables
+  - this could concurrently calculate determinant for example, starting when it is allocated
 - [x] There is probably a way to make getSection just return a pointer to the 'top left corner' of the section so it doesn't have to create a new matrix
 - [ ] It is probably best to use a premade matrix library because it can use SIMD and other optimizations
   - or I could learn how to use those things but that is a bit of a can of worms
@@ -32,7 +33,7 @@
 # THINGS TO FIX
 - [x] Determinant keeps trying to free null pointers, not sure why
   - fixed, added check for null pointers with print, but I don't know what actually caused it.
-- [ ] Probably should make some kind of union for SE3 and matrix or something so I don't have to create a new one every time I want to convert
+
 
 
 # OPTIMIZATIONS
@@ -46,7 +47,6 @@
   - this would let me use non-size constrained matrices and therefore less temporary variables
   - they should probably start as 6x6 because I think the only thing bigger are the eta and f prev
 - [ ] similar to above, preallocating memory where possible could speed things up in the functions that are run many times
-- [ ] could use union to combine so3 and se3 etc. not sure if that is faster or slower
 - [ ] use `restrict` keyword to tell the compiler that the pointers are the only ref. to the data within the function
   - Is this useful in modern compilers? i.e. will this happen automatically?
 - [ ] struct size should be a power of 2 if possible for array of structs

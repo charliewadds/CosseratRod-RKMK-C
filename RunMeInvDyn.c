@@ -285,7 +285,8 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Body_2->type = 1;
     Body_2->object = malloc(sizeof(union object_u));
     Body_2->object->flex = newFlexBody("Body_2", Mf,  K,C, F_0, N, L_0);
-    //Body_2->object->flex->F_0->data[2][0] = 1;
+
+
 
     Object *Body_3 =  malloc(sizeof(struct object_s));
     Body_3->type = 0;
@@ -458,7 +459,7 @@ int main() {
 
     }
 
-    matrix *shape = zeros(5, 1);//todo this is the bymber of joints I think, this should come from either the setup file or a config json or something
+    matrix *shape = zeros(5, 1);
     shape->data[(0 * shape->numCols) + 0] = 0.4;
     shape->data[(1 * shape->numCols) + 0] = -0.5 * 0.4;
     shape->data[(2 * shape->numCols) + 0] = 0.5 * 0.4;
@@ -509,7 +510,7 @@ int main() {
     IDM_MB_RE_OUT *idm = malloc(sizeof(IDM_MB_RE_OUT));
     matrix *tempLinkx1 = matrix_new(5,1);
     for(int i = 0; i < timeStep; i++){
-        //printf("timestep: %d\n", i);
+        printf("timestep: %d\n", i);
         //printMatrix(Flex_MB_BCS(F_0, robot,  *F_ext, 60, -80, 20));//todo just for testing
         //addRobotState(robot, "testRobotOut.json", i);
         //matrix f = *robot->objects[2*BC_Start ]->object->flex->f_prev;//save previous guess
@@ -549,7 +550,7 @@ int main() {
         for(int j = 0; j < robot->numObjects; j++){
             if(robot->objects[j]->type == 2){
                 curr ++;
-                //printf("Joint %d: %f\n", j, robot->objects[j]->object->joint->position);
+                printf("Joint %d: %f\n", j, robot->objects[j]->object->joint->position);
                 angles->data[(curr * angles->numCols) + i] = robot->objects[j]->object->joint->position;
 
             }
