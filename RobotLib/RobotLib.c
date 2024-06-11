@@ -1708,7 +1708,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         Object *body = robot->objects[2 * i ];
         assert(robot->objects[2 * (i - 1) + 1]->type == 2);
         assert(robot->objects[2 * i - 2]->type == 1 || robot->objects[2 * i - 2]->type == 0);
-        matrix *tempC6n1 = matrix_new(6,1);
+        matrix *tempC6n1 = matrix_new(1,6);
 
         CoM2CoM = getCoM2CoM(joint, CoM2CoM);
 //        printf("CoM2CoM\n");
