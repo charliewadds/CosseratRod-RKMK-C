@@ -1002,11 +1002,27 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 
     if(Inv){
 
-        matrix *str_guess = zeros(6,1);
+        matrix *str_guess = zeros(F_0->numRows,1);
         copyMatrix(F_0, str_guess);
 
 
-        Flex_MB_BCS_params params = {robot, theta, theta_dot, theta_ddot, &F_ext, c0, c1, c2, dt, C_des, F_0};
+        Flex_MB_BCS_params params;
+        params.robot = robot;
+        params.F_ext = &F_ext;//todo fix this
+        params.c0 = c0;
+        params.c1 = c1;
+        params.c2 = c2;
+        params.dt = dt;
+        params.Theta = theta;
+        params.Theta_dot = theta_dot;
+        params.Theta_ddot = theta_ddot;
+        params.C_des = C_des;
+        params.F_0 = F_0;
+        params.inv = 0;
+
+
+
+
         find_roots_newton(str_guess,&params);
     }
 
@@ -1026,7 +1042,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 
     matrix *C;
     if(Inv) {
-        matrix *C = zeros(6, 6);   //todo magic number
+        C = zeros(1, numBody);   //todo magic number
     }
     // Set Initial Conditions
 
@@ -1045,9 +1061,10 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
     matrix *tempR6n2 = matrix_new(6,1);
     matrix *tempR6n3 = matrix_new(6,1);
 
+    matrix *tempC6n1 = matrix_new(1,6);
     matrix *temp6x6n1 = matrix_new(6,6);
     matrix *temp6x6n2 = matrix_new(6,6);
-
+    matrix *temp1 = matrix_new(1,1);
     rigidKin *kin = rigidKinAlloc();
     flexDyn *dyn = flexDynAlloc();
     //matrix *parentCoM ;
@@ -1103,9 +1120,11 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
             }
 
             if(Inv){
-                matrix *tempT = matrix_new(1,6);
-                matMult(matrix_transpose(getSection(F,0,5,i,i,tempR6n1), tempT),curr_joint->object->joint->twistR6, tempR6n1);
-                setSection(C, 0,5,i-1,i-1, getSection(F, 0,5,i,i, tempR6n1));
+                tempC6n1 = matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempC6n1);
+                //setSection(C);
+
+                matMult(tempC6n1, curr_joint->object->joint->twistR6, temp1);
+                setSection(C, 0,0,i-1,i-1,temp1);
             }
 
             if(F_dist != NULL){
@@ -1134,9 +1153,11 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 
 
             if(i > BC_Start && Inv){
-                matrix *tempT = matrix_new(1,6);
-                matMult(matrix_transpose(getSection(F,0,5,i,i,tempR6n1), tempT),curr_joint->object->joint->twistR6, tempR6n1);
-                setSection(C, 0,5,i-1,i-1, getSection(F, 0,5,i,i, tempR6n1));
+                tempC6n1 = matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempC6n1);
+                //setSection(C);
+
+                matMult(tempC6n1, curr_joint->object->joint->twistR6, temp1);
+                setSection(C, 0,0,i-1,i-1,temp1);
             }
             /*
              * F_temp = F(:,i) + transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i)- ROBOT{2*i-1}.Mass*d_eta(:,i);
@@ -1286,7 +1307,7 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
     double dt = p->dt;
     matrix *Theta = p->Theta;
     matrix *Theta_dot = p->Theta_dot;
-    matrix *Theta_DDot = p->Theta_DDot;
+    matrix *Theta_DDot = p->Theta_ddot;
     matrix *C_des = p->C_des;
     matrix *F_0 = p->F_0;
     int inv = p->inv;
@@ -1309,12 +1330,8 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
     // Call Flex_MB_BCS function
     matrix *result;
     if(inv){
-        result = Flex_MB_BCS(x_matrix, robot, *F_ext, c0, c1, c2, inv, C_des, &F_0, dt, NULL, NULL, NULL);
-        // Fill f with the residuals
-        for (int i = 0; i < 6; ++i) {
-            gsl_vector_set(f, i, result->data[i * result->numCols]);
-        }
-        matrix_free(result);
+        result = Flex_MB_BCS(x_matrix, robot, *F_ext, c0, c1, c2, inv, C_des, F_0, dt, NULL, NULL, NULL);
+
     }
     else {
         result = Flex_MB_BCS(x_matrix, robot, *F_ext, c0, c1, c2, inv, C_des, F_0, dt, Theta, Theta_dot, Theta_DDot);
@@ -1649,7 +1666,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     params->dt = dt;
     params->Theta = Theta;
     params->Theta_dot = Theta_dot;
-    params->Theta_DDot = Theta_DDot;
+    params->Theta_ddot = Theta_DDot;
     params->C_des = NULL;
     params->inv = 0;
     params->F_0 = matrix_new(6, 1);
@@ -1956,7 +1973,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     }
 
 
-FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *JointAcc, matrix *F_0, matrix *C_des) {
+FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *C_des, matrix *F_0, matrix *Theta_DDot_guess) {
 
     int numBody = 5;//todo this should not be a magic number
     int BC_Start = getBCStart(robot);
@@ -1991,36 +2008,39 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     double c0 = 1.5 / dt;//60
     double c1 = -2 / dt;//-80
     double c2 = .5 / dt;//20
-    //options = optimset('Display','OFF','TolFun',1e-9);
 
-    //todo does this need to find ALL roots or just the one 'nearest' to the initial guess?
-    //matrix *JointAcc = fsolve(@(JointAcc)Flex_MB_BCS(JointAcc, ROBOT, THETA, THETA_DOT, ...
-    //THETA_DDOT, F_ext, c0, c1, c2),JointAcc,options);
-    //printf("INIT_GUESS pre\n");
 
-    //printMatrix(matrix_sub(ones(6,1),JointAcc));
-    //printMatrix(Flex_MB_BCS(JointAcc, robot, *F_ext, c0,c1,c2 ));
-    //assert(!isnan(JointAcc->data[0][0]));
+    //Solve fwd flex boundary conditions
 
-    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2, dt, C_des, F_0, 1};
-    matrix *tempGuess = matrix_new(6, 1);
-    copyMatrix(JointAcc, tempGuess);
+    Flex_MB_BCS_params params;
+    params.robot = robot;
+    params.F_ext = F_ext;
+    params.c0 = c0;
+    params.c1 = c1;
+    params.c2 = c2;
+    params.dt = dt;
+    params.Theta = Theta;
+    params.Theta_dot = Theta_dot;
+    params.Theta_ddot = Theta_DDot;
+    params.C_des = C_des;
+    params.inv = 1;
+    params.F_0 = F_0;
+    matrix *JointAcc = matrix_new(Theta_DDot_guess->numRows, 1);
+
+    copyMatrix(Theta_DDot_guess, JointAcc);
     printf("____________JointAcc_______________________\n");
     printMatrix(JointAcc);
     int status = find_roots_hybrid(JointAcc, &params);
 
     if (status == -2) {
         printf("hybrid method failed to converge. Trying newton\n");
-        status = find_roots_newton(tempGuess, &params);
-        copyMatrix(tempGuess, JointAcc);
+        status = find_roots_newton(JointAcc, &params);
+
         if (status == -2) {
             printf("Newton method failed to converge\n");
         }
     }
-
-
-    //printMatrix(Theta);
-    printf("_______________SOLUTION______________________\n");
+    printf("_______________FORWARD BCS SOLUTION______________________\n");
     printMatrix(JointAcc);
     printf("___________________________________________\n\n");
 
@@ -2071,6 +2091,17 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     matrix *temp6x6n1 = matrix_new(6, 6);
     matrix *temp6x6n2 = matrix_new(6, 6);
 
+
+
+    //solve inverse boundary condition
+    params.inv = 0;
+    matrix *StrGuess = matrix_new(F_0->numRows, 1);
+    copyMatrix(F_0, StrGuess);
+    status = find_roots_hybrid(StrGuess, &params);
+
+
+
+
     for (int i = 1; i < numBody + 2; i++) {
         //printMatrix(C);
         //printf("\n\n");
@@ -2120,13 +2151,8 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
             if (i == BC_Start) {//todo double check this +1
 
                 setSection(F, 0, 5, i, i, matMult(body->object->flex->stiff,
-                                                  matrix_sub(JointAcc, body->object->flex->F_0, tempR6n1),
+                                                  matrix_sub(StrGuess, body->object->flex->F_0, tempR6n1),
                                                   tempR6n1));
-//                for(int ii = 0; ii < F->numRows; ii++){
-//                    for(int j = 0; j < F->numCols; j++) {
-//                        assert(!isnan(F->data[ii][j]));
-//                    }
-//                }
             } else {
                 setSection(F, 0, 5, i, i, F_temp);
             }

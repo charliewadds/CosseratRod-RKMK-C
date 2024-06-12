@@ -280,11 +280,10 @@ int main() {
 
     start = clock();
 
-    matrix *theta = zeros(5, 1);
-    matrix *theta_dot = zeros(5, 1);
+
 
     double dt = 0.025;
-    int timeStep = 100;
+    int timeStep = 10;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -301,18 +300,10 @@ int main() {
     shape->data[(3 * shape->numCols) + 0] = -0.7 * 0.4;
     shape->data[(4 * shape->numCols) + 0] = 0.1 * -0.4;
 
-    matrix *theta_ddot = zeros(5, timeStep);
-
+    matrix *theta_ddot = zeros(5, 1);
+    matrix *theta = zeros(5, 1);
+    matrix *theta_dot = zeros(5, 1);
     matrix *tempTStep = matrix_new(1, timeStep);
-
-    for(int i = 0; i < 5; i++){
-
-        zeroMatrix(tempTStep);
-        matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),shape->data[(i * shape->numCols)], tempTStep);
-        //memcpy(theta_ddot->data[i],tempTStep->data[0],  sizeof * theta_ddot->data[i] * timeStep);
-        setSection(theta_ddot, i, i, 0, timeStep-1, tempTStep);
-
-    }
 
     matrix *F_ext = zeros(6, 1);
     matrix *F_0 = zeros(6, 1);
@@ -345,30 +336,37 @@ int main() {
     FDM_MB_RE_OUT *fdm = malloc(sizeof(FDM_MB_RE_OUT));
     matrix *tempLinkx1 = matrix_new(5,1);
     matrix *InitGuess = zeros(5,1);
-    for(int i = 0; i < timeStep; i++){
-        //printf("timestep: %d\n", i);
-        //printMatrix(Flex_MB_BCS(F_0, robot,  *F_ext, 60, -80, 20));//todo just for testing
-        //addRobotState(robot, "testRobotOut.json", i);
-        //matrix f = *robot->objects[2*BC_Start ]->object->flex->f_prev;//save previous guess
-        matrix *f = matrix_new(6,1);
-        getSection(robot->objects[2*BC_Start ]->object->flex->f_prev, 0, 5, 0, 0, f);
 
-        fdm = FDM_MB_RE(robot, theta, theta_dot, getSection(theta_ddot, 0, 4, i, i, tempLinkx1), F_ext, dt, F_0, InitGuess, );
-        //printf("%f", robot->objects[11]->object->joint->limits[0]);
-        setSection(C, 0, 4, i, i, fdm->C);
+    matrix *C_des = matrixFromFile("Control_good.csv");
+    matrix *C_des_1 = zeros(5,1);
+
+    matrix *temp5x1 = zeros(5,1);
+    matrix *temp5xn = zeros(5,timeStep);
+    matrix *tempF = zeros(6,1);
+    for(int i = 0; i < timeStep; i++){
+
+        setSection(C_des_1, 0, 4, 0, 0, getSection(C_des, 0, 4, i, i, tempLinkx1));
+        fdm = FDM_MB_RE(robot, theta, theta_dot, theta_ddot, F_ext, dt, C_des_1 ,F_0, InitGuess);//todo do I need JointAcc in funciton?
+
+        setSection(T_H, 0, T_H->numRows, i, i, theta);
+        setSection(Tdd_H, 0, Tdd_H->numRows, i, i, theta_ddot);
+        setSection(C, 0, C->numRows, i, i, fdm->C);
+
         copyMatrix(fdm->JointAcc, InitGuess);
 
-        //prevGuess is always 1, todo add other cases
-        getSection(f, 0, 5, 0, 0, F_0);
-        //robot = fdm->robot_new;
+
+        getSection(robot->objects[2*BC_Start]->object->flex->f_prev, 0, 5, robot->objects[2*BC_Start]->object->flex->f_prev->numCols,robot->objects[2*BC_Start]->object->flex->f_prev->numCols , tempF);
+        copyMatrix(tempF, F_0);
+
+        theta_ddot = fdm->JointAcc;
 
 
-        setSection(T_H, 0, 4, i, i, theta);
-        setSection(Tdd_H, 0, 4, i, i, theta_dot);
+        matrix_scalar_mul(theta_ddot, dt, temp5x1);
+        matrix_add(theta_dot, theta, theta_dot);
 
+        matrix_scalar_mul(theta_dot, dt, theta);
+        matrix_add(theta, theta, theta);
 
-        theta = matrix_add(theta, matrix_scalar_mul(getSection(theta_dot, 0, 4, 0, 0, tempLinkx1), dt, tempLinkx1), theta);
-        theta_dot = matrix_add(theta_dot, matrix_scalar_mul(getSection(getSection(theta_ddot, 0, 4, i, i, tempLinkx1), 0, 4, 0, 0, tempLinkx1), dt, tempLinkx1), theta_dot);//todo this feels wrong
         int currJointIndex = 0;
         for(int j = 1; j < 10; j+= 2 ) {//todo j should start at firstjoint an
             if (robot->objects[j]->type == 2) {
@@ -379,17 +377,6 @@ int main() {
             }
         }
 
-        int curr = 0;
-        for(int j = 0; j < robot->numObjects; j++){
-            if(robot->objects[j]->type == 2){
-                curr ++;
-                //printf("Joint %d: %f\n", j, robot->objects[j]->object->joint->position);
-                angles->data[(curr * angles->numCols) + i] = robot->objects[j]->object->joint->position;
-
-            }
-        }
-
-        //matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot.csv");
     }
     printf("DONE");
 //    matrixToFile(angles, "RigidRandyAngles.csv");

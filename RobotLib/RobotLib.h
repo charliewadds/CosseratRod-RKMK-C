@@ -311,7 +311,7 @@ typedef struct {
     Robot *robot;
     matrix *Theta;
     matrix *Theta_dot;
-    matrix *Theta_DDot;
+    matrix *Theta_ddot;
     matrix *F_ext;
     double c0;
     double c1;
@@ -329,7 +329,7 @@ matrix *find_roots_PSO(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *T
 matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM);
 //inline docs working?
 IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *Init_Guess);
-FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *JointAcc, matrix *F_0, matrix *C_des);
+FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *C_des, matrix *F_0, matrix *Theta_DDot_guess);
 int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *p);
 // Define the structure for the parameters to pass to the function
 

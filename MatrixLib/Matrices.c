@@ -597,6 +597,38 @@ void printMatrix(matrix *m){
     }
 }
 
+
+matrix *matrixFromFile(char *filename){
+    FILE *f = fopen(filename, "r");
+    if (f == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+
+    int numRows = 0;
+    int numCols = 0;
+    char c;
+    while((c = fgetc(f)) != EOF){
+        if(c == ','){
+            numCols++;
+        }else if(c == '\n'){
+            numRows++;
+        }
+    }
+    numCols++;
+    numRows++;
+
+    matrix *m = matrix_new(numRows, numCols);
+    rewind(f);
+    for(int i = 0; i < numRows; i++){
+        for(int j = 0; j < numCols; j++){
+            fscanf(f, "%lf,", &m->data[(i * numCols) + j]);
+        }
+    }
+    fclose(f);
+    return m;
+}
 void matrixToFile(matrix *m, char *filename){
     FILE *f = fopen(filename, "a");
     if (f == NULL)
