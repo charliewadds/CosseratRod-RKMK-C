@@ -1386,7 +1386,7 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params) {
         status = gsl_multiroot_fsolver_iterate(s);
 
         if (status) {
-            //printf("STATUS: %s\n", gsl_strerror(status));
+            printf("STATUS: %s\n", gsl_strerror(status));
             break;
         }
 
@@ -1397,8 +1397,8 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params) {
     } while (status == GSL_CONTINUE && iter < 15);
 
     if (status) {
-        //printf("STATUS: %d\n", status);
-        //printf("STATUS: %s\n", gsl_strerror(status));
+        printf("STATUS: %d\n", status);
+        printf("STATUS: %s\n", gsl_strerror(status));
     }
 
     //printf("took %zu iterations\n", iter);
@@ -1448,7 +1448,7 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params) {
         status = gsl_multiroot_fsolver_iterate(s);
 
         if (status) {
-            //printf("STATUS: %s\n", gsl_strerror(status));
+            printf("STATUS: %s\n", gsl_strerror(status));
             break;
         }
 
@@ -1459,11 +1459,11 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params) {
     } while (status == GSL_CONTINUE && iter < 15);
 
     if (status) {
-        //printf("STATUS: %d\n", status);
-        //printf("STATUS: %s\n", gsl_strerror(status));
+        printf("STATUS: %d\n", status);
+        printf("STATUS: %s\n", gsl_strerror(status));
     }
 
-    //printf("took %zu iterations\n", iter);
+    printf("took %zu iterations\n", iter);
     //assert(!isnan(s->f->data[0]));
     // Extract solution
     //matrix *solution = zeros(6, 1);
