@@ -1373,9 +1373,9 @@ void Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params
 }
 
 
-int find_roots_levmarqrt(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2) {
-
-    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
+int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params) {
+//
+//    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
     //dlevmar_dif(meyer, p, x, m, n, 1000, opts, info, work, covar, NULL); // no
     double *p = malloc(6 * sizeof(double));
     for (int i = 0; i < 6; ++i) {
@@ -1722,7 +1722,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     if (status == -2) {
         printf("hybrid method failed to converge. Trying newton\n");
-        status = find_roots_newton(tempGuess, params);
+        status = find_roots_levmarqrt(tempGuess, params);
         copyMatrix(tempGuess, InitGuess);
         if (status == -2) {
             printf("Newton method failed to converge\n");
