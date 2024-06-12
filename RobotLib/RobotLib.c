@@ -1385,7 +1385,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params) {
     double *info = (double *)malloc(10 * sizeof(double));
 
     double opts[5] = {1e-3, 1e-15, 1e-9, 1e-9, 1e-6};
-    dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, 6, 6, 10, opts, info, NULL, NULL, &params);
+    dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, 6, 6, 10, opts, info, NULL, NULL, params);
     printf("iters: %f\n", info[5]);
     printf("reason for terminating: %f\n", info[6]);
     for (int i = 0; i < 6; ++i) {
