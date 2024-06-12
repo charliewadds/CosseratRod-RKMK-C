@@ -402,6 +402,9 @@ int main() {
 //    matrixToFile(angles, "RigidRandyAngles.csv");
 //    robotToFile(robot, "testRobotOut.json");
     matrixToFile(C, "ControlSim2.csv");
+    matrixToFile(angles, "RigidRandyAngles.csv");
+    //robotToFile(robot, "testRobotOut.json");
+    matrixToFile(C, "Control_good.csv");
     matrix_free(tempBodiesx1);
     matrix_free(tempLinkx1);
     matrix_free(shape);
