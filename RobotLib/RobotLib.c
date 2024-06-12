@@ -3,6 +3,7 @@
 //
 
 #include "RobotLib.h"
+#include "../levmar-2.6/levmar.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1356,8 +1357,15 @@ void Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params
         initGuess->data[i * initGuess->numCols] = x[i];
     }
 
-    matrix *result = Flex_MB_BCS(initGuess, p->robot, *p->F_ext, p->c0, p->c1, p->c2);
 
+    matrix *result = matrix_new(6, 1);
+    if(p->inv){
+        result = Flex_MB_BCS(initGuess, p->robot, *p->F_ext, p->c0, p->c1, p->c2, p->inv, p->C_des, p->F_0, p->dt, NULL, NULL, NULL);
+
+    }
+    else {
+        result = Flex_MB_BCS(initGuess, p->robot, *p->F_ext, p->c0, p->c1, p->c2, p->inv, p->C_des, p->F_0, p->dt, p->Theta, p->Theta_dot, p->Theta_ddot);
+    }
     for (int i = 0; i < 6; ++i) {
         f[i] = result->data[i * result->numCols];
     }
