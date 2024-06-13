@@ -1902,15 +1902,11 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
 //                F_temp = matMult(matrix_add(getSection(F, 0, 5, i, i), matrix_transpose(adj_R6(getSection(eta, 0, 5, i, i)))),
 //                        matMult(curr_body->object->flex->mass, getSection(eta, 0, 5, i, i)));
-                } else {
-                    F_temp = matrix_sub(matrix_add(getSection(F, 0, 5, i, i, tempR6n1),
-                                                   matMult(matMult(matrix_transpose(
-                                                                           adj_R6(getSection(eta, 0, 5, i, i, tempR6n2), temp6x6n1),
-                                                                           temp6x6n1),
-                                                                   body->object->rigid->mass, temp6x6n1),
-                                                           getSection(eta, 0, 5, i, i, tempR6n2), tempR6n2), tempR6n2),
-                                        matMult(body->object->rigid->mass, getSection(d_eta, 0, 5, i, i, tempR6n3),
-                                                tempR6n3), F_temp);
+            } else {
+                F_temp = matrix_sub(matrix_add(getSection(F, 0, 5, i, i, tempR6n1),
+                                               matMult(matMult(matrix_transpose(adj_R6(getSection(eta, 0, 5, i, i, tempR6n2), temp6x6n1), temp6x6n1),
+                                                               body->object->rigid->mass, temp6x6n1), getSection(eta, 0, 5, i, i, tempR6n2), tempR6n2), tempR6n2),
+                                    matMult(body->object->rigid->mass, getSection(d_eta, 0, 5, i, i, tempR6n3), tempR6n3), F_temp);
 
 
                 }
@@ -1947,16 +1943,15 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
                                    tempR6n1));
 
 
-                setSection(C, 0, C->numRows - 1, i - 1, i - 1,
-                           matMult(
-                                   matrix_transpose(getSection(F, 0, 5, i - 1, i - 1, tempR6n1), tempR6n1t),
-                                   matMult(
-                                           adj(expm_SE3(hat_R6(matrix_scalar_mul(objCoM, -1, tempR6n1), temp4x4n1),
-                                                        temp4x4n1), temp6x6n1),
-                                           joint->twistR6,
-                                           tempR6n2),
-                                   temp6x6n2
-                           ));
+            setSection(C, 0, C->numRows - 1, i-1, i-1,
+                       matMult(
+                       matrix_transpose(getSection(F, 0, 5, i-1, i-1, tempR6n1), tempR6n1t),
+                       matMult(
+                               adj(expm_SE3(hat_R6(matrix_scalar_mul(objCoM,-1, tempR6n1),temp4x4n1), temp4x4n1), temp6x6n1),
+                               joint->twistR6,
+                               tempR6n2),
+                               temp6x6n2
+                       ));
 
             }
             //matrix_free(objMass);
