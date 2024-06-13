@@ -336,7 +336,7 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *p);
 /*
  * function Error = Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, THETA_DDOT, F_ext, c0, c1, c2)
  */
-matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, double c1, double c2, int Inv, matrix *C_des, matrix *F_0, double dt, matrix *theta, matrix *theta_dot, matrix *theta_ddot);
+matrix *Flex_MB_BCS(matrix *InitGuess,Flex_MB_BCS_params *params);
 
 matrix *fsolve_idm_mb_re(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
 

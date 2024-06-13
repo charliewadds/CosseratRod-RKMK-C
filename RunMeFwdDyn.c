@@ -337,7 +337,9 @@ int main() {
     matrix *tempLinkx1 = matrix_new(5,1);
     matrix *InitGuess = zeros(5,1);
 
-    matrix *C_des = matrixFromFile("Control_good.csv");
+
+    matrix *C_des = matrix_new(5,100);
+    matrixFromFile("Control_good.csv", C_des);
     matrix *C_des_1 = zeros(5,1);
 
     matrix *temp5x1 = zeros(5,1);

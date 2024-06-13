@@ -598,36 +598,29 @@ void printMatrix(matrix *m){
 }
 
 
-matrix *matrixFromFile(char *filename){
-    FILE *f = fopen(filename, "r");
-    if (f == NULL)
-    {
-        printf("Error opening file!\n");
-        exit(1);
+matrix *matrixFromFile(char *filename, matrix *result){
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        perror("Could not open file");
+        return NULL;
     }
 
-    int numRows = 0;
-    int numCols = 0;
-    char c;
-    while((c = fgetc(f)) != EOF){
-        if(c == ','){
-            numCols++;
-        }else if(c == '\n'){
-            numRows++;
-        }
-    }
-    numCols++;
-    numRows++;
 
-    matrix *m = matrix_new(numRows, numCols);
-    rewind(f);
-    for(int i = 0; i < numRows; i++){
-        for(int j = 0; j < numCols; j++){
-            fscanf(f, "%lf,", &m->data[(i * numCols) + j]);
+    char buffer[result->numCols * 24]; //double is 15-17 sig-figs so about 24 chars max per cell
+    int row = 0, col = 0;
+    while (fgets(buffer, sizeof(buffer), file)) {
+        col = 0;
+        char *value = strtok(buffer, ",");
+        while (value && col < result->numCols) {
+            result->data[row * result->numCols + col] = atof(value);
+            value = strtok(NULL, ",");
+            ++col;
         }
+        ++row;
     }
-    fclose(f);
-    return m;
+
+    fclose(file);
+    return result;
 }
 void matrixToFile(matrix *m, char *filename){
     FILE *f = fopen(filename, "a");
