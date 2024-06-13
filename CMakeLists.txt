@@ -47,6 +47,7 @@ message(STATUS "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
 add_executable(runTests runTests.c)
 add_executable(InvDyn RunMeInvDyn.c)
 add_executable(playground playground.c)
+
 # Link libraries to the executable
 # Link GSL libraries with MatrixLib
 #target_link_libraries(levmar PRIVATE levmar-2.6/build/liblevmar.a)
