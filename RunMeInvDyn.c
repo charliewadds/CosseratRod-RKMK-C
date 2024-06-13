@@ -15,6 +15,7 @@
 #include <string.h>
 #include "Matrices.h"
 #include <assert.h>
+#include <pthread.h>
 
 Robot *defRigidKin(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     assert(theta->numCols == 1);//todo add asserts like this to all functions with matrix args
@@ -440,10 +441,12 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 int main() {
 
-    clock_t start, end;
-    double cpu_time_used;
 
-    start = clock();
+    struct timespec cpuStart, cpuEnd;
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &cpuStart);
+
+
+
 
     matrix *theta = zeros(5, 1);
     matrix *theta_dot = zeros(5, 1);
@@ -585,7 +588,7 @@ int main() {
     matrix_free(theta_dot);
     matrix_free(theta_ddot);
 
-    end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("Time: %f\n", cpu_time_used);
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &cpuEnd);
+    printf("used %.6f seconds\n", cpuEnd.tv_sec + cpuEnd.tv_nsec/1e9f);
+    //printf("Time: %f\n", cpu_time_used);
 }

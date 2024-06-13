@@ -278,8 +278,33 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM);
 //inline docs working?
 IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *Init_Guess);
 
-int find_roots_newton(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
-// Define the structure for the parameters to pass to the function
+/*
+ * F matrix is the actuation forces
+ * JointAcc matrix is the joint accelerations
+ * C matrix is the constraint
+ */
+typedef struct FDM_MB_RE_OUT_t{
+    matrix *F;
+    matrix *JointAcc;
+    matrix *C;
+}FDM_MB_RE_OUT;
+
+
+/*
+ * Robot        - The robot object
+ * Theta    - The joint angles
+ * Theta_dot - The joint velocities
+ * Theta_DDot - The joint accelerations
+ * F_ext    - The external forces
+ * c0 - The FDM coefficient at the current time step
+ * c1 - The FDM coefficient at the previous time step
+ * c2
+ * dt
+ * C_des
+ * F_0
+ * inv
+ *
+ */
 typedef struct {
 
     Robot *robot;
@@ -290,12 +315,17 @@ typedef struct {
     double c0;
     double c1;
     double c2;
+    double dt;
+    matrix *C_des;
+    matrix *F_0;
+    int inv;
+
 } Flex_MB_BCS_params;
 /*
  * function Error = Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, THETA_DDOT, F_ext, c0, c1, c2)
  */
-matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, double c1, double c2);
-
+matrix *Flex_MB_BCS(matrix *InitGuess,Flex_MB_BCS_params *params);
+int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params);
 matrix *fsolve_idm_mb_re(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
 
 #endif //COSSERATROD_RKMK_C_MATHLIB_H

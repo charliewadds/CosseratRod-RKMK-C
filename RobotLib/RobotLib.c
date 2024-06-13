@@ -981,8 +981,28 @@ int getBCEnd(Robot *robot){
  * c2 :         FDM Coeff - PrePrevious Time Step        double
  *
 */
-matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, double c1, double c2){
+matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
+
+    Robot *robot = params->robot;
+    matrix *F_ext = params->F_ext;
+    double c0 = params->c0;
+    double c1 = params->c1;
+    double c2 = params->c2;
+    double dt = params->dt;
+    matrix *theta = params->Theta;
+    matrix *theta_dot = params->Theta_dot;
+    matrix *theta_ddot = params->Theta_DDot;
+    matrix *C_des = params->C_des;
+    matrix *F_0 = params->F_0;
+    int Inv = params->inv;
+
+    if(Inv == 1){
+        assert(C_des != NULL);
+        assert(F_0 != NULL);
+        copyMatrix(theta_ddot, InitGuess);
+
+    }
 
     int BC_Start = getBCStart(robot);//todo these dont work
     int BC_End = getBCEnd(robot);
@@ -992,6 +1012,39 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
         //todo not sure what to do here, it might just work?
         //printf("No Flexible Body Found (Flex_MB_BCS)\n");
         return zeros(6,1);
+    }
+
+    matrix *str_guess;
+    if(Inv){
+
+
+        //update joint accelerations
+        for(int i = 0; i < robot->numObjects; i++){
+            if(robot->objects[i]->type == 2){
+                robot->objects[i]->object->joint->acceleration = theta_ddot->data[i];
+                robot->objects[i]->object->joint->velocity = theta_dot->data[i];
+            }
+        }
+        str_guess = zeros(F_0->numRows,1);
+        copyMatrix(F_0, str_guess);
+
+
+        Flex_MB_BCS_params params;
+        params.robot = robot;
+        params.F_ext = F_ext;//todo fix this
+        params.c0 = c0;
+        params.c1 = c1;
+        params.c2 = c2;
+        params.dt = dt;
+        params.Theta = theta;
+        params.Theta_dot = theta_dot;
+        params.Theta_DDot = theta_ddot;
+        params.C_des = C_des;
+        params.F_0 = F_0;
+        params.inv = 0;
+
+
+        find_roots_newton(str_guess,&params);
     }
 
     //todo this is the same as in IDM_MB_RE, it might be faster to pass all these as arguments or maybe a struct or something
@@ -1008,13 +1061,17 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
     matrix *d_eta = zeros(6,7);        //todo magic number     //[se(3) X N+2]  Twist Rate for each BCF + Base + EE Frame in BCF
     matrix *F = zeros(6,6);   //todo magic number              //[se(3) X N+1]  Wrench for each Joint + EE in BCF
 
+    matrix *C;
+    if(Inv) {
+        C = zeros(1, numBody);   //todo magic number
+    }
     // Set Initial Conditions
 
     eye(g_ref[0]);           //[SE(3)]    Base Frame Located @ Base Frame so Identity Transform
     eye(g_act_wrt_prev[0]);  //[SE(3)]    Base Frame Located @ Base Frame so Identity Transform
 
     matrix *F_temp = zeros(6,1);
-    
+
     //recursive definition of dynamics using Euler-pointcare EOM
     Object *curr_joint;
     Object *curr_body;
@@ -1025,9 +1082,10 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
     matrix *tempR6n2 = matrix_new(6,1);
     matrix *tempR6n3 = matrix_new(6,1);
 
+    matrix *tempC6n1 = matrix_new(1,6);
     matrix *temp6x6n1 = matrix_new(6,6);
     matrix *temp6x6n2 = matrix_new(6,6);
-
+    matrix *temp1 = matrix_new(1,1);
     rigidKin *kin = rigidKinAlloc();
     flexDyn *dyn = flexDynAlloc();
 
@@ -1077,10 +1135,25 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 
             if(i == BC_Start ) {
                 //ROBOT{2*i-1}.Stiff * (InitGuess - ROBOT{2*i-1}.F_0);
-                setSection(F, 0, 5, i, i, matMult(curr_body->object->flex->stiff,
-                                                  matrix_sub(InitGuess, curr_body->object->flex->F_0, tempR6n1), tempR6n1));
+                if(Inv) {
+                    setSection(F, 0, 5, i, i, matMult(curr_body->object->flex->stiff,
+                                                      matrix_sub(str_guess, curr_body->object->flex->F_0, tempR6n1),
+                                                      tempR6n1));
+                }else {
+                    setSection(F, 0, 5, i, i, matMult(curr_body->object->flex->stiff,
+                                                      matrix_sub(InitGuess, curr_body->object->flex->F_0, tempR6n1),
+                                                      tempR6n1));
+                }
             } else{
                 setSection(F,0,5,i,i, F_temp);
+            }
+
+            if(Inv){
+                tempC6n1 = matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempC6n1);
+                //setSection(C);
+
+                matMult(tempC6n1, curr_joint->object->joint->twistR6, temp1);
+                setSection(C, 0,0,i-1,i-1,temp1);
             }
 
             if(F_dist != NULL){
@@ -1107,6 +1180,14 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
         }else if(i>BC_Start) {//rigid bodies
             setSection(F,0,5,i,i, F_temp);// [N;Nm] Save Wrench Between i,i-1_th Body @ CoM Expressed in BCF
 
+
+            if(i > BC_Start && Inv){
+                tempC6n1 = matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempC6n1);
+                //setSection(C);
+
+                matMult(tempC6n1, curr_joint->object->joint->twistR6, temp1);
+                setSection(C, 0,0,i-1,i-1,temp1);
+            }
             /*
              * F_temp = F(:,i) + transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i)- ROBOT{2*i-1}.Mass*d_eta(:,i);
              */
@@ -1132,7 +1213,13 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
     }
 
 
+    if(Inv){
+        matrix *C_inv = matrix_new(5,1);
+        matrix_transpose(C, C_inv);
 
+        matrix_sub(C_des, C_inv, C_inv);
+        return C_inv;
+    }
 
     // ALGORITHM FOR LAST ELASTIC BODY TO END OF MANIPULATOR FOR BC LOADS
     for(int i = BC_End+1; i < numBody+2; i++){//todo fix magic number
@@ -1164,7 +1251,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 //        matrix_free(g_act_wrt_prev[i]);
 //    }
 
-    setSection(F, 0,5,F->numCols - 1,F->numCols - 1, &F_ext); //TODO this needs to be added back in, it is the applied wrench to the end effector
+    setSection(F, 0,5,F->numCols - 1,F->numCols - 1, F_ext); //TODO this needs to be added back in, it is the applied wrench to the end effector
 
 
 
@@ -1235,36 +1322,26 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, do
 
 // Define the function whose roots we want to find
 int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
-    Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
 
-    // Extracting parameters
-    //matrix *InitGuess = p->InitGuess;
-    Robot *robot = p->robot;
-    matrix *F_ext = p->F_ext;
-    double c0 = p->c0;
-    double c1 = p->c1;
-    double c2 = p->c2;
 
     // Extracting the elements of x
-    double x_arr[6];
-    for (int i = 0; i < 6; ++i) {
+    double x_arr[x->size];
+    for (int i = 0; i < x->size; ++i) {
         x_arr[i] = gsl_vector_get(x, i);
     }
 
     // Convert x to matrix format
-    matrix *x_matrix = zeros(6, 1);
-    x_matrix->data[(0 * x_matrix->numCols)] = x_arr[0];
-    x_matrix->data[(1 * x_matrix->numCols)] = x_arr[1];
-    x_matrix->data[(2 * x_matrix->numCols)] = x_arr[2];
-    x_matrix->data[(3 * x_matrix->numCols)] = x_arr[3];
-    x_matrix->data[(4 * x_matrix->numCols)] = x_arr[4];
-    x_matrix->data[(5 * x_matrix->numCols)] = x_arr[5];
+    matrix *x_matrix = zeros(x->size, 1);
+    for (int i = 0; i < x_matrix->numRows; ++i) {
+        x_matrix->data[i * x_matrix->numCols] = x_arr[i];
+    }
 
     // Call Flex_MB_BCS function
-    matrix *result = Flex_MB_BCS(x_matrix, robot, *F_ext, c0, c1, c2);
+    matrix *result;
 
+    result = Flex_MB_BCS(x_matrix, params);
     // Fill f with the residuals
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < f->size; ++i) {
         //printf("result: %f\n", result->data[i][0]);
         gsl_vector_set(f, i, result->data[(i * result->numCols)] );
     }
@@ -1284,7 +1361,9 @@ void Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params
         initGuess->data[i * initGuess->numCols] = x[i];
     }
 
-    matrix *result = Flex_MB_BCS(initGuess, p->robot, *p->F_ext, p->c0, p->c1, p->c2);
+
+    matrix *result = matrix_new(6, 1);
+    result = Flex_MB_BCS(initGuess, params);
 
     for (int i = 0; i < 6; ++i) {
         f[i] = result->data[i * result->numCols];
@@ -1293,9 +1372,9 @@ void Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params
 }
 
 
-int find_roots_levmarqrt(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2) {
-
-    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
+int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params) {
+//
+//    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
     //dlevmar_dif(meyer, p, x, m, n, 1000, opts, info, work, covar, NULL); // no
     double *p = malloc(6 * sizeof(double));
     for (int i = 0; i < 6; ++i) {
@@ -1305,7 +1384,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Robot *robot, matrix *Theta, matrix 
     double *info = (double *)malloc(10 * sizeof(double));
 
     double opts[5] = {1e-3, 1e-15, 1e-9, 1e-9, 1e-6};
-    dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, 6, 6, 10, opts, info, NULL, NULL, &params);
+    dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, 6, 6, 10, opts, info, NULL, NULL, params);
     printf("iters: %f\n", info[5]);
     printf("reason for terminating: %f\n", info[6]);
     for (int i = 0; i < 6; ++i) {
@@ -1315,9 +1394,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Robot *robot, matrix *Theta, matrix 
     return info[6];
 }
 
-
-
-int find_roots_newton(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2) {
+int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params) {
     const gsl_multiroot_fsolver_type *T;
     gsl_multiroot_fsolver *s;
 
@@ -1332,8 +1409,7 @@ int find_roots_newton(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
 
     // Set parameters
 
-    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
-    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, &params};
+    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, params};
     //f.params = &params;
 
     // Define initial guess
@@ -1360,14 +1436,16 @@ int find_roots_newton(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
 
         status = gsl_multiroot_test_residual(s->f, 1e-9);
 
-    } while (status == GSL_CONTINUE && iter < 10);
+    } while (status == GSL_CONTINUE && iter < 15);
 
     if (status) {
         printf("STATUS: %d\n", status);
         printf("STATUS: %s\n", gsl_strerror(status));
+    }else{
+        printf("Newton Solver Converged in %zu iterations\n", iter);
     }
 
-    printf("took %zu iterations\n", iter);
+    //printf("took %zu iterations\n", iter);
     //assert(!isnan(s->f->data[0]));
     // Extract solution
     //matrix *solution = zeros(6, 1);
@@ -1379,7 +1457,7 @@ int find_roots_newton(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
     return status;
 }
 
-int find_roots_hybrid(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2) {
+int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params) {
     const gsl_multiroot_fsolver_type *T;
     gsl_multiroot_fsolver *s;
 
@@ -1388,20 +1466,20 @@ int find_roots_hybrid(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
     int status;
     size_t iter = 0;
 
-    const size_t n = 6; // Number of variables
+    const size_t n = InitGuess->numRows; // Number of variables
 
 
 
     // Set parameters
 
-    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
-    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, &params};
+
+    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, params};
     //f.params = &params;
 
     // Define initial guess
-    double x_init[6];
+    double x_init[InitGuess->numRows];
 
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < InitGuess->numRows; ++i) {
         x_init[i] = InitGuess->data[i * InitGuess->numCols];
     }
 
@@ -1614,22 +1692,34 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     double c2 = .5 / dt;//20
     //options = optimset('Display','OFF','TolFun',1e-9);
 
-    //todo does this need to find ALL roots or just the one 'nearest' to the initial guess?
-    //matrix *InitGuess = fsolve(@(InitGuess)Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, ...
-    //THETA_DDOT, F_ext, c0, c1, c2),InitGuess,options);
-    //printf("INIT_GUESS pre\n");
+
 
     //todo start 3 threads at program start, shared matrix memory, basically a race condition to set shared int to pid of thread, whichever pid is first changes matrix to result
-    int status = find_roots_hybrid(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+    Flex_MB_BCS_params *p = malloc(sizeof(Flex_MB_BCS_params));
+    p->robot = robot;
+    p->Theta = Theta;
+    p->Theta_dot = Theta_dot;
+    p->Theta_DDot = Theta_DDot;
+    p->F_ext = F_ext;
+    p->c0 = c0;
+    p->c1 = c1;
+    p->c2 = c2;
+    p->dt = dt;
+    p->inv = 0;
+    p->C_des = NULL;
+    p->F_0 = NULL;
+
+
+    int status = find_roots_hybrid(InitGuess, p);
 
     if(status != 0){
         printf("Powell hybrid method failed to converge, trying levenberg\n");
-        status = find_roots_levmarqrt(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+        status = find_roots_levmarqrt(InitGuess, p);
 
 
         if(status != 6){
             printf("levMar failed trying newton\n\n");
-            status = find_roots_newton(InitGuess, robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2);
+            status = find_roots_newton(InitGuess, p);
             if(status != 0){
                 printf("all failed");
             }else {
