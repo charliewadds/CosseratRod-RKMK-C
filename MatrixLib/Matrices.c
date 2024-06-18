@@ -67,7 +67,16 @@ matrix *matrix_new(uint8_t num_rows, uint8_t num_cols) {
     return m;
 }
 
+double sumSq(matrix *m){
+    double result = 0;
+    for(int i = 0; i < m->numRows; i++){
+        for(int j = 0; j < m->numCols; j++){
+            result += m->data[(i * m->numCols) + j] * m->data[(i * m->numCols) + j];
+        }
+    }
+    return result;
 
+}
 
 void matrix_free(matrix *m) {
     assert(m != NULL);

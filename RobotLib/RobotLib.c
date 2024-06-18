@@ -1276,6 +1276,35 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
     return GSL_SUCCESS;//todo is this right?
 }
 
+// Define the function whose roots we want to find
+double Flex_MB_BCS_nlopt(unsigned int n, const double *x, double *f, void *params) {
+
+
+
+
+    // Convert x to matrix format
+    matrix *x_matrix = zeros(n, 1);
+    for (int i = 0; i < x_matrix->numRows; ++i) {
+        x_matrix->data[i * x_matrix->numCols] = x[i];
+    }
+
+    // Call Flex_MB_BCS function
+    matrix *result;
+
+    result = Flex_MB_BCS(x_matrix, params);
+    // Fill f with the residuals
+//    for (int i = 0; i < n; ++i) {
+//        //printf("result: %f\n", result->data[i][0]);
+//        f[i]= result->data[(i * result->numCols)];
+//    }
+    double out = sumSq(result);
+    // Free memory
+    matrix_free(x_matrix);
+    matrix_free(result);
+    return out;
+}
+
+
 void Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params) {
     Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
 

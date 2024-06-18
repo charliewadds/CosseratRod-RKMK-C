@@ -113,6 +113,8 @@ double matrixRatio(matrix *m1, matrix *m2);
 
 void printMatrix(matrix *m);
 
+
+double sumSq(matrix *m);
 double norm(matrix *m);
 
 //set a section of a matrix to another matrix. m is the matrix to be added to and section is the matrix to be added
