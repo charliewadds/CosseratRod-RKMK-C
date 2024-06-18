@@ -271,13 +271,23 @@ typedef struct IDM_MB_RE_OUT_t{
 
 }IDM_MB_RE_OUT;
 
+typedef struct FDM_MB_RE_OUT_t{
+
+
+    matrix *F;
+    matrix *C;
+    matrix *v;
+
+
+}FDM_MB_RE_OUT;
+
 void robotToFile(Robot *robot, char *filename);
 void addRobotState(Robot *robot, char* filename, int num);
 matrix *find_roots_PSO(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
 matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM);
 //inline docs working?
 IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *Init_Guess);
-
+FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *C_des, matrix *F_0, matrix *Theta_DDot_guess);
 /*
  * F matrix is the actuation forces
  * JointAcc matrix is the joint accelerations
