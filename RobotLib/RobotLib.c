@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-
+#include <nlopt.h>
 
 matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     matrix *parentCoM;
