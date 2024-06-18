@@ -4,6 +4,7 @@
 
 #include "RobotLib.h"
 #include "../levmar-2.6/levmar.h"
+#include <nlopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1321,19 +1322,15 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
 // Define the function whose roots we want to find
-int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
+double Flex_MB_BCS_wrapper(unsigned int n, const double *x, double *f, void *params) {
 
 
-    // Extracting the elements of x
-    double x_arr[x->size];
-    for (int i = 0; i < x->size; ++i) {
-        x_arr[i] = gsl_vector_get(x, i);
-    }
+
 
     // Convert x to matrix format
-    matrix *x_matrix = zeros(x->size, 1);
+    matrix *x_matrix = zeros(n, 1);
     for (int i = 0; i < x_matrix->numRows; ++i) {
-        x_matrix->data[i * x_matrix->numCols] = x_arr[i];
+        x_matrix->data[i * x_matrix->numCols] = x[i];
     }
 
     // Call Flex_MB_BCS function
@@ -1341,16 +1338,15 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
 
     result = Flex_MB_BCS(x_matrix, params);
     // Fill f with the residuals
-    for (int i = 0; i < f->size; ++i) {
+    for (int i = 0; i < n; ++i) {
         //printf("result: %f\n", result->data[i][0]);
-        gsl_vector_set(f, i, result->data[(i * result->numCols)] );
+        f[i]= result->data[(i * result->numCols)];
     }
-
+    double out = sumSq(result);
     // Free memory
     matrix_free(x_matrix);
     matrix_free(result);
-
-    return GSL_SUCCESS;//todo is this right?
+    return out;
 }
 
 void Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params) {
@@ -1394,242 +1390,108 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params) {
     return info[6];
 }
 
-int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params) {
-    const gsl_multiroot_fsolver_type *T;
-    gsl_multiroot_fsolver *s;
-
-    T = gsl_multiroot_fsolver_dnewton;
-    //s = gsl_multiroot_fsolver_allc(T, 6);
-    int status;
-    size_t iter = 0;
-
-    const size_t n = 6; // Number of variables
-
-
-
-    // Set parameters
-
-    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, params};
-    //f.params = &params;
-
-    // Define initial guess
-    double x_init[6];
-
-    for (int i = 0; i < 6; ++i) {
-        x_init[i] = InitGuess->data[i * InitGuess->numCols];
-    }
-
-    gsl_vector_view x_vec = gsl_vector_view_array(x_init, n);
-    s = gsl_multiroot_fsolver_alloc(T, n);
-    gsl_multiroot_fsolver_set(s, &f, &x_vec.vector);
-
-    do {
-        iter++;
-        status = gsl_multiroot_fsolver_iterate(s);
-
-        if (status) {
-            printf("STATUS: %s\n", gsl_strerror(status));
-            break;
-        }
-
-
-
-        status = gsl_multiroot_test_residual(s->f, 1e-9);
-
-    } while (status == GSL_CONTINUE && iter < 15);
-
-    if (status) {
-        printf("STATUS: %d\n", status);
-        printf("STATUS: %s\n", gsl_strerror(status));
-    }else{
-        printf("Newton Solver Converged in %zu iterations\n", iter);
-    }
-
-    //printf("took %zu iterations\n", iter);
-    //assert(!isnan(s->f->data[0]));
-    // Extract solution
-    //matrix *solution = zeros(6, 1);
-    for (int i = 0; i < 6; ++i) {
-        InitGuess->data[i * InitGuess->numCols] = gsl_vector_get(s->x, i);
-    }
-
-    gsl_multiroot_fsolver_free(s);
-    return status;
-}
+//int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params) {
+//    const gsl_multiroot_fsolver_type *T;
+//    gsl_multiroot_fsolver *s;
+//
+//    T = gsl_multiroot_fsolver_dnewton;
+//    //s = gsl_multiroot_fsolver_allc(T, 6);
+//    int status;
+//    size_t iter = 0;
+//
+//    const size_t n = 6; // Number of variables
+//
+//
+//
+//    // Set parameters
+//
+//    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, params};
+//    //f.params = &params;
+//
+//    // Define initial guess
+//    double x_init[6];
+//
+//    for (int i = 0; i < 6; ++i) {
+//        x_init[i] = InitGuess->data[i * InitGuess->numCols];
+//    }
+//
+//    gsl_vector_view x_vec = gsl_vector_view_array(x_init, n);
+//    s = gsl_multiroot_fsolver_alloc(T, n);
+//    gsl_multiroot_fsolver_set(s, &f, &x_vec.vector);
+//
+//    do {
+//        iter++;
+//        status = gsl_multiroot_fsolver_iterate(s);
+//
+//        if (status) {
+//            printf("STATUS: %s\n", gsl_strerror(status));
+//            break;
+//        }
+//
+//
+//
+//        status = gsl_multiroot_test_residual(s->f, 1e-9);
+//
+//    } while (status == GSL_CONTINUE && iter < 15);
+//
+//    if (status) {
+//        printf("STATUS: %d\n", status);
+//        printf("STATUS: %s\n", gsl_strerror(status));
+//    }else{
+//        printf("Newton Solver Converged in %zu iterations\n", iter);
+//    }
+//
+//    //printf("took %zu iterations\n", iter);
+//    //assert(!isnan(s->f->data[0]));
+//    // Extract solution
+//    //matrix *solution = zeros(6, 1);
+//    for (int i = 0; i < 6; ++i) {
+//        InitGuess->data[i * InitGuess->numCols] = gsl_vector_get(s->x, i);
+//    }
+//
+//    gsl_multiroot_fsolver_free(s);
+//    return status;
+//}
 
 int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params) {
-    const gsl_multiroot_fsolver_type *T;
-    gsl_multiroot_fsolver *s;
 
-    T = gsl_multiroot_fsolver_hybrid;
-    //s = gsl_multiroot_fsolver_allc(T, 6);
-    int status;
-    size_t iter = 0;
 
     const size_t n = InitGuess->numRows; // Number of variables
 
 
+    nlopt_opt opt = nlopt_create(NLOPT_LD_LBFGS, n); // NLOPT_LD_LBFGS is the algorithm
 
-    // Set parameters
 
-
-    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, params};
+    nlopt_func f = &Flex_MB_BCS_wrapper;
     //f.params = &params;
 
-    // Define initial guess
-    double x_init[InitGuess->numRows];
+    // Set lower and upper bounds for the variables
+    double lb[6] = {-HUGE_VAL, -HUGE_VAL, -HUGE_VAL, -HUGE_VAL, -HUGE_VAL, -HUGE_VAL}; // No lower bounds
+    double ub[6] = {HUGE_VAL, HUGE_VAL, HUGE_VAL, HUGE_VAL, HUGE_VAL, HUGE_VAL}; // No upper bounds
+    nlopt_set_lower_bounds(opt, lb);
+    nlopt_set_upper_bounds(opt, ub);
 
-    for (int i = 0; i < InitGuess->numRows; ++i) {
-        x_init[i] = InitGuess->data[i * InitGuess->numCols];
+    // Set the stopping criteria
+    nlopt_set_ftol_rel(opt, 1e-6);
+
+    // Initial guess for the variables
+    double x[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; // Starting point
+    double minf; // Value of the minimum objective function
+
+    // Optimize
+    if (nlopt_optimize(opt, x, &minf) < 0) {
+        printf("Optimization failed!\n");
+    } else {
+        printf("Found minimum at f(%g, %g, %g, %g, %g, %g) = %g\n", x[0], x[1], x[2], x[3], x[4], x[5], minf);
     }
 
-    gsl_vector_view x_vec = gsl_vector_view_array(x_init, n);
-    s = gsl_multiroot_fsolver_alloc(T, n);
-    gsl_multiroot_fsolver_set(s, &f, &x_vec.vector);
+    // Destroy the optimization object and free memory
+    nlopt_destroy(opt);
 
-    do {
-        iter++;
-        status = gsl_multiroot_fsolver_iterate(s);
-
-        if (status) {
-            printf("STATUS: %s\n", gsl_strerror(status));
-            break;
-        }
-
-
-
-        status = gsl_multiroot_test_residual(s->f, 1e-9);
-
-    } while (status == GSL_CONTINUE && iter < 15);
-
-    if (status) {
-        printf("STATUS: %d\n", status);
-        printf("STATUS: %s\n", gsl_strerror(status));
-    }
-
-    printf("took %zu iterations\n", iter);
-    //assert(!isnan(s->f->data[0]));
-    // Extract solution
-    //matrix *solution = zeros(6, 1);
-    for (int i = 0; i < 6; ++i) {
-        InitGuess->data[i * InitGuess->numCols] = gsl_vector_get(s->x, i);
-    }
-
-    gsl_multiroot_fsolver_free(s);
-    return status;
+    return 0;
 }
 
-int jacobian_numerical(const gsl_vector *x, void *params, gsl_matrix *J) {
-    gsl_vector *f = gsl_vector_alloc(x->size); // Allocate vector for residuals
-    gsl_vector *x_plus = gsl_vector_alloc(x->size);
-    gsl_vector *x_minus = gsl_vector_alloc(x->size);
 
-    // Compute f(x)
-    Flex_MB_BCS_wrapper(x, params, f);
-
-    // Compute Jacobian using finite differences
-    for (size_t j = 0; j < x->size; j++) {
-        double x_j = gsl_vector_get(x, j);
-        double h = 1e-5; // Step size for finite differences
-
-        gsl_vector_memcpy(x_plus, x);
-        gsl_vector_set(x_plus, j, x_j + h);
-        Flex_MB_BCS_wrapper(x_plus, params, f);
-
-        gsl_vector_memcpy(x_minus, x);
-        gsl_vector_set(x_minus, j, x_j - h);
-        Flex_MB_BCS_wrapper(x_minus, params, f);
-
-        gsl_vector_sub(x_plus, x_minus);
-        gsl_vector_scale(x_plus, 1.0 / (2 * h));
-
-        gsl_matrix_set_col(J, j, x_plus);
-    }
-
-    gsl_vector_free(f);
-    gsl_vector_free(x_plus);
-    gsl_vector_free(x_minus);
-
-    return GSL_SUCCESS;
-}
-
-int fdf_function(const gsl_vector *x, void *params, gsl_vector *f, gsl_matrix *J) {
-    // Compute the residuals (objectives) using the provided objective function
-    Flex_MB_BCS_wrapper(x, params, f);
-
-    // Compute the Jacobian numerically using finite differences
-    jacobian_numerical(x, params, J);
-
-    return GSL_SUCCESS;
-}
-
-matrix *find_roots_deriv(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2) {
-
-    const gsl_multiroot_fdfsolver_type *T;
-    gsl_multiroot_fdfsolver *s;
-
-    //T = gsl_multiroot_fdfsolver_gnewton;
-    //s = gsl_multiroot_fsolver_allc(T, 6);
-    int status;
-    size_t iter = 0;
-
-    const size_t n = 6; // Number of variables
-
-
-
-
-    //f.params = &params;
-
-    // Define initial guess
-    double x_init[6];
-
-    for (int i = 0; i < 6; ++i) {
-        x_init[i] = InitGuess->data[i * InitGuess->numCols];
-    }
-
-    gsl_vector_view x_vec = gsl_vector_view_array(x_init, n);
-
-    gsl_matrix *J = gsl_matrix_alloc(6, 6);
-    Flex_MB_BCS_params params = { robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
-    jacobian_numerical(&x_vec.vector, &params, J);
-    // Set parameters
-//    printf("GSL_JACOBIAN\n");
-//    printGSLMatrix(J);
-    gsl_multiroot_function_fdf f = {&Flex_MB_BCS_wrapper, &jacobian_numerical, &fdf_function,n, &params};
-
-
-    T = gsl_multiroot_fdfsolver_gnewton;
-    s = gsl_multiroot_fdfsolver_alloc(T, 6);
-    gsl_multiroot_fdfsolver_set(s, &f, &x_vec.vector);//todo check this cast
-
-    printf("starting solve\n");
-    do {
-        iter++;
-        status = gsl_multiroot_fdfsolver_iterate(s);
-        printf("Iteration %zu:\n", iter);
-//        for (int i = 0; i < 6; i++) {
-//            printf("x[%d] = %.18f\n", i, gsl_vector_get(s->x, i));
-//        }
-
-        if (status) {
-            printf("STATUS: %s\n", gsl_strerror(status));
-            break;
-        }
-
-
-        status = gsl_multiroot_test_residual(s->f, 1e-9);
-    } while (status == GSL_CONTINUE && iter < 10);
-    printf("done\n");
-
-    // Extract solution
-    matrix *solution = zeros(6, 1);
-    for (int i = 0; i < 6; ++i) {
-        solution->data[i * solution->numCols] = gsl_vector_get(s->x, i);
-    }
-
-    gsl_multiroot_fdfsolver_free(s);
-    return solution;
-}
 
 /*
  * Inverse Dynamic Model for Rigid-Flexible Multi-Body Open-Chain Manipulator

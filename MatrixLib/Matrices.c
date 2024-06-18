@@ -368,7 +368,16 @@ void setSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, u
 
 }
 
+double sumSq(matrix *m){
+    double result = 0;
+    for(int i = 0; i < m->numRows; i++){
+        for(int j = 0; j < m->numCols; j++){
+            result += m->data[(i * m->numCols) + j] * m->data[(i * m->numCols) + j];
+        }
+    }
+    return result;
 
+}
 void copyMatrix(matrix *m, matrix *result){
     assert(m->numRows == result->numRows);
     assert(m->numCols == result->numCols);

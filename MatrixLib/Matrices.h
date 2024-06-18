@@ -51,6 +51,8 @@ matrix *matrix_rand(uint8_t num_rows, uint8_t num_cols);
 //return list of the number of rows and columns
 int *matrix_shape(matrix *m);
 
+
+double sumSq(matrix *m);
 matrix *matMult_elem(matrix *m1, matrix *m2);
 matrix *matrix_inverse(matrix *m, matrix *result);
 // Dot product
