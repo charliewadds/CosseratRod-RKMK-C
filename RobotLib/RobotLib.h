@@ -327,5 +327,5 @@ typedef struct {
 matrix *Flex_MB_BCS(matrix *InitGuess,Flex_MB_BCS_params *params);
 int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params);
 matrix *fsolve_idm_mb_re(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
-
+FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *C_des, matrix *F_0, matrix *Theta_DDot_guess);
 #endif //COSSERATROD_RKMK_C_MATHLIB_H

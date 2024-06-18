@@ -597,6 +597,31 @@ void printMatrix(matrix *m){
     }
 }
 
+
+matrix *matrixFromFile(char *filename, matrix *result){
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        perror("Could not open file");
+        return NULL;
+    }
+
+
+    char buffer[result->numCols * 24]; //double is 15-17 sig-figs so about 24 chars max per cell
+    int row = 0, col = 0;
+    while (fgets(buffer, sizeof(buffer), file)) {
+        col = 0;
+        char *value = strtok(buffer, ",");
+        while (value && col < result->numCols) {
+            result->data[row * result->numCols + col] = atof(value);
+            value = strtok(NULL, ",");
+            ++col;
+        }
+        ++row;
+    }
+
+    fclose(file);
+    return result;
+}
 void matrixToFile(matrix *m, char *filename){
     FILE *f = fopen(filename, "a");
     if (f == NULL)
