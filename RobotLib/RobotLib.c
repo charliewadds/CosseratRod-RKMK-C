@@ -981,7 +981,7 @@ int getBCEnd(Robot *robot){
  * c2 :         FDM Coeff - PrePrevious Time Step        double
  *
 */
-matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
+matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
     Robot *robot = params->robot;
@@ -1029,22 +1029,35 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         copyMatrix(F_0, str_guess);
 
 
-        Flex_MB_BCS_params params;
-        params.robot = robot;
-        params.F_ext = F_ext;//todo fix this
-        params.c0 = c0;
-        params.c1 = c1;
-        params.c2 = c2;
-        params.dt = dt;
-        params.Theta = theta;
-        params.Theta_dot = theta_dot;
-        params.Theta_ddot = theta_ddot;
-        params.C_des = C_des;
-        params.F_0 = F_0;
-        params.inv = 0;
+
+        params->robot = robot;
+        params->F_ext = F_ext;//todo fix this
+        params->c0 = c0;
+        params->c1 = c1;
+        params->c2 = c2;
+        params->dt = dt;
+        params->Theta = theta;
+        params->Theta_dot = theta_dot;
+        params->Theta_ddot = theta_ddot;
+        params->C_des = C_des;
+        params->F_0 = F_0;
+        params->inv = 0;
 
 
-        find_roots_newton(str_guess,&params);
+        int status = find_roots_hybrid(str_guess, params);
+
+        if (status == -2) {
+            printf("hybrid method failed to converge. Trying levmar\n");
+            status = find_roots_levmarqrt(str_guess, params);
+
+            if (status != 6) {
+                printf("levmar method failed to converge trying newton\n");
+                status = find_roots_newton(str_guess, params);
+                if(status == -2){
+                    printf("newton method failed to converge\n");
+                }
+            }
+        }
     }
 
     //todo this is the same as in IDM_MB_RE, it might be faster to pass all these as arguments or maybe a struct or something
@@ -1137,12 +1150,10 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
                 //ROBOT{2*i-1}.Stiff * (InitGuess - ROBOT{2*i-1}.F_0);
                 if(Inv) {
                     setSection(F, 0, 5, i, i, matMult(curr_body->object->flex->stiff,
-                                                      matrix_sub(str_guess, curr_body->object->flex->F_0, tempR6n1),
-                                                      tempR6n1));
+                                                      matrix_sub(str_guess, curr_body->object->flex->F_0, tempR6n1),tempR6n1));
                 }else {
                     setSection(F, 0, 5, i, i, matMult(curr_body->object->flex->stiff,
-                                                      matrix_sub(InitGuess, curr_body->object->flex->F_0, tempR6n1),
-                                                      tempR6n1));
+                                                      matrix_sub(InitGuess, curr_body->object->flex->F_0, tempR6n1),tempR6n1));
                 }
             } else{
                 setSection(F,0,5,i,i, F_temp);
@@ -1740,8 +1751,14 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         printf("hybrid method failed to converge. Trying newton\n");
         status = find_roots_levmarqrt(tempGuess, params);
         copyMatrix(tempGuess, InitGuess);
-        if (status == -2) {
-            printf("Newton method failed to converge\n");
+        if (status != 6) {
+            printf("levmar method failed to converge trying newton\n");
+            status = find_roots_newton(tempGuess, params);
+            copyMatrix(tempGuess, InitGuess);
+            if(status != 0){
+                printf("newton method failed to converge. ALL FAILED");
+
+            }
         }
     }
         //printMatrix(Theta);
