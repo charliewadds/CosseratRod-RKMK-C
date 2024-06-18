@@ -25,7 +25,7 @@ include_directories(gsl)
 set(LIE_GROUP_SOURCES LieGroup/LieGroup.c)
 set(MATRIX_LIB_SOURCES MatrixLib/Matrices.c)
 set(ROBOT_LIB_SOURCES RobotLib/RobotLib.c)
-set(TEST_SOURCE Tests/testMatrix.c)
+
 set(FDM_SOURCE FDM/Discretization.c FDM/FDM.c
         RunMeInvDyn.c)
 
@@ -37,16 +37,16 @@ find_package(LAPACK REQUIRED)
 add_library(MatrixLib STATIC ${MATRIX_LIB_SOURCES})
 add_library(LieGroup STATIC ${LIE_GROUP_SOURCES})
 add_library(RobotLib STATIC ${ROBOT_LIB_SOURCES})
-add_library(TestLib STATIC ${TEST_SOURCE})
-add_library(FDM STATIC ${FDM_SOURCE})
+
+
 
 
 add_subdirectory(levmar-2.6)
 # Main executable
 message(STATUS "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
-add_executable(runTests runTests.c)
+
 add_executable(InvDyn RunMeInvDyn.c)
-add_executable(playground playground.c)
+
 add_executable(FwdDyn RunMeFwdDyn.c)
 # Link libraries to the executable
 # Link GSL libraries with MatrixLib
@@ -54,15 +54,13 @@ add_executable(FwdDyn RunMeFwdDyn.c)
 target_link_libraries(MatrixLib PRIVATE -lm -lgsl -lgslcblas)
 target_link_libraries(LieGroup PRIVATE MatrixLib gsl)
 
-target_link_libraries(RobotLib PRIVATE -lgsl levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)
+target_link_libraries(RobotLib PRIVATE -lgsl -llapack -lblas -lopenblas levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)
 
-install(TARGETS MatrixLib LieGroup RobotLib TestLib FDM
+install(TARGETS MatrixLib LieGroup RobotLib
         LIBRARY DESTINATION /Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/sharedLibs
 )
 
 
 
-target_link_libraries(InvDyn -lm -lgsl  MatrixLib LieGroup RobotLib)
-target_link_libraries(FwdDyn -lm -lgsl  MatrixLib LieGroup RobotLib)
-target_link_libraries(runTests TestLib MatrixLib LieGroup RobotLib FDM -lm)
-target_link_libraries(playground MatrixLib LieGroup RobotLib FDM -lm gsl -lm)
+target_link_libraries(InvDyn -lm -lgsl -llapack -lblas MatrixLib LieGroup RobotLib)
+target_link_libraries(FwdDyn -lm -lgsl -llapack -lblas MatrixLib LieGroup RobotLib)
