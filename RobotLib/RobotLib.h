@@ -270,16 +270,17 @@ typedef struct IDM_MB_RE_OUT_t{
 
 
 }IDM_MB_RE_OUT;
-
+/*
+ * F matrix is the actuation forces
+ * JointAcc matrix is the joint accelerations
+ * C matrix is the constraint
+*/
 typedef struct FDM_MB_RE_OUT_t{
-
-
     matrix *F;
+    matrix *JointAcc;
     matrix *C;
-    matrix *v;
-
-
 }FDM_MB_RE_OUT;
+
 
 void robotToFile(Robot *robot, char *filename);
 void addRobotState(Robot *robot, char* filename, int num);
@@ -292,13 +293,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
  * F matrix is the actuation forces
  * JointAcc matrix is the joint accelerations
  * C matrix is the constraint
- */
-typedef struct FDM_MB_RE_OUT_t{
-    matrix *F;
-    matrix *JointAcc;
-    matrix *C;
-}FDM_MB_RE_OUT;
-
+*/
 
 /*
  * Robot        - The robot object
@@ -334,6 +329,7 @@ typedef struct {
 /*
  * function Error = Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, THETA_DDOT, F_ext, c0, c1, c2)
  */
+int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params);
 matrix *Flex_MB_BCS(matrix *InitGuess,Flex_MB_BCS_params *params);
 int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params);
 matrix *fsolve_idm_mb_re(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);

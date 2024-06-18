@@ -1045,7 +1045,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         params.inv = 0;
 
 
-        find_roots_newton(str_guess,&params);
+        find_roots_hybrid(str_guess,&params);
     }
 
     //todo this is the same as in IDM_MB_RE, it might be faster to pass all these as arguments or maybe a struct or something
@@ -1338,10 +1338,10 @@ double Flex_MB_BCS_wrapper(unsigned int n, const double *x, double *f, void *par
 
     result = Flex_MB_BCS(x_matrix, params);
     // Fill f with the residuals
-    for (int i = 0; i < n; ++i) {
-        //printf("result: %f\n", result->data[i][0]);
-        f[i]= result->data[(i * result->numCols)];
-    }
+//    for (int i = 0; i < n; ++i) {
+//        //printf("result: %f\n", result->data[i][0]);
+//        f[i]= result->data[(i * result->numCols)];
+//    }
     double out = sumSq(result);
     // Free memory
     matrix_free(x_matrix);
@@ -1459,10 +1459,10 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params) {
     const size_t n = InitGuess->numRows; // Number of variables
 
 
-    nlopt_opt opt = nlopt_create(NLOPT_LD_LBFGS, n); // NLOPT_LD_LBFGS is the algorithm
+    nlopt_opt opt = nlopt_create(NLOPT_LD_LBFGS_NOCEDAL, n); // NLOPT_LD_LBFGS is the algorithm
 
+    nlopt_set_min_objective(opt, Flex_MB_BCS_wrapper, params);
 
-    nlopt_func f = &Flex_MB_BCS_wrapper;
     //f.params = &params;
 
     // Set lower and upper bounds for the variables
@@ -1475,12 +1475,14 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params) {
     nlopt_set_ftol_rel(opt, 1e-6);
 
     // Initial guess for the variables
-    double x[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; // Starting point
+    double *x = InitGuess->data; // Starting point
     double minf; // Value of the minimum objective function
 
     // Optimize
-    if (nlopt_optimize(opt, x, &minf) < 0) {
+    int code = nlopt_optimize(opt, x, &minf);
+    if (code < 0) {
         printf("Optimization failed!\n");
+        printf("error code: %d\n", code);
     } else {
         printf("Found minimum at f(%g, %g, %g, %g, %g, %g) = %g\n", x[0], x[1], x[2], x[3], x[4], x[5], minf);
     }
@@ -1574,7 +1576,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     int status = find_roots_hybrid(InitGuess, p);
 
-    if(status != 0){
+    if(0 != 0){
         printf("Powell hybrid method failed to converge, trying levenberg\n");
         status = find_roots_levmarqrt(InitGuess, p);
 
@@ -1939,7 +1941,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     printMatrix(JointAcc);
     int status = find_roots_hybrid(JointAcc, &params);
 
-    if (status == -2) {
+    if (1 == -2) {
         printf("hybrid method failed to converge. Trying newton\n");
         status = find_roots_newton(JointAcc, &params);
 

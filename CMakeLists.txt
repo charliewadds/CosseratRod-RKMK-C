@@ -10,7 +10,7 @@ set(ENV{OPENBLAS_NUM_THREADS} 1)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
 link_directories("/opt/homebrew/lib")
 include_directories("/opt/homebrew/include")
-include_directories("/usr/local/lib")
+link_directories("/usr/local/lib")
 include_directories("/usr/local/include")
 #find_package(GSL REQUIRED)
 # Include directories
@@ -54,7 +54,7 @@ add_executable(FwdDyn RunMeFwdDyn.c)
 target_link_libraries(MatrixLib PRIVATE -lm -lgsl -lgslcblas)
 target_link_libraries(LieGroup PRIVATE MatrixLib gsl)
 #target_link_libraries(Solvers PRIVATE)
-target_link_libraries(RobotLib PRIVATE -lgsl levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)
+target_link_libraries(RobotLib PRIVATE -lgsl -lnlopt levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)
 
 
 
