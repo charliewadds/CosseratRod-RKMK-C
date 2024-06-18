@@ -1459,20 +1459,20 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params) {
     const size_t n = InitGuess->numRows; // Number of variables
 
 
-    nlopt_opt opt = nlopt_create(NLOPT_LD_LBFGS_NOCEDAL, n); // NLOPT_LD_LBFGS is the algorithm
+    nlopt_opt opt = nlopt_create(NLOPT_LD_LBFGS, n); // NLOPT_LD_LBFGS is the algorithm
 
     nlopt_set_min_objective(opt, Flex_MB_BCS_wrapper, params);
 
     //f.params = &params;
 
     // Set lower and upper bounds for the variables
-    double lb[6] = {-HUGE_VAL, -HUGE_VAL, -HUGE_VAL, -HUGE_VAL, -HUGE_VAL, -HUGE_VAL}; // No lower bounds
-    double ub[6] = {HUGE_VAL, HUGE_VAL, HUGE_VAL, HUGE_VAL, HUGE_VAL, HUGE_VAL}; // No upper bounds
+    double lb[6] = {-2, -2, -2, -2, -2, -2}; // No lower bounds
+    double ub[6] = {2,2 ,2 ,2 ,2 ,2}; // No upper bounds
     nlopt_set_lower_bounds(opt, lb);
     nlopt_set_upper_bounds(opt, ub);
 
     // Set the stopping criteria
-    nlopt_set_ftol_rel(opt, 1e-6);
+    nlopt_set_ftol_rel(opt, 1e-2);
 
     // Initial guess for the variables
     double *x = InitGuess->data; // Starting point
