@@ -1472,7 +1472,7 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params) {
     nlopt_set_upper_bounds(opt, ub);
 
     // Set the stopping criteria
-    nlopt_set_ftol_rel(opt, 1e-2);
+    nlopt_set_ftol_rel(opt, 1e-9);
 
     // Initial guess for the variables
     double *x = InitGuess->data; // Starting point
