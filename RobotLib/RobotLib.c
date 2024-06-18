@@ -1441,6 +1441,47 @@ int find_roots_hybrid(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Th
     return status;
 }
 
+int find_roots_hybrid_nlopt(matrix *InitGuess, Flex_MB_BCS_params *params) {
+
+
+    const size_t n = InitGuess->numRows; // Number of variables
+
+
+    nlopt_opt opt = nlopt_create(NLOPT_LD_LBFGS, n); // NLOPT_LD_LBFGS is the algorithm
+
+    nlopt_set_min_objective(opt, Flex_MB_BCS_wrapper, params);
+
+    //f.params = &params;
+
+    // Set lower and upper bounds for the variables
+    double lb[6] = {-2, -2, -2, -2, -2, -2}; // No lower bounds
+    double ub[6] = {2,2 ,2 ,2 ,2 ,2}; // No upper bounds
+    nlopt_set_lower_bounds(opt, lb);
+    nlopt_set_upper_bounds(opt, ub);
+
+    // Set the stopping criteria
+    nlopt_set_ftol_rel(opt, 1e-9);
+
+    // Initial guess for the variables
+    double *x = InitGuess->data; // Starting point
+    double minf; // Value of the minimum objective function
+
+    // Optimize
+    int code = nlopt_optimize(opt, x, &minf);
+    if (code < 0) {
+        printf("Optimization failed!\n");
+        printf("error code: %d\n", code);
+    } else {
+        printf("Found minimum at f(%g, %g, %g, %g, %g, %g) = %g\n", x[0], x[1], x[2], x[3], x[4], x[5], minf);
+    }
+
+    // Destroy the optimization object and free memory
+    nlopt_destroy(opt);
+
+    return 0;
+}
+
+
 int jacobian_numerical(const gsl_vector *x, void *params, gsl_matrix *J) {
     gsl_vector *f = gsl_vector_alloc(x->size); // Allocate vector for residuals
     gsl_vector *x_plus = gsl_vector_alloc(x->size);
