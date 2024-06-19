@@ -1320,7 +1320,8 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             }
         }
     }
-    printf("FUFLEX_MB_BCS SOLVER END");
+    printf("FUFLEX_MB_BCS SOLVER END\n");
+    printMatrix(str_guess);
 
     //todo this is the same as in IDM_MB_RE, it might be faster to pass all these as arguments or maybe a struct or something
     matrix **g_ref =  malloc(sizeof(matrix) * (numBody+2));           //[SE(3) X N+2]  Transformation to i_th C-BCF from/in base BCF for RRC
@@ -1647,7 +1648,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
     double x[6];
     double *info = (double *)malloc(10 * sizeof(double));
 
-    double opts[5] = {1e-3, 1e-6, 1e-6, 1e-6, 1e-6};
+    double opts[5] = {1e-9, 1e-9, 1e-9, 1e-9, -1e-9};
     if(fwd){
         dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, 6, 6, 10, opts, info, NULL, NULL, params);
     }else {
@@ -1701,6 +1702,7 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
     s = gsl_multiroot_fsolver_alloc(T, n);
     gsl_multiroot_fsolver_set(s, f, &x_vec.vector);
 
+
     do {
         iter++;
         status = gsl_multiroot_fsolver_iterate(s);
@@ -1712,7 +1714,7 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
 
 
 
-        status = gsl_multiroot_test_residual(s->f, 1e-5);
+        status = gsl_multiroot_test_residual(s->f, 1e-15);
 
     } while (status == GSL_CONTINUE && iter < 10);
 
@@ -1777,7 +1779,7 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
 
 
 
-        status = gsl_multiroot_test_residual(s->f, 1e-5);
+        status = gsl_multiroot_test_residual(s->f, 1e-15);
 
     } while (status == GSL_CONTINUE && iter < 15);
 
