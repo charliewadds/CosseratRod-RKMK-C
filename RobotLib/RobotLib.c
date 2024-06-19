@@ -1256,7 +1256,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
     double dt = params->dt;
     matrix *theta = params->Theta;
     matrix *theta_dot = params->Theta_dot;
-    matrix *theta_ddot = params->Theta_ddot;
+    matrix *theta_ddot = InitGuess;
     matrix *C_des = params->C_des;
     matrix *F_0 = params->F_0;
     int Inv = params->inv;
@@ -1284,7 +1284,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             robot->objects[(2*i)]->object->joint->acceleration = InitGuess->data[num];
 
             vel_old->data[num] = robot->objects[(2*i)]->object->joint->velocity;
-            robot->objects[(2*i)]->object->joint->velocity = theta_dot->data[num];
+            robot->objects[(2*i)]->object->joint->velocity += InitGuess->data[num] * dt;
             num ++;
         }
     }
@@ -1521,6 +1521,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     matrix_free(temp6x6n1);
     matrix_free(temp6x6n2);
+    copyMatrix(C_inv, InitGuess);
     return C_inv;
 
 
@@ -1641,18 +1642,19 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
 //
 //    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
     //dlevmar_dif(meyer, p, x, m, n, 1000, opts, info, work, covar, NULL); // no
-    double *p = malloc(6 * sizeof(double));
-    for (int i = 0; i < 6; ++i) {
+    int n = InitGuess->numRows;
+    double *p = malloc(n * sizeof(double));
+    for (int i = 0; i < n; ++i) {
         p[i] = InitGuess->data[i * InitGuess->numCols];
     }
-    double x[6];
+    double x[n];
     double *info = (double *)malloc(10 * sizeof(double));
 
     double opts[5] = {1e-9, 1e-9, 1e-9, 1e-9, -1e-9};
     if(fwd){
-        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, 6, 6, 10, opts, info, NULL, NULL, params);
+        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, n, n, 10, opts, info, NULL, NULL, params);
     }else {
-        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, x, 6, 6, 10, opts, info, NULL, NULL, params);
+        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, x, n, n, 10, opts, info, NULL, NULL, params);
     }
     printf("iters: %f\n", info[5]);
     printf("reason for terminating: %f\n", info[6]);
@@ -1675,6 +1677,8 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
     size_t iter = 0;
 
     const size_t n = InitGuess->numRows; // Number of variables
+
+
 
 
     gsl_multiroot_function *f = malloc(sizeof(gsl_multiroot_function));
@@ -1702,7 +1706,13 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
     s = gsl_multiroot_fsolver_alloc(T, n);
     gsl_multiroot_fsolver_set(s, f, &x_vec.vector);
 
+    // output the jacobian
+    gsl_matrix *jacobian = gsl_matrix_alloc(n, n);
 
+    int stat = gsl_multiroot_fdjacobian(f, &x_vec.vector, s->f, 1e-9, jacobian);
+    printf("JACOBIAN:\n");
+    printf("STATUS: %d\n", stat);
+    printGSLMatrix(jacobian);
     do {
         iter++;
         status = gsl_multiroot_fsolver_iterate(s);
