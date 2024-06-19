@@ -1620,16 +1620,16 @@ int F_Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
 void F_Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params) {
     Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
 
-    matrix *initGuess = matrix_new(6, 1);
-    for (int i = 0; i < 6; ++i) {
+    matrix *initGuess = matrix_new(n, 1);
+    for (int i = 0; i < n; ++i) {
         initGuess->data[i * initGuess->numCols] = x[i];
     }
 
 
-    matrix *result = matrix_new(6, 1);
+    matrix *result = matrix_new(n, 1);
     result = F_Flex_MB_BCS(initGuess, params);
 
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < n; ++i) {
         f[i] = result->data[i * result->numCols];
     }
 
@@ -1647,7 +1647,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
     double x[6];
     double *info = (double *)malloc(10 * sizeof(double));
 
-    double opts[5] = {1e-3, 1e-6, 1e-6, 1e-6, -1e-6};
+    double opts[5] = {1e-3, 1e-6, 1e-6, 1e-6, 1e-6};
     if(fwd){
         dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, 6, 6, 10, opts, info, NULL, NULL, params);
     }else {
