@@ -2358,7 +2358,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     printMatrix(JointAcc);
     copyMatrix(Theta_DDot_guess, tempGuess);
     int status = find_roots_hybrid(tempGuess, &params, 1);
-
+    //git
     if (status != 0) {
         printf("hybrid method failed to converge. Trying levmar\n");
         copyMatrix(Theta_DDot_guess, tempGuess);
