@@ -1177,7 +1177,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 //        matrix_free(g_act_wrt_prev[i]);
 //    }
 
-    setSection(F, 0,5,F->numCols - 1,F->numCols - 1, &F_ext); //TODO this needs to be added back in, it is the applied wrench to the end effector
+    setSection(F, 0,5,F->numCols - 1,F->numCols - 1, F_ext); //TODO this needs to be added back in, it is the applied wrench to the end effector
 
 
 
@@ -1731,12 +1731,13 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
     }
 
     gsl_multiroot_fsolver_free(s);
+    free(f);
     return status;
 }
 
 int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
     const gsl_multiroot_fsolver_type *T;
-    gsl_multiroot_fsolver *s;
+    //gsl_multiroot_fsolver *s;
 
     T = gsl_multiroot_fsolver_hybrid;
     //s = gsl_multiroot_fsolver_allc(T, 6);
@@ -1747,21 +1748,13 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
 
 
 
-    gsl_multiroot_function *f = malloc(sizeof(gsl_multiroot_function));
+    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, params};
     // Set parameters
-    if(fwd){
-        f->f = &F_Flex_MB_BCS_wrapper;
-        f->n = n;
-        f->params = params;
+    if(fwd) {
 
-    }else {
-        f->f = &Flex_MB_BCS_wrapper;
-        f->n = n;
-        f->params = params;
+        f.f = &F_Flex_MB_BCS_wrapper;
     }
-    //f.params = &params;
 
-    // Define initial guess
     double x_init[InitGuess->numRows];
 
     for (int i = 0; i < InitGuess->numRows; ++i) {
@@ -1769,8 +1762,8 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
     }
 
     gsl_vector_view x_vec = gsl_vector_view_array(x_init, n);
-    s = gsl_multiroot_fsolver_alloc(T, n);
-    gsl_multiroot_fsolver_set(s, f, &x_vec.vector);
+    gsl_multiroot_fsolver *s = gsl_multiroot_fsolver_alloc(T, n);
+    gsl_multiroot_fsolver_set(s, &f, &x_vec.vector);
 
     do {
         iter++;

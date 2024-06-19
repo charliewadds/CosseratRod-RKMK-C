@@ -339,7 +339,9 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *p, int fwd);
  * function Error = Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, THETA_DDOT, F_ext, c0, c1, c2)
  */
 matrix *Flex_MB_BCS(matrix *InitGuess,Flex_MB_BCS_params *params);
+int F_Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f);
 
+matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params);
 matrix *fsolve_idm_mb_re(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
 
 #endif //COSSERATROD_RKMK_C_MATHLIB_H
