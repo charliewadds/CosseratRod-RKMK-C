@@ -331,7 +331,8 @@ int main() {
     matrix *Tdd_H = zeros(5, timeStep);//todo 5 should be num bodies
 
     //matrix *EE_POS = zeros(3, timeStep);
-
+//(lldb) br set --name malloc_error_break
+//(lldb) br set -n malloc_error_break
     matrix *angles = zeros(((robot->numObjects-1)/2)+1,timeStep);
     FDM_MB_RE_OUT *fdm = malloc(sizeof(FDM_MB_RE_OUT));
     matrix *tempLinkx1 = matrix_new(5,1);

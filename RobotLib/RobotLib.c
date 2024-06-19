@@ -1570,7 +1570,7 @@ void Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params
     }
 
 
-    matrix *result = matrix_new(6, 1);
+    matrix *result;
     result = Flex_MB_BCS(initGuess, params);
 
     for (int i = 0; i < 6; ++i) {
@@ -1646,7 +1646,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
     double x[6];
     double *info = (double *)malloc(10 * sizeof(double));
 
-    double opts[5] = {1e-15, 1e-15, 1e-5, 1e-5, -1};
+    double opts[5] = {1e-3, 1e-15, 1e-9, 1e-9, -1e-9};
     if(fwd){
         dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, 6, 6, 10, opts, info, NULL, NULL, params);
     }else {
@@ -1660,6 +1660,8 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
 
     return info[6];
 }
+//(lldb) br set --name malloc_error_break
+//        (lldb) br set -n malloc_error_break
 
 int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
     const gsl_multiroot_fsolver_type *T;
@@ -2250,7 +2252,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
         matrix *Ct = matrix_new(C->numCols, C->numRows);
         matrix_transpose(C, Ct);
-        matrix_free(C);
+        //matrix_free(C);
         for (int i = 1; i < numBody + 2; i++) {
             Object *body = robot->objects[2 * i];
             if (body->type == 1) {
@@ -2631,7 +2633,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     matrix *Ct = matrix_new(C->numCols, C->numRows);
     matrix_transpose(C, Ct);
-    matrix_free(C);
+    //matrix_free(C);
     for (int i = 1; i < numBody + 2; i++) {
         Object *body = robot->objects[2 * i];
         if (body->type == 1) {

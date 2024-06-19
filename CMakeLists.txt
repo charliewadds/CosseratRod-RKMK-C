@@ -17,7 +17,7 @@ include_directories(MatrixLib)
 include_directories(RobotLib)
 include_directories(FDM)
 include_directories(Tests)
-include_directories(gsl)
+#include_directories(gsl)
 
 
 
@@ -54,7 +54,7 @@ add_executable(FwdDyn RunMeFwdDyn.c)
 target_link_libraries(MatrixLib PRIVATE -lm -lgsl -lgslcblas)
 target_link_libraries(LieGroup PRIVATE MatrixLib gsl)
 
-target_link_libraries(RobotLib PRIVATE -lgsl -llapack -lblas -lopenblas levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)
+target_link_libraries(RobotLib PRIVATE -lgsl levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)
 
 install(TARGETS MatrixLib LieGroup RobotLib
         LIBRARY DESTINATION /Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/sharedLibs
@@ -62,5 +62,5 @@ install(TARGETS MatrixLib LieGroup RobotLib
 
 
 
-target_link_libraries(InvDyn -lm -lgsl -llapack -lblas MatrixLib LieGroup RobotLib)
-target_link_libraries(FwdDyn -lm -lgsl -llapack -lblas MatrixLib LieGroup RobotLib)
+target_link_libraries(InvDyn -lm -lgsl MatrixLib LieGroup RobotLib)
+target_link_libraries(FwdDyn -lm -lgsl MatrixLib LieGroup RobotLib)
