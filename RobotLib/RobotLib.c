@@ -1961,10 +1961,10 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         g_act_wrt_prev[i] = zeros(4, 4);
     }
 
-    matrix *eta = zeros(6, numBody + 1);               //[se(3) X N+2]  Twists for each BCF + Base + EE in BCF
-    matrix *d_eta = zeros(6, numBody + 1);             //[se(3) X N+2]  Twist Rate for each BCF + Base + EE Frame in BCF
-    matrix *F = zeros(6, numBody + 1);                 //[se(3) X N+1]  Wrench for each Joint + EE in BCF
-    matrix *C = zeros(1, numBody+1);                     //[se(3) X N]    Actuated Control for each Joint in BCF
+    matrix *eta = zeros(6, numBody + 2);               //[se(3) X N+2]  Twists for each BCF + Base + EE in BCF
+    matrix *d_eta = zeros(6, numBody + 2);             //[se(3) X N+2]  Twist Rate for each BCF + Base + EE Frame in BCF
+    matrix *F = zeros(6, numBody + 2);                 //[se(3) X N+1]  Wrench for each Joint + EE in BCF
+    matrix *C = zeros(1, numBody);                     //[se(3) X N]    Actuated Control for each Joint in BCF
 
     matrix *CoM2CoM = zeros(4, 4);
     //[]     FDM Coefficients for BDF-2
@@ -2024,8 +2024,8 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         eye(g_ref[0]);
         eye(g_act_wrt_prev[0]);
 
-        setSection(eta, 0, 5, 0, 0, zeros(6, 1));
-        setSection(d_eta, 0, 5, 0, 0, zeros(6, 1));
+    setSection(eta, 0, 5, 0, 0, zeros(6, 1));
+    setSection(d_eta, 0, 5, 0, 0, zeros(6, 1));
 
         matrix *F_temp = zeros(6, 1);
         Theta = zeros(numBody, 1);
