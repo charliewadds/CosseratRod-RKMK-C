@@ -1275,17 +1275,17 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     matrix *str_guess;
 
-
-
     matrix *accel_old = zeros(theta_ddot->numRows,1);
     matrix *vel_old = zeros(theta_dot->numRows,1);
-    for(int i = 0; i < robot->numObjects; i++){
-        if(robot->objects[i]->type == 2){
-            accel_old->data[i] = robot->objects[i]->object->joint->acceleration;
-            robot->objects[i]->object->joint->acceleration = theta_ddot->data[i];
+    int num = 0;
+    for(int i = 0; i < (robot->numObjects/2)-1; i++){
+        if(robot->objects[(2*i)]->type == 2){
+            accel_old->data[num] = robot->objects[(2*i)]->object->joint->acceleration;
+            robot->objects[(2*i)]->object->joint->acceleration = InitGuess->data[num];
 
-            vel_old->data[i] = robot->objects[i]->object->joint->velocity;
-            robot->objects[i]->object->joint->velocity = theta_dot->data[i];
+            vel_old->data[num] = robot->objects[(2*i)]->object->joint->velocity;
+            robot->objects[(2*i)]->object->joint->velocity = theta_dot->data[num];
+            num ++;
         }
     }
     str_guess = zeros(F_0->numRows,1);
@@ -1306,7 +1306,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
     params->F_0 = F_0;
 
 
-
+    printf("F_FLEX_MB_BCS SOLVER START");
     int status = find_roots_hybrid(str_guess, params, 0);
 
     if (status != 0) {
@@ -1320,7 +1320,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             }
         }
     }
-
+    printf("FUFLEX_MB_BCS SOLVER END");
 
     //todo this is the same as in IDM_MB_RE, it might be faster to pass all these as arguments or maybe a struct or something
     matrix **g_ref =  malloc(sizeof(matrix) * (numBody+2));           //[SE(3) X N+2]  Transformation to i_th C-BCF from/in base BCF for RRC
@@ -1480,14 +1480,15 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     }
 
+    num = 0;
+    for(int i = 0; i < (robot->numObjects/2)-1; i++){
+        if(robot->objects[i*2]->type == 2){
 
-    for(int i = 0; i < robot->numObjects; i++){
-        if(robot->objects[i]->type == 2){
-
-            robot->objects[i]->object->joint->acceleration = accel_old->data[i];
+            robot->objects[(2*i)]->object->joint->acceleration = accel_old->data[num];
 
 
-            robot->objects[i]->object->joint->velocity = vel_old->data[i];
+            robot->objects[(2*i)]->object->joint->velocity = vel_old->data[num];
+            num++;
         }
     }
 
@@ -1646,7 +1647,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
     double x[6];
     double *info = (double *)malloc(10 * sizeof(double));
 
-    double opts[5] = {1e-3, 1e-15, 1e-9, 1e-9, -1e-9};
+    double opts[5] = {1e-3, 1e-6, 1e-6, 1e-6, -1e-6};
     if(fwd){
         dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, 6, 6, 10, opts, info, NULL, NULL, params);
     }else {
@@ -1677,7 +1678,7 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
 
     gsl_multiroot_function *f = malloc(sizeof(gsl_multiroot_function));
     // Set parameters
-    if(fwd){
+    if(fwd == 1){
         f->f = &F_Flex_MB_BCS_wrapper;
         f->n = n;
         f->params = params;
@@ -1958,10 +1959,10 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         g_act_wrt_prev[i] = zeros(4, 4);
     }
 
-    matrix *eta = zeros(6, numBody + 2);               //[se(3) X N+2]  Twists for each BCF + Base + EE in BCF
-    matrix *d_eta = zeros(6, numBody + 2);             //[se(3) X N+2]  Twist Rate for each BCF + Base + EE Frame in BCF
-    matrix *F = zeros(6, numBody + 2);                 //[se(3) X N+1]  Wrench for each Joint + EE in BCF
-    matrix *C = zeros(1, numBody);                     //[se(3) X N]    Actuated Control for each Joint in BCF
+    matrix *eta = zeros(6, numBody + 1);               //[se(3) X N+2]  Twists for each BCF + Base + EE in BCF
+    matrix *d_eta = zeros(6, numBody + 1);             //[se(3) X N+2]  Twist Rate for each BCF + Base + EE Frame in BCF
+    matrix *F = zeros(6, numBody + 1);                 //[se(3) X N+1]  Wrench for each Joint + EE in BCF
+    matrix *C = zeros(1, numBody+1);                     //[se(3) X N]    Actuated Control for each Joint in BCF
 
     matrix *CoM2CoM = zeros(4, 4);
     //[]     FDM Coefficients for BDF-2
@@ -2353,16 +2354,17 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     copyMatrix(Theta_DDot_guess, JointAcc);
     printf("____________JointAcc_______________________\n");
     printMatrix(JointAcc);
+    copyMatrix(Theta_DDot_guess, tempGuess);
     int status = find_roots_hybrid(tempGuess, &params, 1);
 
     if (status != 0) {
         printf("hybrid method failed to converge. Trying levmar\n");
-        zeroMatrix(tempGuess);
+        copyMatrix(Theta_DDot_guess, tempGuess);
         status = find_roots_levmarqrt(tempGuess, &params, 1);
 
         if (status != 6) {
             printf("levmar method failed to converge trying newton\n");
-            zeroMatrix(tempGuess);
+            copyMatrix(Theta_DDot_guess, tempGuess);
             status = find_roots_newton(tempGuess, &params, 1);
             if(status != 0){
                 printf("newton method failed to converge. ALL FAILED");
