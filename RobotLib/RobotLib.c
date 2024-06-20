@@ -1241,6 +1241,8 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     matrix_free(temp6x6n1);
     matrix_free(temp6x6n2);
+
+    copyMatrix(out, InitGuess);
     return out;
 
 }
@@ -1301,12 +1303,12 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
     params->dt = dt;
     params->Theta = theta;
     params->Theta_dot = theta_dot;
-    params->Theta_ddot = theta_ddot;
+    params->Theta_ddot = InitGuess;
     params->C_des = C_des;
     params->F_0 = F_0;
 
 
-    printf("F_FLEX_MB_BCS SOLVER START");
+    //printf("F_FLEX_MB_BCS SOLVER START");
     int status = find_roots_hybrid(str_guess, params, 0);
 
     if (status != 0) {
@@ -1320,8 +1322,8 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             }
         }
     }
-    printf("FUFLEX_MB_BCS SOLVER END\n");
-    printMatrix(str_guess);
+    //printf("FUFLEX_MB_BCS SOLVER END\n");
+    //printMatrix(str_guess);
 
     //todo this is the same as in IDM_MB_RE, it might be faster to pass all these as arguments or maybe a struct or something
     matrix **g_ref =  malloc(sizeof(matrix) * (numBody+2));           //[SE(3) X N+2]  Transformation to i_th C-BCF from/in base BCF for RRC
@@ -1567,8 +1569,8 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
 void Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params) {
     Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
 
-    matrix *initGuess = matrix_new(6, 1);
-    for (int i = 0; i < 6; ++i) {
+    matrix *initGuess = matrix_new(n, 1);
+    for (int i = 0; i < n; ++i) {
         initGuess->data[i * initGuess->numCols] = x[i];
     }
 
@@ -1576,7 +1578,7 @@ void Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params
     matrix *result;
     result = Flex_MB_BCS(initGuess, params);
 
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < n; ++i) {
         f[i] = result->data[i * result->numCols];
     }
 
@@ -1628,7 +1630,7 @@ void F_Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *para
     }
 
 
-    matrix *result = matrix_new(n, 1);
+    matrix *result;
     result = F_Flex_MB_BCS(initGuess, params);
 
     for (int i = 0; i < n; ++i) {
@@ -1637,11 +1639,12 @@ void F_Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *para
 
 }
 
-
 int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
 //
 //    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
     //dlevmar_dif(meyer, p, x, m, n, 1000, opts, info, work, covar, NULL); // no
+    printf("LEV MAR START\n");
+    printMatrix(InitGuess);
     int n = InitGuess->numRows;
     double *p = malloc(n * sizeof(double));
     for (int i = 0; i < n; ++i) {
@@ -1650,19 +1653,59 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
     double x[n];
     double *info = (double *)malloc(10 * sizeof(double));
 
-    double opts[5] = {1e-9, 1e-9, 1e-9, 1e-9, -1e-9};
+    double opts[5] = {1e-3, 1e-15, 1e-15, 1e-15, 1e-15};
     if(fwd){
-        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, n, n, 10, opts, info, NULL, NULL, params);
+        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, n, n, 100, NULL, info, NULL, NULL, params);
     }else {
-        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, x, n, n, 10, opts, info, NULL, NULL, params);
+        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, x, n, n, 100, NULL, info, NULL, NULL, params);
     }
     printf("iters: %f\n", info[5]);
     printf("reason for terminating: %f\n", info[6]);
+
+    switch ((int)info[6]) {
+        case 1:
+            printf("stopped by small gradient J^T e\n");
+            break;
+        case 2:
+            printf("stopped by small Dp\n");
+            break;
+        case 3:
+            printf("stopped by itmax\n");
+            break;
+        case 4:
+            printf("singular matrix. Restart from current p with increased mu\n");
+            break;
+        case 5:
+            printf("no further error reduction is possible. Restart with increased mu\n");
+            break;
+        case 6:
+            printf("stopped by small ||e||_2 i.e. solver converged\n");
+            break;
+        case 7:
+            printf("stopped by invalid (i.e. NaN or Inf) function values. Restart with current p\n");
+            break;
+        case 8:
+            printf("stopped by parameter limits\n");
+            break;
+        default:
+            printf("unknown reason for termination\n");
+            break;
+
+    }
+    printf("\te_2 @initial p %.15f\n", info[0]);
+    printf("\te_2 %.15f\n", info[1]);
+    printf("\tJ^T e %.15f\n", info[2]);
+    printf("\t||Dp||_2 %.15f\n", info[3]);
+    printf("\tmu/max[J^T J] %.15f\n", info[4]);
+    printf("\titers: %f\n", info[5]);
+    printf("\tevals: %f\n", info[7]);
+    printf("\tjacobian evals: %f\n", info[8]);
+    printf("\tlinear system solves: %f\n", info[9]);
     for (int i = 0; i < 6; ++i) {
         InitGuess->data[i * InitGuess->numCols] = p[i];
     }
 
-    return info[6];
+    return info[10];
 }
 //(lldb) br set --name malloc_error_break
 //        (lldb) br set -n malloc_error_break
@@ -1752,7 +1795,7 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
     const gsl_multiroot_fsolver_type *T;
     //gsl_multiroot_fsolver *s;
 
-    T = gsl_multiroot_fsolver_hybrid;
+    T = gsl_multiroot_fsolver_hybrids;
     //s = gsl_multiroot_fsolver_allc(T, 6);
     int status;
     size_t iter = 0;
@@ -1798,11 +1841,11 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
         printf("STATUS: %s\n", gsl_strerror(status));
     }
 
-    printf("took %zu iterations\n", iter);
+    printf("\thybrid took %zu iterations\n", iter);
    //assert(!isnan(s->f->data[1]));
     // Extract solution
     //matrix *solution = zeros(6, 1);
-    for (int i = 0; i < s->x->size; ++i) {
+    for (int i = 0; i < InitGuess->numRows; ++i) {
         InitGuess->data[i * InitGuess->numCols] = gsl_vector_get(s->x, i);
     }
 
@@ -2367,6 +2410,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     printf("____________JointAcc_______________________\n");
     printMatrix(JointAcc);
     copyMatrix(Theta_DDot_guess, tempGuess);
+
     int status = find_roots_hybrid(tempGuess, &params, 1);
     //git
     if (status != 0) {
