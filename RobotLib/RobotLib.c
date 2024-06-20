@@ -1724,7 +1724,7 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
 
 
 
-        status = gsl_multiroot_test_residual(s->f, 1e-15);
+        status = gsl_multiroot_test_residual(s->f, 1e-9);
 
     } while (status == GSL_CONTINUE && iter < 10);
 
