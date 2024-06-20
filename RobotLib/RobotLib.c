@@ -1349,7 +1349,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
     eye(g_act_wrt_prev[0]);  //[SE(3)]    Base Frame Located @ Base Frame so Identity Transform
 
     matrix *F_temp = zeros(6,1);
-    
+
     //recursive definition of dynamics using Euler-pointcare EOM
     Object *curr_joint;
     Object *curr_body;
