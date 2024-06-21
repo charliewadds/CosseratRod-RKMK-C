@@ -1281,12 +1281,12 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
     matrix *vel_old = zeros(theta_dot->numRows,1);
     int num = 0;
     for(int i = 0; i < (robot->numObjects/2)-1; i++){
-        if(robot->objects[(2*i)]->type == 2){
-            accel_old->data[num] = robot->objects[(2*i)]->object->joint->acceleration;
-            robot->objects[(2*i)]->object->joint->acceleration = InitGuess->data[num];
+        if(robot->objects[(2*i)+1]->type == 2){
+            accel_old->data[num] = robot->objects[(2*i)+1]->object->joint->acceleration;
+            robot->objects[(2*i)+1]->object->joint->acceleration = InitGuess->data[num];
 
-            vel_old->data[num] = robot->objects[(2*i)]->object->joint->velocity;
-            robot->objects[(2*i)]->object->joint->velocity += InitGuess->data[num] * dt;
+            vel_old->data[num] = robot->objects[(2*i)+1]->object->joint->velocity;
+            robot->objects[(2*i)+1]->object->joint->velocity += InitGuess->data[num] * dt;
             num ++;
         }
     }
@@ -1309,19 +1309,26 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
     //printf("F_FLEX_MB_BCS SOLVER START");
-    int status = find_roots_hybrid(str_guess, params, 0);
+
+    matrix *tempGuess = zeros(6,1);
+
+    copyMatrix(F_0, tempGuess);
+    int status = find_roots_hybrid(tempGuess, params, 0);
 
     if (status != 0) {
-        printf("hybrid method failed to converge. Trying levmar\n");
-        status = find_roots_levmarqrt(str_guess, params, 0);
+        printf("\thybrid method failed to converge. Trying levmar\n");
+        copyMatrix(F_0, tempGuess);
+        status = find_roots_levmarqrt(tempGuess, params, 0);
         if (status != 6) {
-            printf("levmar method failed to converge trying newton\n");
-            status = find_roots_newton(str_guess, params, 0);
+            printf("\tlevmar method failed to converge trying newton\n");
+            copyMatrix(F_0, tempGuess);
+            status = find_roots_newton(tempGuess, params, 0);
             if(status != 0){
-                printf("newton method failed to converge\n");
+                printf("\tnewton method failed to converge\n");
             }
         }
     }
+    copyMatrix(tempGuess, str_guess);
     //printf("FUFLEX_MB_BCS SOLVER END\n");
     //printMatrix(str_guess);
 
@@ -1653,11 +1660,11 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
     double x[n];
     double *info = (double *)malloc(10 * sizeof(double));
 
-    double opts[5] = {1e-3, 1e-15, 1e-15, 1e-15, 1e-15};
+    double opts[5] = {1e-1, 1e-15, 1e-15, 1e-15, -1e-15};
     if(fwd){
-        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, n, n, 100, NULL, info, NULL, NULL, params);
+        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, n, n, 100, opts, info, NULL, NULL, params);
     }else {
-        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, x, n, n, 100, NULL, info, NULL, NULL, params);
+        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, x, n, n, 100, opts, info, NULL, NULL, params);
     }
     printf("iters: %f\n", info[5]);
     printf("reason for terminating: %f\n", info[6]);
@@ -1705,7 +1712,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
         InitGuess->data[i * InitGuess->numCols] = p[i];
     }
 
-    return info[10];
+    return info[6];
 }
 //(lldb) br set --name malloc_error_break
 //        (lldb) br set -n malloc_error_break
