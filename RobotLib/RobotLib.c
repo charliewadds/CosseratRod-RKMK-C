@@ -1708,7 +1708,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
     printf("\tevals: %f\n", info[7]);
     printf("\tjacobian evals: %f\n", info[8]);
     printf("\tlinear system solves: %f\n", info[9]);
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < InitGuess->numRows; ++i) {
         InitGuess->data[i * InitGuess->numCols] = p[i];
     }
 

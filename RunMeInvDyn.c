@@ -289,7 +289,7 @@ int main() {
     matrix *theta_dot = zeros(5, 1);
 
     double dt = 0.025;
-    int timeStep = 100;
+    int timeStep = 10;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
