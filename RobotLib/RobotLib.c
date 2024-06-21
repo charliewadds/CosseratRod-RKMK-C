@@ -1662,9 +1662,9 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
 
     double opts[5] = {1e-1, 1e-15, 1e-15, 1e-15, -1e-15};
     if(fwd){
-        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, n, n, 100, opts, info, NULL, NULL, params);
+        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, n, n, 10, opts, info, NULL, NULL, params);
     }else {
-        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, x, n, n, 100, opts, info, NULL, NULL, params);
+        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, x, n, n, 10, opts, info, NULL, NULL, params);
     }
     printf("iters: %f\n", info[5]);
     printf("reason for terminating: %f\n", info[6]);
