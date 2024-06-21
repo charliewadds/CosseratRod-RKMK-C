@@ -1492,12 +1492,12 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     num = 0;
     for(int i = 0; i < (robot->numObjects/2)-1; i++){
-        if(robot->objects[i*2]->type == 2){
+        if(robot->objects[(i*2)+1]->type == 2){
 
-            robot->objects[(2*i)]->object->joint->acceleration = accel_old->data[num];
+            robot->objects[(2*i)+1]->object->joint->acceleration = accel_old->data[num];
 
 
-            robot->objects[(2*i)]->object->joint->velocity = vel_old->data[num];
+            robot->objects[(2*i)+1]->object->joint->velocity = vel_old->data[num];
             num++;
         }
     }
@@ -1530,7 +1530,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     matrix_free(temp6x6n1);
     matrix_free(temp6x6n2);
-    copyMatrix(C_inv, InitGuess);
+    //copyMatrix(C_inv, InitGuess);
     return C_inv;
 
 
@@ -1660,7 +1660,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
     double x[n];
     double *info = (double *)malloc(10 * sizeof(double));
 
-    double opts[5] = {1e-1, 1e-15, 1e-15, 1e-15, -1e-15};
+    double opts[5] = {1e-9, 1e-9, 1e-9, 1e-9, -1e-9};
     if(fwd){
         dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, n, n, 10, opts, info, NULL, NULL, params);
     }else {
@@ -1699,6 +1699,10 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
             break;
 
     }
+    for (int i = 0; i < InitGuess->numRows; ++i) {
+        InitGuess->data[i * InitGuess->numCols] = p[i];
+    }
+
     printf("\te_2 @initial p %.15f\n", info[0]);
     printf("\te_2 %.15f\n", info[1]);
     printf("\tJ^T e %.15f\n", info[2]);
@@ -1708,9 +1712,10 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
     printf("\tevals: %f\n", info[7]);
     printf("\tjacobian evals: %f\n", info[8]);
     printf("\tlinear system solves: %f\n", info[9]);
-    for (int i = 0; i < InitGuess->numRows; ++i) {
-        InitGuess->data[i * InitGuess->numCols] = p[i];
-    }
+
+    printf("\tSolution\n");
+    printMatrix(InitGuess);
+
 
     return info[6];
 }
