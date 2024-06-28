@@ -1241,8 +1241,6 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     matrix_free(temp6x6n1);
     matrix_free(temp6x6n2);
-
-    copyMatrix(out, InitGuess);
     return out;
 
 }
@@ -1344,7 +1342,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     matrix *eta = zeros(6,7);      //todo magic number         //[se(3) X N+2]  Twists for each BCF + Base + EE in BCF
     matrix *d_eta = zeros(6,7);        //todo magic number     //[se(3) X N+2]  Twist Rate for each BCF + Base + EE Frame in BCF
-    matrix *F = zeros(6,6);   //todo magic number              //[se(3) X N+1]  Wrench for each Joint + EE in BCF
+    matrix *F = zeros(6,7);   //todo magic number              //[se(3) X N+1]  Wrench for each Joint + EE in BCF
 
     matrix *C;
     if(Inv) {
@@ -1366,6 +1364,11 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
     matrix *tempR6n1 = matrix_new(6,1);
     matrix *tempR6n2 = matrix_new(6,1);
     matrix *tempR6n3 = matrix_new(6,1);
+    matrix *tempR6n4 = matrix_new(6,1);
+
+    matrix *tempR6t = matrix_new(1,6);
+
+    matrix *temp4x4n1 = matrix_new(4,4);
 
     matrix *tempC6n1 = matrix_new(1,6);
     matrix *temp6x6n1 = matrix_new(6,6);
@@ -1376,7 +1379,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     //matrix *parentCoM ;
     //matrix *childCoM;
-    for(int i = 1; i <= BC_End; i++){
+    for(int i = 1; i <= 6; i++){
 
         //printMatrix(&F_temp);
         //printf("\n\n");
@@ -1490,6 +1493,8 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     }
 
+
+
     num = 0;
     for(int i = 0; i < (robot->numObjects/2)-1; i++){
         if(robot->objects[(i*2)+1]->type == 2){
@@ -1501,7 +1506,94 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             num++;
         }
     }
+//    F(:,end) = F_ext;
+//    for i = flip(2 : BC_Start)
+//    F(:,i-1) = transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i) + ...
+//    ROBOT{2*i-1}.Mass*d_eta(:,i) - transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i);
+//    C(:,i-1) = transpose(F(:,i-1)) * Ad(expm3(hat(-ROBOT{2*i-1}.CoM)))*ROBOT{2*(i-1)}.Twist;      %[] Transform Joint twist to Link CoM BCF then Project Constraints
+//    end
 
+    setSection(F, 0,5,F->numCols - 1,F->numCols - 1, F_ext);
+    for(int i = BC_Start; i >= 1; i--) {
+        curr_joint = robot->objects[2 * (i - 1)+1];
+        curr_body = robot->objects[2 * i ];
+
+        //transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i) +
+
+
+        adj(g_act_wrt_prev[i+1], temp6x6n1);
+        matrix_transpose(temp6x6n1, temp6x6n1);
+
+        getSection(F, 0,5,i,i, tempR6n2);
+
+        matMult(temp6x6n1, tempR6n2, tempR6n1);
+
+        //first line
+        //+
+        // ROBOT{2*i-1}.Mass*d_eta(:,i) - transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i);
+        //mass
+        if(curr_body->type == 1) {//flexible body
+            //temp6x6n2 = curr_body->object->flex->mass;
+            copyMatrix(curr_body->object->flex->mass, temp6x6n2);
+        }else if(curr_body->type == 0){
+            copyMatrix(curr_body->object->rigid->mass, temp6x6n2);
+            //temp6x6n2 = curr_body->object->rigid->mass;
+        }else{
+            assert(1 == 0);//this is a bad way to do errors
+        }
+
+
+
+        getSection(d_eta, 0,5,i,i, tempR6n3);
+        matMult(temp6x6n2, tempR6n3, tempR6n3);
+        //-
+        //tempr6n3
+        getSection(eta, 0,5,i,i, tempR6n4);
+        adj_R6(tempR6n4, temp6x6n1);
+        matrix_transpose(temp6x6n1, temp6x6n1);
+        matMult(temp6x6n2, temp6x6n1, temp6x6n1);
+        //mass
+        getSection(eta, 0,5,i,i, tempR6n4);
+        matMult(temp6x6n1, tempR6n4, tempR6n2);
+
+
+        matrix_sub(tempR6n3, tempR6n2, tempR6n2);//second line
+
+        matrix_add(tempR6n1, tempR6n2, tempR6n1);//full line
+        setSection(F, 0,5,i-1,i-1, tempR6n1);
+
+
+
+        if(curr_body->type == 1) {//flexible body
+            //temp6x6n2 = curr_body->object->flex->mass;
+            copyMatrix(curr_body->object->flex->CoM, tempR6n1);
+        }else if(curr_body->type == 0){
+            copyMatrix(curr_body->object->rigid->CoM, tempR6n1);
+            //temp6x6n2 = curr_body->object->rigid->mass;
+        }else{
+            assert(1 == 0);//this is a bad way to do errors
+        }
+
+        //C(:,i-1) = transpose(F(:,i-1)) * Ad(expm3(hat(-ROBOT{2*i-1}.CoM)))*ROBOT{2*(i-1)}.Twist;
+
+        getSection(F, 0,5,i-1,i-1, tempR6n1);
+        matrix_transpose(tempR6n1, tempR6t);
+
+        matrix_scalar_mul( tempR6n1, -1, tempR6n1);
+        hat_R6(tempR6n1, temp4x4n1);
+        expm_SE3(temp4x4n1, temp4x4n1);
+        adj(temp4x4n1, temp6x6n1);
+
+        matMult(temp6x6n1, tempR6t, tempR6t);
+
+        copyMatrix(curr_joint->object->joint->twistR6, tempR6n2);
+
+        matMult(tempR6t, tempR6n2, temp1);
+        setSection(C, 0,0,i-1,i-1,temp1);
+
+
+
+    }
     matrix *C_inv = matrix_new(5,1);
     matrix_transpose(C, C_inv);
 
@@ -1844,7 +1936,7 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
 
 
 
-        status = gsl_multiroot_test_residual(s->f, 1e-15);
+        status = gsl_multiroot_test_residual(s->f, 1e-9);
 
     } while (status == GSL_CONTINUE && iter < 15);
 
