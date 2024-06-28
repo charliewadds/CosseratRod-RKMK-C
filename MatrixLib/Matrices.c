@@ -429,7 +429,7 @@ matrix *matrix_sin(matrix *m){//todo update to use result matrix
     matrix *result = matrix_new(m->numRows, m->numCols);
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            result->data[(i * result->numCols) + j] =(double) sin(m->data[(i * m->numCols) + j]);
+            result->data[(i * result->numCols) + j] =(double) sinl(m->data[(i * m->numCols) + j]);
         }
     }
     return result;
@@ -442,6 +442,8 @@ matrix *matMult(matrix *m1, matrix *m2, matrix *result) {
 
     // Ensure the result matrix has the correct dimensions
     assert((result->numRows == m1->numRows && result->numCols == m2->numCols) || (result->numRows == m1->numCols && result->numCols == m2->numRows));
+
+
 
 
     matrix *temp;

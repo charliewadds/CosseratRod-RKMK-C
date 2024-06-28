@@ -116,7 +116,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Object *base = malloc(sizeof(struct object_s));
     base->type = 0;
     base->object = malloc(sizeof(union object_u));
-    base->object->rigid = newRigidBody("base", matrix_scalar_mul(eye(temp6x6n1), DBL_MAX, temp6x6n1), Z, Z);//todo dbl max to replace inf
+    base->object->rigid = newRigidBody("base", matrix_scalar_mul(eye(temp6x6n1), INFINITY, temp6x6n1), Z, Z);//todo dbl max to replace inf
 
     Object *Body_1 =  malloc(sizeof(struct object_s));
     Body_1->type = 0;
@@ -283,7 +283,7 @@ int main() {
 
 
     double dt = 0.025;
-    int timeStep = 1;
+    int timeStep = 100;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -365,7 +365,7 @@ int main() {
 
 
         matrix_scalar_mul(theta_ddot, dt, temp5x1);
-        matrix_add(theta_dot, theta, theta_dot);
+        matrix_add(temp5x1, theta, theta_dot);
 
         matrix_scalar_mul(theta_dot, dt, theta);
         matrix_add(theta, theta, theta);

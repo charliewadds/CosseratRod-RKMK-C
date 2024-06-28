@@ -1148,6 +1148,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
     // ALGORITHM FOR LAST ELASTIC BODY TO END OF MANIPULATOR FOR BC LOADS
+
     for(int i = BC_End+1; i < numBody+2; i++){//todo fix magic number
         curr_joint = robot->objects[2 * (i - 1)+1];
 
@@ -1181,7 +1182,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
 
-    matrix *bodyMass;
+    matrix *bodyMass = matrix_new(6,6);
     for(int i = BC_End+1; i >= numBody ; i--){
 
 
@@ -1189,10 +1190,12 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         //    %[]         End of {SECTION III} Algorithm
         curr_body = robot->objects[2 * i ];
         if(curr_body->type == 1){//flex
-            bodyMass = curr_body->object->flex->mass;
+            //bodyMass = curr_body->object->flex->mass;
+            copyMatrix(curr_body->object->flex->mass, bodyMass);
 
         }else if(curr_body->type == 0){//rigid
-            bodyMass = curr_body->object->rigid->mass;
+            //bodyMass = curr_body->object->rigid->mass;
+            copyMatrix(curr_body->object->flex->mass, bodyMass);
         }
 
         //got distracted halfway through this so it could be wrong (it was)
@@ -1495,17 +1498,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
 
-    num = 0;
-    for(int i = 0; i < (robot->numObjects/2)-1; i++){
-        if(robot->objects[(i*2)+1]->type == 2){
 
-            robot->objects[(2*i)+1]->object->joint->acceleration = accel_old->data[num];
-
-
-            robot->objects[(2*i)+1]->object->joint->velocity = vel_old->data[num];
-            num++;
-        }
-    }
 //    F(:,end) = F_ext;
 //    for i = flip(2 : BC_Start)
 //    F(:,i-1) = transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i) + ...
@@ -1584,7 +1577,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         expm_SE3(temp4x4n1, temp4x4n1);
         adj(temp4x4n1, temp6x6n1);
 
-        matMult(temp6x6n1, tempR6t, tempR6t);
+        matMult(tempR6t, temp6x6n1, tempR6t);
 
         copyMatrix(curr_joint->object->joint->twistR6, tempR6n2);
 
@@ -1599,6 +1592,19 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     matrix_sub(C_des, C_inv, C_inv);
 
+
+
+    num = 0;
+    for(int i = 0; i < (robot->numObjects/2)-1; i++){
+        if(robot->objects[(i*2)+1]->type == 2){
+
+            robot->objects[(2*i)+1]->object->joint->acceleration = accel_old->data[num];
+
+
+            robot->objects[(2*i)+1]->object->joint->velocity = vel_old->data[num];
+            num++;
+        }
+    }
 
     //free(bodyMass);
     matrix_free(eta);
@@ -1751,8 +1757,23 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
     }
     double x[n];
     double *info = (double *)malloc(10 * sizeof(double));
+    double opts[5];
+    if(fwd) {
+        //opts[5] = {1e-3, 1e-9, 1e-5, 1e-5, -1e-9};
+        opts[0] = 1e-3;
+        opts[1] = 1e-9;
+        opts[2] = 1e-5;
+        opts[3] = 1e-5;
+        opts[4] = -1e-9;
 
-    double opts[5] = {1e-9, 1e-9, 1e-9, 1e-9, -1e-9};
+    }else{
+        //opts[5] = {1e-3, 1e-9, 1e-9, 1e-9, -1e-9};
+        opts[0] = 1e-3;
+        opts[1] = 1e-9;
+        opts[2] = 1e-9;
+        opts[3] = 1e-9;
+        opts[4] = -1e-9;
+    }
     if(fwd){
         dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, n, n, 10, opts, info, NULL, NULL, params);
     }else {
@@ -1935,8 +1956,11 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
         }
 
 
-
-        status = gsl_multiroot_test_residual(s->f, 1e-9);
+        if(fwd) {
+            status = gsl_multiroot_test_residual(s->f, 1e-5);
+        }else {
+            status = gsl_multiroot_test_residual(s->f, 1e-9);
+        }
 
     } while (status == GSL_CONTINUE && iter < 15);
 
@@ -2517,6 +2541,8 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     int status = find_roots_hybrid(tempGuess, &params, 1);
     //git
+
+    printf("HYBRID DONE\n");
     if (status != 0) {
         printf("hybrid method failed to converge. Trying levmar\n");
         copyMatrix(Theta_DDot_guess, tempGuess);
