@@ -424,7 +424,7 @@ matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol
 
     for(int i = startRow; i <= endRow; i++){
         for(int j = startCol; j <= endCol; j++){
-            result->data[((i-startRow) * result->numCols) + (j- startCol)] = m->data[(i * m->numCols) + j];
+            result->data[((i-startRow) * result->numCols) + (j - startCol)] = m->data[(i * m->numCols) + j];
 
         }
     }

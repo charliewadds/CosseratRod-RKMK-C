@@ -59,6 +59,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     double L_0 = 0.4;
     matrix *F_0 = zeros(6,1);
     F_0->data[(2 * F_0->numCols) + 0] = 1;
+
     double rho = 75e1;
     double mu = 1e5;
     double r = 0.1;
@@ -358,7 +359,7 @@ int main() {
         copyMatrix(fdm->JointAcc, InitGuess);
 
 
-        getSection(robot->objects[2*BC_Start]->object->flex->f_prev, 0, 5, robot->objects[2*BC_Start]->object->flex->f_prev->numCols,robot->objects[2*BC_Start]->object->flex->f_prev->numCols , tempF);
+        getSection(robot->objects[2*BC_Start]->object->flex->f_prev, 0, 5, robot->objects[2*BC_Start]->object->flex->f_prev->numCols-1,robot->objects[2*BC_Start]->object->flex->f_prev->numCols -1, tempF);
         copyMatrix(tempF, F_0);
 
         //theta_ddot = fdm->JointAcc;

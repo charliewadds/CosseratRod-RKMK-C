@@ -1115,9 +1115,11 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
                 setSection(F, 0, 5, i, i, matMult(curr_body->object->flex->stiff,
                                                   matrix_sub(InitGuess, curr_body->object->flex->F_0, tempR6n1), tempR6n1));
                 assert(hasNan(F) == 0);
+                //printMatrix(F);
             } else{
                 assert(hasNan(F) == 0);
                 setSection(F,0,5,i,i, F_temp);
+
                 assert(hasNan(F) == 0);
             }
 
@@ -1127,7 +1129,8 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             F_dist = zeros(6, curr_body->object->flex->N);
 
             assert(hasNan(g_ref[i])==0);
-            flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i, tempR6n1), curr_body->object->flex,
+            flex_dyn(g_ref[i], F_dist, getSection
+            (F, 0, 5, i, i, tempR6n1), curr_body->object->flex,
                      getSection(eta, 0, 5, i, i, tempR6n2), c0, c1, c2, dyn);
 
             setSection(d_eta, 0,5,i,i, dyn->d_eta_end);
