@@ -1278,16 +1278,37 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
     Robot *robot = params->robot;
-    matrix *F_ext = params->F_ext;
+
+
+    matrix *F_ext = matrix_new(params->F_ext->numRows, params->F_ext->numCols);
+    copyMatrix(params->F_ext, F_ext);
+
     double c0 = params->c0;
     double c1 = params->c1;
     double c2 = params->c2;
     double dt = params->dt;
-    matrix *theta = params->Theta;
-    matrix *theta_dot = params->Theta_dot;
-    matrix *theta_ddot = InitGuess;
-    matrix *C_des = params->C_des;
-    matrix *F_0 = params->F_0;
+
+
+    matrix *theta = matrix_new(params->Theta->numRows, params->Theta->numCols);
+    copyMatrix(params->Theta, theta);
+
+
+    matrix *theta_dot = matrix_new(params->Theta_dot->numRows, params->Theta_dot->numCols);
+    copyMatrix(params->Theta_dot, theta_dot);
+
+
+    matrix *theta_ddot = matrix_new(InitGuess->numRows, InitGuess->numCols);
+    copyMatrix(InitGuess, theta_ddot);
+
+
+    matrix *C_des = matrix_new(params->C_des->numRows, params->C_des->numCols);
+    copyMatrix(params->C_des, C_des);
+
+
+    matrix *F_0 = matrix_new(params->F_0->numRows, params->F_0->numCols);
+    copyMatrix(params->F_0, F_0);
+
+
     int Inv = params->inv;
 
 
