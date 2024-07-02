@@ -122,6 +122,7 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
     assert(g_oldToCur->numRows == 4);
 
 
+
     //matrix *parentCoM = malloc(sizeof(matrix));
     matrix *childCoM = matrix_new(6,1);
 
@@ -1337,6 +1338,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             robot->objects[(2*i)+1]->object->joint->acceleration = InitGuess->data[num];
 
             vel_old->data[num] = robot->objects[(2*i)+1]->object->joint->velocity;
+            //assert(hasNan(InitGuess) == 0);
             robot->objects[(2*i)+1]->object->joint->velocity += InitGuess->data[num] * dt;
             num ++;
         }
@@ -1664,9 +1666,12 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
             robot->objects[(2*i)+1]->object->joint->velocity = vel_old->data[num];
+            //printf("%f", robot->objects[(2*i)+1]->object->joint->velocity);
             num++;
         }
     }
+
+
 
     //free(bodyMass);
 
@@ -2732,7 +2737,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         if (status != 6) {
             printf("levmar method failed to converge trying newton\n");
             copyMatrix(F_0, StrGuess);
-            status = find_roots_newton(StrGuess, &params, 0);
+            status = find_roots_newton(StrGuess, params, 0);
             if(status != 0){
                 printf("newton method failed to converge. ALL FAILED");
 
