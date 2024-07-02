@@ -1802,7 +1802,10 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
     double *info = (double *)malloc(10 * sizeof(double));
     double opts[5];
     /* I: opts[0-4] = minim. options [\mu, \epsilon1, \epsilon2, \epsilon3, \delta]. Respectively the
-                       * scale factor for initial \mu, stopping thresholds for ||J^T e||_inf, ||Dp||_2 and ||e||_2 and
+                       * scale factor for initial \mu,
+                       * stopping thresholds for ||J^T e||_inf,
+                       * ||Dp||_2 and
+                       * ||e||_2 and
                        * the step used in difference approximation to the Jacobian. Set to NULL for defaults to be used.
                        * If \delta<0, the Jacobian is approximated with central differences which are more accurate
                        * (but slower!) compared to the forward differences employed by default.
@@ -1813,24 +1816,24 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
      */
     if(fwd) {
         //opts[5] = {1e-3, 1e-9, 1e-5, 1e-5, -1e-9};
-        opts[0] = 1e-6;
-        opts[1] = 1e-9;
-        opts[2] = 1e-5;
+        opts[0] = 1e-3;
+        opts[1] = 1e-15;
+        opts[2] = 1e-9;
         opts[3] = 1e-5;
-        opts[4] = 1e-9;
+        opts[4] = 1e-10;
 
     }else{
         //opts[5] = {1e-3, 1e-9, 1e-9, 1e-9, -1e-9};
-        opts[0] = 1e-6;
-        opts[1] = 1e-9;
+        opts[0] = 1e-3;
+        opts[1] = 1e-15;
         opts[2] = 1e-9;
         opts[3] = 1e-9;
-        opts[4] = 1e-9;
+        opts[4] = 1e-6;
     }
     if(fwd){
-        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, n, n, 10, opts, info, NULL, NULL, params);
+        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, 100, opts, info, NULL, NULL, params);
     }else {
-        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, x, n, n, 10, opts, info, NULL, NULL, params);
+        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, 100, opts, info, NULL, NULL, params);
     }
     printf("iters: %f\n", info[5]);
     printf("reason for terminating: %f\n", info[6]);
@@ -1840,10 +1843,10 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
             printf("stopped by small gradient J^T e\n");
             break;
         case 2:
-            printf("stopped by small Dp\n");
+            printf("stopped by small Dp.\n");
             break;
         case 3:
-            printf("stopped by itmax\n");
+            printf("max number of iterations reached\n");
             break;
         case 4:
             printf("singular matrix. Restart from current p with increased mu\n");
@@ -1881,6 +1884,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
 
     printf("\tSolution\n");
     printMatrix(InitGuess);
+    printf("the residual is: %.15f\n", info[1]);
 
 
     return info[6];
@@ -1974,7 +1978,7 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
     const gsl_multiroot_fsolver_type *T;
     //gsl_multiroot_fsolver *s;
 
-    T = gsl_multiroot_fsolver_hybrids;
+    T = gsl_multiroot_fsolver_hybrid;
     //s = gsl_multiroot_fsolver_allc(T, 6);
     int status;
     size_t iter = 0;
@@ -2011,6 +2015,7 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
 
 
         if(fwd) {
+
             status = gsl_multiroot_test_residual(s->f, 1e-5);
         }else {
             status = gsl_multiroot_test_residual(s->f, 1e-9);
@@ -2625,12 +2630,12 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     int status = find_roots_levmarqrt(tempGuess, params, 1);
     //git
     printf("HYBRID DONE\n");
-    if (status != 0) {
+    if (status != 6) {
         printf("hybrid method failed to converge. Trying levmar\n");
         copyMatrix(Theta_DDot_guess, tempGuess);
         status = find_roots_hybrid(tempGuess, params, 1);
 
-        if (status != 6) {
+        if (status != 0) {
             printf("levmar method failed to converge trying newton\n");
             copyMatrix(Theta_DDot_guess, tempGuess);
             status = find_roots_newton(tempGuess, params, 1);
