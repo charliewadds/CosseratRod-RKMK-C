@@ -1384,7 +1384,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         printf("\thybrid method failed to converge. Trying levmar\n");
         copyMatrix(F_0, tempGuess);
         status = find_roots_levmarqrt(tempGuess, params, 0);
-        if (status != 6) {
+        if (status != 6 && status != 2) {
             printf("\tlevmar method failed to converge trying newton\n");
             copyMatrix(F_0, tempGuess);
             status = find_roots_newton(tempGuess, params, 0);
@@ -1817,10 +1817,10 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
     if(fwd) {
         //opts[5] = {1e-3, 1e-9, 1e-5, 1e-5, -1e-9};
         opts[0] = 1e-3;
-        opts[1] = 1e-15;
-        opts[2] = 1e-9;
-        opts[3] = 1e-5;
-        opts[4] = 1e-10;
+        opts[1] = 1e-17;
+        opts[2] = 1e-17 * 1e-17;
+        opts[3] = 1e-17;
+        opts[4] = -1e-6;
 
     }else{
         //opts[5] = {1e-3, 1e-9, 1e-9, 1e-9, -1e-9};
@@ -1831,7 +1831,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
         opts[4] = 1e-6;
     }
     if(fwd){
-        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, 100, opts, info, NULL, NULL, params);
+        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, 100, NULL, info, NULL, NULL, params);
     }else {
         dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, 100, opts, info, NULL, NULL, params);
     }
@@ -1872,11 +1872,11 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
         InitGuess->data[i * InitGuess->numCols] = p[i];
     }
 
-    printf("\te_2 @initial p %.15f\n", info[0]);
-    printf("\te_2 %.15f\n", info[1]);
-    printf("\tJ^T e %.15f\n", info[2]);
-    printf("\t||Dp||_2 %.15f\n", info[3]);
-    printf("\tmu/max[J^T J] %.15f\n", info[4]);
+    printf("\te_2 @initial p %.30f\n", info[0]);
+    printf("\te_2 %.30f\n", info[1]);
+    printf("\tJ^T e %.30f\n", info[2]);
+    printf("\t||Dp||_2 %.30f\n", info[3]);
+    printf("\tmu/max[J^T J] %.30f\n", info[4]);
     printf("\titers: %f\n", info[5]);
     printf("\tevals: %f\n", info[7]);
     printf("\tjacobian evals: %f\n", info[8]);
@@ -2629,9 +2629,9 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     int status = find_roots_levmarqrt(tempGuess, params, 1);
     //git
-    printf("HYBRID DONE\n");
-    if (status != 6) {
-        printf("hybrid method failed to converge. Trying levmar\n");
+    printf("HYBRID DONE, status: %d\n", status);
+    if (status != 6 && status != 2) {
+        printf("levmar method failed to converge. Trying hybrid\n");
         copyMatrix(Theta_DDot_guess, tempGuess);
         status = find_roots_hybrid(tempGuess, params, 1);
 
@@ -2704,7 +2704,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     matrix *StrGuess = matrix_new(F_0->numRows, 1);
     copyMatrix(F_0, StrGuess);
     status = find_roots_hybrid(StrGuess, params, 0);
-
+    printf("fdm 2");
     if (status != 0) {
         printf("hybrid method failed to converge. Trying levmar\n");
         copyMatrix(F_0, StrGuess);
