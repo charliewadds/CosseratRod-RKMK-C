@@ -1671,35 +1671,6 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         }
     }
 
-
-
-    //free(bodyMass);
-
-
-    for(int i = 0; i < (numBody+2); i++){
-        free(g_act_wrt_prev[i]->data);
-        //free(g_act_wrt_prev[i]);
-        matrix_free(g_ref[i]);
-
-    }
-    free(g_act_wrt_prev);
-    matrix_free(eta);
-    matrix_free(F_dist);
-    freeFlexDyn(dyn);
-    freeRigidKin(kin);
-    matrix_free(F);
-    matrix_free(d_eta);
-    matrix_free(F_temp);
-    matrix_free(CoM2CoM);
-    //matrix_free(F_dist);
-
-    matrix_free(tempR6n1);
-    matrix_free(tempR6n2);
-    matrix_free(tempR6n3);
-
-    matrix_free(temp6x6n1);
-    matrix_free(temp6x6n2);
-    //copyMatrix(C_inv, InitGuess);
     return C_inv;
 
 
