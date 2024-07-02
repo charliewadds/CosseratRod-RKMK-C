@@ -1323,15 +1323,27 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
     params->robot = robot;
-    params->F_ext = F_ext;//todo fix this
+
+    copyMatrix(F_ext, params->F_ext);
+    //params->F_ext = F_ext;
     params->c0 = c0;
     params->c1 = c1;
     params->c2 = c2;
     params->dt = dt;
-    params->Theta = theta;
-    params->Theta_dot = theta_dot;
-    params->Theta_ddot = InitGuess;
-    params->C_des = C_des;
+
+    copyMatrix(theta, params->Theta);
+    //params->Theta = theta;
+
+    copyMatrix(theta_dot, params->Theta_dot);
+    //params->Theta_dot = theta_dot;
+
+    copyMatrix(theta_ddot, params->Theta_ddot);
+    //params->Theta_ddot = InitGuess;
+
+    copyMatrix(C_des, params->C_des);
+    //params->C_des = C_des;
+
+    copyMatrix(F_0, params->F_0);
     params->F_0 = F_0;
 
 
@@ -1633,12 +1645,16 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
     }
 
     //free(bodyMass);
-    matrix_free(eta);
+
 
     for(int i = 0; i < (numBody+2); i++){
+        free(g_act_wrt_prev[i]->data);
+        //free(g_act_wrt_prev[i]);
         matrix_free(g_ref[i]);
-        matrix_free(g_act_wrt_prev[i]);
+
     }
+    free(g_act_wrt_prev);
+    matrix_free(eta);
     matrix_free(F_dist);
     freeFlexDyn(dyn);
     freeRigidKin(kin);
@@ -2007,11 +2023,11 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
         printf("STATUS: %s\n", gsl_strerror(status));
     }
 
-    gsl_matrix *jacobian = gsl_matrix_alloc(n, n);
-    int stat = gsl_multiroot_fdjacobian(&f, &x_vec.vector, s->f, 1e-9, jacobian);
-    printf("JACOBIAN:\n");
-    printf("STATUS: %d\n", stat);
-    printGSLMatrix(jacobian);
+//    gsl_matrix *jacobian = gsl_matrix_alloc(n, n);
+//    int stat = gsl_multiroot_fdjacobian(&f, &x_vec.vector, s->f, 1e-9, jacobian);
+//    printf("JACOBIAN:\n");
+//    printf("STATUS: %d\n", stat);
+//    printGSLMatrix(jacobian);
     printf("\thybrid took %zu iterations\n", iter);
    //assert(!isnan(s->f->data[1]));
     // Extract solution
@@ -2566,19 +2582,39 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     //Solve fwd flex boundary conditions
 
-    Flex_MB_BCS_params params;
-    params.robot = robot;
-    params.F_ext = F_ext;
-    params.c0 = c0;
-    params.c1 = c1;
-    params.c2 = c2;
-    params.dt = dt;
-    params.Theta = Theta;
-    params.Theta_dot = Theta_dot;
-    params.Theta_ddot = Theta_DDot;
-    params.C_des = C_des;
-    params.inv = 1;
-    params.F_0 = F_0;
+    Flex_MB_BCS_params *params = malloc(sizeof(Flex_MB_BCS_params));
+
+    params->robot = robot;
+
+    params->F_ext = matrix_new(F_ext->numRows, F_ext->numCols);
+    copyMatrix(F_ext, params->F_ext);
+    //params.F_ext = F_ext;
+    params->c0 = c0;
+    params->c1 = c1;
+    params->c2 = c2;
+    params->dt = dt;
+
+
+    params->Theta = matrix_new(Theta->numRows, Theta->numCols);
+    copyMatrix(Theta, params->Theta);
+    //params.Theta = Theta;
+
+    params->Theta_dot = matrix_new(Theta_dot->numRows, Theta_dot->numCols);
+    copyMatrix(Theta_dot, params->Theta_dot);
+    //params.Theta_dot = Theta_dot;
+    params->Theta_ddot = matrix_new(Theta_DDot->numRows, Theta_DDot->numCols);
+    copyMatrix(Theta_DDot, params->Theta_ddot);
+    //params.Theta_ddot = Theta_DDot;
+
+    params->C_des = matrix_new(C_des->numRows, C_des->numCols);
+    copyMatrix(C_des, params->C_des);
+    //params.C_des = C_des;
+    params->inv = 1;
+
+    params->F_0 = matrix_new(F_0->numRows, F_0->numCols);
+    copyMatrix(F_0, params->F_0);
+    //params.F_0 = F_0;
+
     matrix *JointAcc = matrix_new(Theta_DDot_guess->numRows, 1);
     matrix *tempGuess = matrix_new(Theta_DDot_guess->numRows, 1);
     copyMatrix(Theta_DDot_guess, JointAcc);
@@ -2586,19 +2622,18 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     printMatrix(JointAcc);
     copyMatrix(Theta_DDot_guess, tempGuess);
 
-    int status = find_roots_hybrid(tempGuess, &params, 1);
+    int status = find_roots_hybrid(tempGuess, params, 1);
     //git
-
     printf("HYBRID DONE\n");
     if (status != 0) {
         printf("hybrid method failed to converge. Trying levmar\n");
         copyMatrix(Theta_DDot_guess, tempGuess);
-        status = find_roots_levmarqrt(tempGuess, &params, 1);
+        status = find_roots_levmarqrt(tempGuess, params, 1);
 
         if (status != 6) {
             printf("levmar method failed to converge trying newton\n");
             copyMatrix(Theta_DDot_guess, tempGuess);
-            status = find_roots_newton(tempGuess, &params, 1);
+            status = find_roots_newton(tempGuess, params, 1);
             if(status != 0){
                 printf("newton method failed to converge. ALL FAILED");
 
@@ -2660,15 +2695,15 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
 
     //solve inverse boundary condition
-    params.inv = 0;
+    params->inv = 0;
     matrix *StrGuess = matrix_new(F_0->numRows, 1);
     copyMatrix(F_0, StrGuess);
-    status = find_roots_hybrid(StrGuess, &params, 0);
+    status = find_roots_hybrid(StrGuess, params, 0);
 
     if (status != 0) {
         printf("hybrid method failed to converge. Trying levmar\n");
         copyMatrix(F_0, StrGuess);
-        status = find_roots_levmarqrt(StrGuess, &params, 0);
+        status = find_roots_levmarqrt(StrGuess, params, 0);
 
         if (status != 6) {
             printf("levmar method failed to converge trying newton\n");
