@@ -1821,7 +1821,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
         opts[1] = 1e-17; // stopping thresholds for ||J^T e||_inf
         opts[2] = 1e-17 * 1e-17; // stopping thresholds for ||Dp||_2
         opts[3] = 1e-5; // stopping thresholds for ||e||_2
-        opts[4] = -1e-6; // the step used in difference approximation to the Jacobian
+        opts[4] = -1e-2; // the step used in difference approximation to the Jacobian
 
     }else{
         //opts[5] = {1e-3, 1e-9, 1e-9, 1e-9, -1e-9};
@@ -1829,12 +1829,12 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
         opts[1] = 1e-15;
         opts[2] = 1e-17 * 1e-17;
         opts[3] = 1e-9;
-        opts[4] = 1e-6;
+        opts[4] = -1e-2;
     }
     if(fwd){
-        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, 100, opts, info, NULL, NULL, params);
+        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, 1000, opts, info, NULL, NULL, params);
     }else {
-        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, 100, NULL, info, NULL, NULL, params);
+        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, 1000, NULL, info, NULL, NULL, params);
     }
     printf("iters: %f\n", info[5]);
     printf("reason for terminating: %f\n", info[6]);
@@ -1885,7 +1885,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
 
     printf("\tSolution\n");
     printMatrix(InitGuess);
-    printf("the residual is: %.15f\n", info[1]);
+    printf("the residual is: %.30f\n", info[1]);
 
 
     return info[6];
@@ -1949,10 +1949,13 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
         }
 
 
+        if(fwd){
+            status = gsl_multiroot_test_residual(s->f, 1e-5);
+        }else{
+            status = gsl_multiroot_test_residual(s->f, 1e-9);
+        }
 
-        status = gsl_multiroot_test_residual(s->f, 1e-9);
-
-    } while (status == GSL_CONTINUE && iter < 10);
+    } while (status == GSL_CONTINUE && iter < 100);
 
     if (status) {
         printf("STATUS: %d\n", status);
@@ -2022,9 +2025,9 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
             status = gsl_multiroot_test_residual(s->f, 1e-9);
         }
 
-    } while (status == GSL_CONTINUE && iter < 15);
+    } while (status == GSL_CONTINUE && iter < 100);
 
-    if (status) {
+    if (status != GSL_SUCCESS){
         printf("STATUS: %d\n", status);
         printf("STATUS: %s\n", gsl_strerror(status));
     }
