@@ -283,7 +283,7 @@ int main() {
 
 
     double dt = 0.025;
-    int timeStep = 1;
+    int timeStep = 100;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -361,7 +361,8 @@ int main() {
         getSection(robot->objects[2*BC_Start]->object->flex->f_prev, 0, 5, robot->objects[2*BC_Start]->object->flex->f_prev->numCols,robot->objects[2*BC_Start]->object->flex->f_prev->numCols , tempF);
         copyMatrix(tempF, F_0);
 
-        theta_ddot = fdm->JointAcc;
+        //theta_ddot = fdm->JointAcc;
+        copyMatrix(fdm->JointAcc, theta_ddot);
 
 
         matrix_scalar_mul(theta_ddot, dt, temp5x1);
