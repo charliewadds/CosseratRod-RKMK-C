@@ -1846,7 +1846,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
         opts[1] = 1e-9;
         opts[2] = 1e-5;
         opts[3] = 1e-5;
-        opts[4] = -1e-9;
+        opts[4] = 1e-9;
 
     }else{
         //opts[5] = {1e-3, 1e-9, 1e-9, 1e-9, -1e-9};
@@ -1854,7 +1854,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
         opts[1] = 1e-9;
         opts[2] = 1e-9;
         opts[3] = 1e-9;
-        opts[4] = -1e-9;
+        opts[4] = 1e-9;
     }
     if(fwd){
         dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, n, n, 10, opts, info, NULL, NULL, params);
@@ -2651,13 +2651,13 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     printMatrix(JointAcc);
     copyMatrix(Theta_DDot_guess, tempGuess);
 
-    int status = find_roots_hybrid(tempGuess, params, 1);
+    int status = find_roots_levmarqrt(tempGuess, params, 1);
     //git
     printf("HYBRID DONE\n");
     if (status != 0) {
         printf("hybrid method failed to converge. Trying levmar\n");
         copyMatrix(Theta_DDot_guess, tempGuess);
-        status = find_roots_levmarqrt(tempGuess, params, 1);
+        status = find_roots_hybrid(tempGuess, params, 1);
 
         if (status != 6) {
             printf("levmar method failed to converge trying newton\n");
