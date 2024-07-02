@@ -401,7 +401,7 @@ int main() {
     printf("DONE");
 //    matrixToFile(angles, "RigidRandyAngles.csv");
 //    robotToFile(robot, "testRobotOut.json");
-    matrixToFile(C, "ControlSim2.csv");
+    //matrixToFile(C, "ControlSim2.csv");
     matrixToFile(angles, "RigidRandyAngles.csv");
     //robotToFile(robot, "testRobotOut.json");
     matrixToFile(C, "Control_good.csv");

@@ -40,6 +40,8 @@ gsl_matrix *matrix_to_gsl(matrix *matrix, gsl_matrix *out);
 gsl_matrix *copy_matrix_to_gsl(matrix *matrix, gsl_matrix *out);
 matrix *gsl_to_matrix(gsl_matrix *gsl_matrix, matrix *result);
 
+
+int hasNan(matrix *m);
 matrix *matrix_solve(matrix *A, matrix *b, matrix *result);
 // Constructor-like 
 // Allocates memory for a new matrix

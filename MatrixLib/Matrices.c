@@ -30,15 +30,24 @@ gsl_matrix *copy_matrix_to_gsl(matrix *matrix, gsl_matrix *out){
 matrix *expm(matrix *A, matrix *result){
     assert(A->square == 1);
 
+    matrix *tempResult;
+    if(A == result){
+        tempResult = matrix_new(result->numRows, result->numCols);
+
+    }else{
+        tempResult = result;
+    }
+
     gsl_matrix *gsl_A = gsl_matrix_alloc(A->numRows, A->numCols);
     gsl_matrix *gsl_result = gsl_matrix_alloc(A->numRows, A->numCols);
     copy_matrix_to_gsl(A, gsl_A);
     //matrix_to_gsl(A, gsl_A);
     gsl_linalg_exponential_ss(gsl_A, gsl_result, GSL_PREC_DOUBLE);
 
-    gsl_to_matrix(gsl_result, result);
+    gsl_to_matrix(gsl_result, tempResult);
     gsl_matrix_free(gsl_A);
     gsl_matrix_free(gsl_result);
+    copyMatrix(tempResult, result);
     return result;
 }
 
@@ -474,6 +483,17 @@ matrix *matMult(matrix *m1, matrix *m2, matrix *result) {
 
 
     return result;
+}
+
+
+int hasNan(matrix *m){
+
+   for(int i = 0; i < m->numRows * m->numCols; i++) {
+       if (isnan(m->data[i]))
+           return 1;
+   }
+    return 0;
+
 }
 
 
