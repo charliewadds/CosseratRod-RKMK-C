@@ -274,17 +274,32 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     return newRobot;
 }
 
+
+
+void saveTimeCSV(int step, double time, char *filename){
+    FILE *f = fopen(filename, "a");
+    if (f == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+
+    fprintf(f, "%d, %f\n", step, time);
+
+    fclose(f);
+}
 int main() {
 
     clock_t start, end;
     double cpu_time_used;
 
     start = clock();
+    clock_t stepStart = 0;
 
 
 
     double dt = 0.025;
-    int timeStep = 11;
+    int timeStep = 100;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -348,6 +363,9 @@ int main() {
     matrix *temp5xn = zeros(5,timeStep);
     matrix *tempF = zeros(6,1);
     for(int i = 0; i < timeStep; i++){
+        printf("\nTime Step: %d\n", i);
+
+        stepStart = clock();
 
         setSection(C_des_1, 0, 4, 0, 0, getSection(C_des, 0, 4, i, i, tempLinkx1));
         fdm = FDM_MB_RE(robot, theta, theta_dot, theta_ddot, F_ext, dt, C_des_1 ,F_0, InitGuess);//todo do I need JointAcc in funciton?
@@ -381,7 +399,8 @@ int main() {
                 currJointIndex++;
             }
         }
-
+        printf("step took: %f Seconds\n", ((double) (clock() - stepStart)) / CLOCKS_PER_SEC);
+        saveTimeCSV(i, ((double) (clock() - stepStart)) / CLOCKS_PER_SEC, "time.csv");
     }
     printf("DONE");
 //    matrixToFile(angles, "RigidRandyAngles.csv");

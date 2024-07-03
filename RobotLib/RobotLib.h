@@ -6,6 +6,20 @@
 //#include "Matrices.h"
 //#endif
 
+
+#define VERBOSE 1
+#define SOLVER_SAVE 1
+
+#define MAX_ITER_LEVMAR 2000
+#define MAX_ITER_NEWTON 20
+#define MAX_ITER_HYBRID 20
+
+#define TOLERANCE_INV 1e-9
+#define TOLERANCE_FWD 1e-5
+
+#define D_P_LEVMAR 1e-30
+#define STEP_LEVMAR 1e-6
+
 #ifndef COSSERATROD_RKMK_C_ROBOTLIB_H
 #define COSSERATROD_RKMK_C_ROBOTLIB_H
 #include "LieGroup.h"
