@@ -284,7 +284,7 @@ int main() {
 
 
     double dt = 0.025;
-    int timeStep = 10;
+    int timeStep = 11;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -352,9 +352,9 @@ int main() {
         setSection(C_des_1, 0, 4, 0, 0, getSection(C_des, 0, 4, i, i, tempLinkx1));
         fdm = FDM_MB_RE(robot, theta, theta_dot, theta_ddot, F_ext, dt, C_des_1 ,F_0, InitGuess);//todo do I need JointAcc in funciton?
 
-        setSection(T_H, 0, T_H->numRows, i, i, theta);
-        setSection(Tdd_H, 0, Tdd_H->numRows, i, i, theta_ddot);
-        setSection(C, 0, C->numRows, i, i, fdm->C);
+        setSection(T_H, 0, T_H->numRows-1, i, i, theta);
+        setSection(Tdd_H, 0, Tdd_H->numRows-1, i, i, theta_ddot);
+        setSection(C, 0, C->numRows-1, i, i, fdm->C);
 
         copyMatrix(fdm->JointAcc, InitGuess);
 
