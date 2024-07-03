@@ -1533,9 +1533,10 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             if(i > BC_Start){
                 tempC6n1 = matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempC6n1);
                 //setSection(C);
-
-                matMult(tempC6n1, curr_joint->object->joint->twistR6, temp1);
-                setSection(C, 0,0,i-1,i-1,temp1);
+                if(i<numBody+1) {
+                    matMult(tempC6n1, curr_joint->object->joint->twistR6, temp1);
+                    setSection(C, 0, 0, i - 1, i - 1, temp1);
+                }
             }
             /*
              * F_temp = F(:,i) + transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i)- ROBOT{2*i-1}.Mass*d_eta(:,i);
@@ -1834,7 +1835,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
     if(fwd){
         dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, 1000, opts, info, NULL, NULL, params);
     }else {
-        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, 1000, NULL, info, NULL, NULL, params);
+        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, 1000, opts, info, NULL, NULL, params);
     }
     printf("iters: %f\n", info[5]);
     printf("reason for terminating: %f\n", info[6]);
@@ -1968,7 +1969,7 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
     //assert(!isnan(s->f->data[0]));
     // Extract solution
     //matrix *solution = zeros(6, 1);
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < InitGuess->numRows; ++i) {
         InitGuess->data[i * InitGuess->numCols] = gsl_vector_get(s->x, i);
     }
 
