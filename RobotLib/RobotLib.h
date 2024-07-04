@@ -7,22 +7,23 @@
 //#endif
 
 
-#define GSL_ERROR_HANDLER 0
-#define VERBOSE 1
+#define GSL_ERROR_HANDLER 1
+#define VERBOSE 2
 #define SOLVER_SAVE 1
 #define SOLVER_ERRORS 1
 #define SOLVER_ERROR_TOP 1
+#define TOLERANCE_STEP 1e-6
 
 
 
 #define MAX_ITER_LEVMAR 2000
-#define MAX_ITER_NEWTON 20
-#define MAX_ITER_HYBRID 20
+#define MAX_ITER_NEWTON 200
+#define MAX_ITER_HYBRID 200
 
 #define TOLERANCE_INV 1e-9
 #define TOLERANCE_FWD 1e-5
 
-#define D_P_LEVMAR 1e-9
+#define D_P_LEVMAR 1e-30
 #define STEP_LEVMAR 1e-6
 
 #ifndef COSSERATROD_RKMK_C_ROBOTLIB_H
@@ -346,12 +347,12 @@ void robotToFile(Robot *robot, char *filename);
 void addRobotState(Robot *robot, char* filename, int num);
 matrix *find_roots_PSO(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
 matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM);
-int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd);
-int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd);
+int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, double tol);
+int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, double tol);
 //inline docs working?
 IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *Init_Guess);
 FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *C_des, matrix *F_0, matrix *Theta_DDot_guess);
-int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *p, int fwd);
+int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *p, int fwd, double tol);
 // Define the structure for the parameters to pass to the function
 
 /*
