@@ -1397,7 +1397,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         #endif
         copyMatrix(F_0, tempGuess);
         status = find_roots_levmarqrt(tempGuess, params, 0, TOLERANCE_INV);
-        if (status != 6 && status != 2) {
+        if (status != 6 ) {
             #if VERBOSE >= 2
             printf("\t\tlevmar method failed to converge in F_FLEX trying newton\n");
             #endif
@@ -1422,8 +1422,8 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
     #endif
     copyMatrix(tempGuess, str_guess);
     //printf("FUFLEX_MB_BCS SOLVER END\n");
-    //printMatrix(str_guess);
-    //printf("\n");
+    printMatrix(str_guess);
+    printf("\n");
 
     //todo this is the same as in IDM_MB_RE, it might be faster to pass all these as arguments or maybe a struct or something
     matrix **g_ref =  malloc(sizeof(matrix) * (numBody+2));           //[SE(3) X N+2]  Transformation to i_th C-BCF from/in base BCF for RRC
@@ -1827,7 +1827,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
 //    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
     //dlevmar_dif(meyer, p, x, m, n, 1000, opts, info, work, covar, NULL); // no
 
-    int status = -1;
+
 
     int n = InitGuess->numRows;
     double *p = malloc(n * sizeof(double));
@@ -1855,7 +1855,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
      */
     if(fwd) {
         //opts[5] = {1e-3, 1e-9, 1e-5, 1e-5, -1e-9};
-        opts[0] = -1e-3; // scale factor for initial mu
+        opts[0] = 1e-1; // scale factor for initial mu
         opts[1] = 1e-15; // stopping thresholds for ||J^T e||_inf
         opts[2] = D_P_LEVMAR; // stopping thresholds for ||Dp||_2
         opts[3] = TOLERANCE_FWD; // stopping thresholds for ||e||_2
@@ -1863,7 +1863,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
 
     }else{
         //{1e-3, 1e-15, 1e-9, 1e-9, 1e-6};
-        opts[0] = -1e-3;
+        opts[0] = 1e-1;
         opts[1] = 1e-15;
         opts[2] = D_P_LEVMAR;
         opts[3] = TOLERANCE_INV;
@@ -1936,13 +1936,6 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
     for (int i = 0; i < 6; ++i) {
         InitGuess->data[i * InitGuess->numCols] = p[i];
     }
-
-//    if(info[6] == 2 || info[6] == 6){
-//        if(info[1] < tol) {
-//            status = 0;
-//        }
-//
-//    }
     return info[6];
 }
 //(lldb) br set --name malloc_error_break
@@ -2116,13 +2109,13 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, do
         }else {
             status = gsl_multiroot_test_residual(s->f, TOLERANCE_INV);
         }
-        if(status == GSL_CONTINUE){
-            if(fwd) {
-                status = gsl_multiroot_test_delta(s->dx, s->x, TOLERANCE_STEP, TOLERANCE_STEP);
-            }else {
-                status = gsl_multiroot_test_delta(s->dx, s->x, TOLERANCE_STEP, TOLERANCE_STEP);
-            }
-        }
+//        if(status == GSL_CONTINUE){
+//            if(fwd) {
+//                status = gsl_multiroot_test_delta(s->dx, s->x, TOLERANCE_STEP, TOLERANCE_STEP);
+//            }else {
+//                status = gsl_multiroot_test_delta(s->dx, s->x, TOLERANCE_STEP, TOLERANCE_STEP);
+//            }
+//        }
 
     } while (status == GSL_CONTINUE && iter < MAX_ITER_HYBRID);
 
@@ -2778,9 +2771,9 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     int status = find_roots_levmarqrt(tempGuess, params, 1, TOLERANCE_FWD);
     //git
     #if VERBOSE >= 2
-    printf("levmar DONE, status: %d\n", status);
+    printf("HYBRID DONE, status: %d\n", status);
     #endif
-    if (status != 6 && status != 2) {
+    if (status != 6 ) {
         #if VERBOSE >= 2
         printf("levmar method failed to converge. Trying hybrid\n");
         #endif
@@ -2888,7 +2881,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         copyMatrix(F_0, StrGuess);
         status = find_roots_levmarqrt(StrGuess, params, 0, TOLERANCE_FWD);
         printMatrix(StrGuess);
-        if (status != 6 && status != 2) {
+        if (status != 6) {
             #if VERBOSE >= 2
             printf("levmar method failed to converge trying newton\n");
             #endif
