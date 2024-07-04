@@ -16,11 +16,11 @@
 
 
 
-#define MAX_ITER_LEVMAR 2000
-#define MAX_ITER_NEWTON 200
-#define MAX_ITER_HYBRID 200
+#define MAX_ITER_LEVMAR 500
+#define MAX_ITER_NEWTON 50
+#define MAX_ITER_HYBRID 50
 
-#define TOLERANCE_INV 1e-12
+#define TOLERANCE_INV 1e-9
 #define TOLERANCE_FWD 1e-5
 
 #define D_P_LEVMAR 1e-30
@@ -28,6 +28,8 @@
 
 #ifndef COSSERATROD_RKMK_C_ROBOTLIB_H
 #define COSSERATROD_RKMK_C_ROBOTLIB_H
+
+
 #include "LieGroup.h"
 //#include "FDM.h"
 #include <gsl/gsl_deriv.h>
@@ -361,7 +363,7 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *p, int fwd, double 
 matrix *Flex_MB_BCS(matrix *InitGuess,Flex_MB_BCS_params *params);
 int F_Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f);
 
-matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params);
+int F_Flex_MB_BCS(matrix *InitGuess, matrix *result, Flex_MB_BCS_params *params);
 matrix *fsolve_idm_mb_re(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
 
 #endif //COSSERATROD_RKMK_C_MATHLIB_H

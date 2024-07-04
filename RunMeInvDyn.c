@@ -350,7 +350,7 @@ int main() {
     IDM_MB_RE_OUT *idm = malloc(sizeof(IDM_MB_RE_OUT));
     matrix *tempLinkx1 = matrix_new(5,1);
     for(int i = 0; i < timeStep; i++){
-        //printf("timestep: %d\n", i);
+        printf("timestep: %d\n", i);
         //printMatrix(Flex_MB_BCS(F_0, robot,  *F_ext, 60, -80, 20));//todo just for testing
         //addRobotState(robot, "testRobotOut.json", i);
         //matrix f = *robot->objects[2*BC_Start ]->object->flex->f_prev;//save previous guess

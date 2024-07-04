@@ -369,7 +369,7 @@ int main() {
 
         setSection(C_des_1, 0, 4, 0, 0, getSection(C_des, 0, 4, i, i, tempLinkx1));
         fdm = FDM_MB_RE(robot, theta, theta_dot, theta_ddot, F_ext, dt, C_des_1 ,F_0, InitGuess);//todo do I need JointAcc in funciton?
-
+        assert(isnan(robot->objects[1]->object->joint->velocity)==0);
         setSection(T_H, 0, T_H->numRows-1, i, i, theta);
         setSection(Tdd_H, 0, Tdd_H->numRows-1, i, i, theta_ddot);
         setSection(C, 0, C->numRows-1, i, i, fdm->C);
@@ -393,6 +393,10 @@ int main() {
         matrix_add(temp5x1, theta, theta);
 
         int currJointIndex = 0;
+        assert(hasNan(theta) == 0);
+        assert(hasNan(theta_dot) == 0);
+        assert(hasNan(theta_ddot) == 0);
+        assert(isnan(robot->objects[1]->object->joint->velocity)==0);
         for(int j = 1; j < 10; j+= 2 ) {//todo j should start at firstjoint an
             if (robot->objects[j]->type == 2) {
                 robot->objects[j]->object->joint->position = theta->data[(currJointIndex * theta->numCols)];
@@ -401,6 +405,7 @@ int main() {
                 currJointIndex++;
             }
         }
+        assert(isnan(robot->objects[1]->object->joint->velocity)==0);
         printf("step took: %f Seconds\n", ((double) (clock() - stepStart)) / CLOCKS_PER_SEC);
         saveTimeCSV(i, ((double) (clock() - stepStart)) / CLOCKS_PER_SEC, "time.csv");
     }
