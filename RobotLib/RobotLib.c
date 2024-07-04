@@ -2644,7 +2644,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     assert(isnan(robot->objects[1]->object->joint->velocity)==0);
     copyMatrix(Theta_DDot_guess, tempGuess);
     int status = find_roots_hybrid(tempGuess, params, 1, TOLERANCE_FWD);
-    //git
+
 
     #if VERBOSE >= 2
     printf("HYBRID DONE, status: %d\n", status);
