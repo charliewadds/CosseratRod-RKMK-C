@@ -375,7 +375,9 @@ int main() {
         setSection(C, 0, C->numRows-1, i, i, fdm->C);
 
         copyMatrix(fdm->JointAcc, InitGuess);
-
+        printf("Joint Acc in main: \n");
+        printMatrix(fdm->JointAcc);
+        printf("-----------------------\n");
 
         getSection(robot->objects[2*BC_Start]->object->flex->f_prev, 0, 5, robot->objects[2*BC_Start]->object->flex->f_prev->numCols-1,robot->objects[2*BC_Start]->object->flex->f_prev->numCols -1, tempF);
         copyMatrix(tempF, F_0);
@@ -387,8 +389,8 @@ int main() {
         matrix_scalar_mul(theta_ddot, dt, temp5x1);
         matrix_add(temp5x1, theta, theta_dot);
 
-        matrix_scalar_mul(theta_dot, dt, theta);
-        matrix_add(theta, theta, theta);
+        matrix_scalar_mul(theta_dot, dt, temp5x1);
+        matrix_add(temp5x1, theta, theta);
 
         int currJointIndex = 0;
         for(int j = 1; j < 10; j+= 2 ) {//todo j should start at firstjoint an

@@ -9,7 +9,7 @@
 #include <string.h>
 #include <assert.h>
 #include <gsl/gsl_blas.h>
-
+#include <gsl/gsl_errno.h>
 
 matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     matrix *parentCoM;
@@ -191,7 +191,7 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
     matrix_scalar_mul(newTwist, joint->velocity, temp6x1n2);
     matrix_add(temp6x1n1, temp6x1n2, eta);
 
-
+    //assert(hasNan(eta) == 0);
     matrix *d_eta = matrix_new(6,1);
     matrix_add(
             matrix_add(matMult(adj(g_act_wrt_prev, temp6x6n1), d_eta_old, temp6x1n1), matMult(adj_R6(eta, temp6x6n2), matrix_scalar_mul(newTwist, joint->velocity, temp6x1n2), temp6x1n2), temp6x1n2),
@@ -201,20 +201,20 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
     //memcpy(result->g_cur, g_cur, sizeof(matrix));
 
     copyMatrix(g_cur, result->g_cur);
-    assert(hasNan(result->g_cur) == 0);
+    //assert(hasNan(result->g_cur) == 0);
     //result->g_cur = g_cur;
     //memcpy(result->g_act_wrt_prev, g_cur_wrt_prev, sizeof(matrix));
     copyMatrix(g_act_wrt_prev, result->g_act_wrt_prev);
-    assert(hasNan(result->g_act_wrt_prev) == 0);
+    //assert(hasNan(result->g_act_wrt_prev) == 0);
     //result->g_act_wrt_prev = g_act_wrt_prev;
     //memcpy(result->eta, eta, sizeof(matrix));
     copyMatrix(eta, result->eta);
-    assert(hasNan(result->eta) == 0);
+    //assert(hasNan(result->eta) == 0);
     //result->eta = eta;
     //memcpy(result->d_eta, d_eta, sizeof(matrix));
     //result->d_eta = d_eta;
     copyMatrix(d_eta, result->d_eta);
-    assert(hasNan(result->d_eta) == 0);
+    //assert(hasNan(result->d_eta) == 0);
 
     matrix_free(eta);
     matrix_free(childCoM);
@@ -611,9 +611,9 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
     matrix_free(eta_t);
 
     matrix_free(f_t);
-    //printMatrix(adj_R6(f));
-//    printMatrix(result->f_s);
-//    printMatrix(result->eta_s);
+
+
+
     return result;
 }
 
@@ -829,7 +829,7 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
     zeroMatrix(result->f);
     //result->eta = zeros(6, body->N);
     //result->f = zeros(6, body->N);
-    assert(hasNan(F_base) == 0);
+    //assert(hasNan(F_base) == 0);
     matrix **g = (matrix **)malloc(sizeof(matrix *) * body->N);
 
     matrix *temp6xNn1 = matrix_new(6, body->N);
@@ -854,9 +854,9 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
     matrix *tempR6n5 = matrix_new(6,1);
 
     matrix *temp4x4n1 = matrix_new(4,4);
-    assert(hasNan(result->f) == 0);
+    //assert(hasNan(result->f) == 0);
     setSection(result->f, 0, 5, 0, 0, matrix_add(matrix_solve(body->stiff,F_base, tempR6n1), body->F_0, tempR6n1));
-    assert(hasNan(result->f) == 0);
+    //assert(hasNan(result->f) == 0);
 
     setSection(result->eta, 0, 5, 0, 0, eta_base);
     //memcpy(g[0], g_base, sizeof(matrix));
@@ -868,7 +868,7 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
     matrix *f_sh = matrix_new(6,1);
     COSS_ODE_OUT *ode = odeAlloc();
 
-    assert(hasNan(result->f) == 0);
+    //assert(hasNan(result->f) == 0);
     for(int i = 0; i < body->N-1; i++) {
 
         matrix_scalar_mul(matrix_sub(getSection(body->f_prev, 0,5,i+1,i+1, tempR6n1), getSection(body->f_prev, 0,5,i,i, tempR6n2),tempR6n1),c1, tempR6n1);
@@ -887,34 +887,34 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
                         getSection(eta_h,0,5,i,i, tempR6n3), getSection(f_h, 0,5,i,i, tempR6n4),
                         f_sh, body->stiff, body->damping, body->mass, c0, body->F_0,
                         getSection(F_dist, 0,5,i,i, tempR6n5), ode);
-        assert(hasNan(g[i+1])==0);
+        //assert(hasNan(g[i+1])==0);
         /*
          * f(:,i+1) = f(:,i) + f_s*ds;                     %[se(3)]    Assuming Euler Integration
          * eta(:,i+1) = eta(:,i) + eta_s*ds;               %[se(3)]    Assuming Euler Integration
          * g(:,:,i+1) = g(:,:,i) * expm(hat(f(:,i))*ds);   %[SE(3)]    Assuming Lie-Euler Geometric Integration
          */
-        assert(hasNan(result->f) == 0);
+        //assert(hasNan(result->f) == 0);
         setSection(result->f,0,5,i+1,i+1,
                    (matrix_add(getSection(result->f,0,5,i,i, tempR6n1), matrix_scalar_mul(ode->f_s,ds, tempR6n2), tempR6n1)));
-        assert(hasNan(g[i+1])==0);
+        //assert(hasNan(g[i+1])==0);
 
         setSection(result->eta,0,5,i+1,i+1,
                    (matrix_add(getSection(result->eta,0,5,i,i, tempR6n1), matrix_scalar_mul(ode->eta_s,ds, tempR6n2), tempR6n1))
         );
 
-        assert(hasNan(result->f) == 0);
+        //assert(hasNan(result->f) == 0);
         //zeroMatrix(tempR6n1);
-        assert(hasNan(g[i+1]) == 0);
+        //assert(hasNan(g[i+1]) == 0);
         getSection(result->f,0,5,i,i, tempR6n1);
-        assert(hasNan(tempR6n1) == 0);
+        //assert(hasNan(tempR6n1) == 0);
         hat_R6(tempR6n1, temp4x4n1);
-        assert(hasNan(temp4x4n1) == 0);
+        //assert(hasNan(temp4x4n1) == 0);
         matrix_scalar_mul(temp4x4n1, ds, temp4x4n1);
-        assert(hasNan(temp4x4n1) == 0);
+        //assert(hasNan(temp4x4n1) == 0);
         expm(temp4x4n1, temp4x4n1);
         matMult(g[i], temp4x4n1,g[i+1]);
-        assert(hasNan(g[i+1])==0);
-        assert(hasNan(result->f) == 0);
+        //assert(hasNan(g[i+1])==0);
+        //assert(hasNan(result->f) == 0);
 
     }
 
@@ -925,7 +925,7 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
     //result->g_end = g[body->N-1];
     //memcpy(result->g_end, g[body->N-1], sizeof(matrix));
     copyMatrix(g[body->N-1], result->g_end);
-    assert(hasNan(result->g_end)==0);
+    //assert(hasNan(result->g_end)==0);
 //    matrix_free(result->g_end);
 //    result->g_end = g[body->N-1];
 
@@ -1032,7 +1032,7 @@ int getBCEnd(Robot *robot){
 matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
-    assert(hasNan(InitGuess) == 0);
+    //assert(hasNan(InitGuess) == 0);
     Robot *robot = params->robot;
     matrix *F_ext = params->F_ext;
     double c0 = params->c0;
@@ -1120,12 +1120,14 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         //g_act_wrt_prev[i] = kin->g_act_wrt_prev;
         copyMatrix(kin->g_act_wrt_prev, g_act_wrt_prev[i]);
 
+        //assert(hasNan(eta) == 0);
         setSection(eta, 0,5,i,i, kin->eta);
+        //assert(hasNan(eta) == 0);
         setSection(d_eta, 0,5,i,i, kin->d_eta);
 
 
         matMult(matrix_transpose(adj(g_act_wrt_prev[i], temp6x6n1), temp6x6n2), F_temp, F_temp);//why is this not a pointer
-        assert(hasNan(g_ref[i])==0);
+        //assert(hasNan(g_ref[i])==0);
         if(curr_body->type == 1) {//flexible body
             if(dyn->eta != NULL){
                 matrix_free(dyn->eta);
@@ -1140,16 +1142,16 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
             if(i == BC_Start ) {
                 //ROBOT{2*i-1}.Stiff * (InitGuess - ROBOT{2*i-1}.F_0);
-                assert(hasNan(F) == 0);
+                //assert(hasNan(F) == 0);
                 setSection(F, 0, 5, i, i, matMult(curr_body->object->flex->stiff,
                                                   matrix_sub(InitGuess, curr_body->object->flex->F_0, tempR6n1), tempR6n1));
-                assert(hasNan(F) == 0);
+                //assert(hasNan(F) == 0);
                 //printMatrix(F);
             } else{
-                assert(hasNan(F) == 0);
+                //assert(hasNan(F) == 0);
                 setSection(F,0,5,i,i, F_temp);
 
-                assert(hasNan(F) == 0);
+                //assert(hasNan(F) == 0);
             }
 
             if(F_dist != NULL){
@@ -1157,7 +1159,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             }
             F_dist = zeros(6, curr_body->object->flex->N);
 
-            assert(hasNan(g_ref[i])==0);
+            //assert(hasNan(g_ref[i])==0);
             flex_dyn(g_ref[i], F_dist, getSection
             (F, 0, 5, i, i, tempR6n1), curr_body->object->flex,
                      getSection(eta, 0, 5, i, i, tempR6n2), c0, c1, c2, dyn);
@@ -1165,7 +1167,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             setSection(d_eta, 0,5,i,i, dyn->d_eta_end);
             //memcpy(g_ref[i], dyn->g_end, sizeof(matrix));
             copyMatrix(dyn->g_end, g_ref[i]);
-            assert(hasNan(g_ref[i]) == 0);
+            //assert(hasNan(g_ref[i]) == 0);
 //            g_ref[i] = dyn->g_end;//is this the leak??
             //d_eta[i] = *dyn->d_eta_end;
 
@@ -1198,7 +1200,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 //                    ),matMult(curr_body->object->rigid->mass,getSection(eta,0,5,i,i))
 //            );
         }
-        assert(hasNan(g_ref[i])==0);
+        //assert(hasNan(g_ref[i])==0);
 
     }
 
@@ -1375,50 +1377,29 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
     copyMatrix(F_0, str_guess);
 
 
-
-    params->robot = robot;
-
-    copyMatrix(F_ext, params->F_ext);
-    //params->F_ext = F_ext;
-    params->c0 = c0;
-    params->c1 = c1;
-    params->c2 = c2;
-    params->dt = dt;
-
-    copyMatrix(theta, params->Theta);
-    //params->Theta = theta;
-
-    copyMatrix(theta_dot, params->Theta_dot);
-    //params->Theta_dot = theta_dot;
-
-    copyMatrix(theta_ddot, params->Theta_ddot);
-    //params->Theta_ddot = InitGuess;
-
-    copyMatrix(C_des, params->C_des);
-    //params->C_des = C_des;
-
-    copyMatrix(F_0, params->F_0);
-    params->F_0 = F_0;
-
     #if VERBOSE == 1
-    printf("-------------------F_FLEX-----------------------------\n");
+    printf("\t\t-------------------F_FLEX-----------------------------\n");
+    printf("\t\tInitial Guess For Forward boundary condition solver:\n");
+    printMatrix(F_0);
+    //assert(hasNan(InitGuess) == 0);
     #endif
     //printf("F_FLEX_MB_BCS SOLVER START");
 
     matrix *tempGuess = zeros(6,1);
 
     copyMatrix(F_0, tempGuess);
+
     int status = find_roots_hybrid(tempGuess, params, 0);
 
     if (status != 0) {
         #if VERBOSE == 1
-        printf("\thybrid method failed to converge in F_FLEX. Trying levmar\n");
+        printf("\t\thybrid method failed to converge in F_FLEX. Trying levmar\n");
         #endif
         copyMatrix(F_0, tempGuess);
         status = find_roots_levmarqrt(tempGuess, params, 0);
         if (status != 6 && status != 2) {
             #if VERBOSE == 1
-            printf("\tlevmar method failed to converge in F_FLEX trying newton\n");
+            printf("\t\tlevmar method failed to converge in F_FLEX trying newton\n");
             #endif
             copyMatrix(F_0, tempGuess);
             status = find_roots_newton(tempGuess, params, 0);
@@ -1426,12 +1407,16 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
                 #if VERBOSE >= 1
                 printf("\tALL FAILED IN F_FLEX_MB_BCS\n");
                 #endif
+
+                #if SOLVER_ERRORS == 1
+                    assert(1 == 0);
+                #endif
             }
         }
     }
 
     #if VERBOSE == 1
-    printf("-------------------F_FLEX END-----------------------------\n");
+
     printMatrix(tempGuess);
     printf("-------------------F_FLEX END-----------------------------\n");
     #endif
@@ -1743,14 +1728,16 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
     // Call Flex_MB_BCS function
     matrix *result;
 
-    assert(hasNan(x_matrix) == 0);
+    //assert(hasNan(x_matrix) == 0);
     result = Flex_MB_BCS(x_matrix, params);
     // Fill f with the residuals
     for (int i = 0; i < f->size; ++i) {
         //printf("result: %f\n", result->data[i][0]);
         gsl_vector_set(f, i, result->data[(i * result->numCols)] );
     }
-
+    if(hasNan(x_matrix) == 1){
+        return GSL_EINVAL;
+    }
     // Free memory
     matrix_free(x_matrix);
     matrix_free(result);
@@ -1798,17 +1785,20 @@ int F_Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
 
     // Call Flex_MB_BCS function
     matrix *result;
-
+    //assert(hasNan(x_matrix) == 0);
     result = F_Flex_MB_BCS(x_matrix, params);
     // Fill f with the residuals
     for (int i = 0; i < f->size; ++i) {
         //printf("result: %f\n", result->data[i][0]);
         gsl_vector_set(f, i, result->data[(i * result->numCols)] );
     }
-
+    if(hasNan(x_matrix) == 1){
+        return GSL_EINVAL;
+    }
     // Free memory
     matrix_free(x_matrix);
     matrix_free(result);
+
 
     return GSL_SUCCESS;//todo is this right?
 }
@@ -1836,10 +1826,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
 //    Flex_MB_BCS_params params = {robot, Theta, Theta_dot, Theta_DDot, F_ext, c0, c1, c2};
     //dlevmar_dif(meyer, p, x, m, n, 1000, opts, info, work, covar, NULL); // no
 
-    #if VERBOSE == 1
-    printf("LEV MAR START\n");
-    printMatrix(InitGuess);
-    #endif
+
 
     int n = InitGuess->numRows;
     double *p = malloc(n * sizeof(double));
@@ -1867,14 +1854,14 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
      */
     if(fwd) {
         //opts[5] = {1e-3, 1e-9, 1e-5, 1e-5, -1e-9};
-        opts[0] = 1; // scale factor for initial mu
+        opts[0] = 1e-3; // scale factor for initial mu
         opts[1] = 1e-15; // stopping thresholds for ||J^T e||_inf
         opts[2] = D_P_LEVMAR; // stopping thresholds for ||Dp||_2
         opts[3] = TOLERANCE_FWD; // stopping thresholds for ||e||_2
         opts[4] = STEP_LEVMAR; // the step used in difference approximation to the Jacobian
 
     }else{
-        //opts[5] = {1e-3, 1e-9, 1e-9, 1e-9, -1e-9};
+        //{1e-3, 1e-15, 1e-9, 1e-9, 1e-6};
         opts[0] = 1e-3;
         opts[1] = 1e-15;
         opts[2] = D_P_LEVMAR;
@@ -1882,9 +1869,9 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
         opts[4] = STEP_LEVMAR;
     }
     if(fwd){
-        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, x, n, n, MAX_ITER_LEVMAR, opts, info, NULL, NULL, params);
+        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, MAX_ITER_LEVMAR, opts, info, NULL, NULL, params);
     }else {
-        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, x, n, n, MAX_ITER_LEVMAR, opts, info, NULL, NULL, params);
+        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, MAX_ITER_LEVMAR, opts, info, NULL, NULL, params);
     }
 
     #if SOLVER_SAVE
@@ -1894,6 +1881,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
         solverSave("levmar", "levmarSave.csv", (int)info[6], (int)info[5], (double) info[1], fwd);
     }
     #endif
+
     #if VERBOSE == 1
     printf("iters: %f\n", info[5]);
     printf("reason for terminating: %f\n", info[6]);
@@ -1944,7 +1932,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd)
     printMatrix(InitGuess);
     printf("the residual is: %.30f\n", info[1]);
     #endif
-    for (int i = 0; i < InitGuess->numRows; ++i) {
+    for (int i = 0; i < 6; ++i) {
         InitGuess->data[i * InitGuess->numCols] = p[i];
     }
     return info[6];
@@ -2058,8 +2046,8 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
 int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
     const gsl_multiroot_fsolver_type *T;
     //gsl_multiroot_fsolver *s;
-
-    T = gsl_multiroot_fsolver_hybrids;
+    assert(hasNan(InitGuess) == 0);
+    T = gsl_multiroot_fsolver_hybrid;
     //s = gsl_multiroot_fsolver_allc(T, 6);
     int status;
     size_t iter = 0;
@@ -2116,17 +2104,33 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd) {
     }
 #endif
     #if VERBOSE == 1
-    if (status != GSL_SUCCESS){
-        printf("STATUS: %d\n", status);
-        printf("STATUS: %s\n", gsl_strerror(status));
+    if(fwd) {
+        if (status != GSL_SUCCESS) {
+            printf("\tSTATUS: %d\n", status);
+            printf("\tSTATUS: %s\n", gsl_strerror(status));
+        }
+        printf("\thybrid took %zu iterations\n", iter);\
+
     }
-    printf("\thybrid took %zu iterations\n", iter);
+    else{
+            if (status != GSL_SUCCESS){
+                printf("STATUS: %d\n", status);
+                printf("STATUS: %s\n", gsl_strerror(status));
+            }
+            printf("hybrid took %zu iterations\n", iter);
+    }
+    gsl_matrix *jacobian = gsl_matrix_alloc(n, n);
+    int stat = gsl_multiroot_fdjacobian(&f, &x_vec.vector, s->f, 1e-3, jacobian);
+    printf("JACOBIAN:\n");
+    printf("STATUS: %d\n", stat);
+    printGSLMatrix(jacobian);
+
+    matrix *determinant = zeros(6,6);
+    gsl_to_matrix(jacobian, determinant);
+    printf("DETERMINANT: %.15f\n", Det(determinant));
     #endif
-//    gsl_matrix *jacobian = gsl_matrix_alloc(n, n);
-//    int stat = gsl_multiroot_fdjacobian(&f, &x_vec.vector, s->f, 1e-9, jacobian);
-//    printf("JACOBIAN:\n");
-//    printf("STATUS: %d\n", stat);
-//    printGSLMatrix(jacobian);
+
+
 
    //assert(!isnan(s->f->data[1]));
     // Extract solution
@@ -2354,6 +2358,9 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
             //copyMatrix(tempGuess, InitGuess);
             if(status != 0){
                 printf("newton method failed to converge. ALL FAILED");
+                #if SOLVER_ERRORS == 1
+                assert(1 == 0);
+                #endif
 
             }
         }
@@ -2642,7 +2649,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     }
 
-#include <gsl/gsl_errno.h>
+
 
 void custom_error_handler(const char *reason, const char *file, int line, int gsl_errno) {
     fprintf(stderr, "GSL Error: %s:%d: %s (code %d)\n", file, line, reason, gsl_errno);
@@ -2651,9 +2658,9 @@ void custom_error_handler(const char *reason, const char *file, int line, int gs
 
 FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *C_des, matrix *F_0, matrix *Theta_DDot_guess) {
 
-
-    gsl_set_error_handler(&custom_error_handler);
-
+    #if GSL_ERROR_HANDLER == 1
+        gsl_set_error_handler(&custom_error_handler);
+    #endif
     int numBody = 5;//todo this should not be a magic number
     int BC_Start = getBCStart(robot);
     //int BC_End = getBCEnd(robot);
@@ -2726,11 +2733,11 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     matrix *JointAcc = matrix_new(Theta_DDot_guess->numRows, 1);
     matrix *tempGuess = matrix_new(Theta_DDot_guess->numRows, 1);
-    copyMatrix(Theta_DDot_guess, JointAcc);
+
 
     #if VERBOSE == 1
-    printf("____________JointAcc_______________________\n");
-    printMatrix(JointAcc);
+    printf("____________theta ddot guess_______________________\n");
+    printMatrix(Theta_DDot_guess);
     #endif
 
     copyMatrix(Theta_DDot_guess, tempGuess);
@@ -2754,6 +2761,9 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
             status = find_roots_newton(tempGuess, params, 1);
             if(status != 0){
                 printf("ALL FAILED IN FDM_MB_RE FIRST SOLVE");
+                #if SOLVER_ERRORS == 1 || SOLVER_ERROR_TOP == 1
+                assert(1 == 0);
+                #endif
 
             }
         }
@@ -2837,6 +2847,9 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
             if(status != 0){
                 #if VERBOSE == 2
                 printf("ALL FAILED IN FDM_MB_RE SECOND SOLVE");
+                #endif
+                #if SOLVER_ERRORS == 1 || SOLVER_ERROR_TOP == 1
+                assert(1 == 0);
                 #endif
             }
         }

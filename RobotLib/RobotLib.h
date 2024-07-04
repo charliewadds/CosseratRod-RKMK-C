@@ -7,8 +7,13 @@
 //#endif
 
 
+#define GSL_ERROR_HANDLER 0
 #define VERBOSE 1
 #define SOLVER_SAVE 1
+#define SOLVER_ERRORS 1
+#define SOLVER_ERROR_TOP 1
+
+
 
 #define MAX_ITER_LEVMAR 2000
 #define MAX_ITER_NEWTON 20
@@ -17,7 +22,7 @@
 #define TOLERANCE_INV 1e-9
 #define TOLERANCE_FWD 1e-5
 
-#define D_P_LEVMAR 1e-30
+#define D_P_LEVMAR 1e-9
 #define STEP_LEVMAR 1e-6
 
 #ifndef COSSERATROD_RKMK_C_ROBOTLIB_H

@@ -52,12 +52,8 @@ matrix *expm(matrix *A, matrix *result){
 }
 
 matrix *gsl_to_matrix(gsl_matrix *gsl_matrix, matrix *result){
-    //matrix *m = matrix_new(gsl_matrix->size1, gsl_matrix->size2);
-    //zeroMatrix(result);
-    for(int i = 0; i < result->numRows; i++){
-        for(int j = 0; j < result->numCols; j++){
-            result->data[(i * result->numCols) + j] = gsl_matrix_get(gsl_matrix, i, j);
-        }
+    for(int i = 0; i < gsl_matrix->size1 * gsl_matrix->size2; i++){
+        result->data[i] = gsl_matrix->data[i];
     }
     return result;
 }
