@@ -903,7 +903,7 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
         );
 
         assert(hasNan(result->f) == 0);
-        zeroMatrix(tempR6n1);
+        //zeroMatrix(tempR6n1);
         assert(hasNan(g[i+1]) == 0);
         getSection(result->f,0,5,i,i, tempR6n1);
         assert(hasNan(tempR6n1) == 0);
@@ -1432,6 +1432,8 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     #if VERBOSE == 1
     printf("-------------------F_FLEX END-----------------------------\n");
+    printMatrix(tempGuess);
+    printf("-------------------F_FLEX END-----------------------------\n");
     #endif
     copyMatrix(tempGuess, str_guess);
     //printf("FUFLEX_MB_BCS SOLVER END\n");
@@ -1486,7 +1488,7 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     //matrix *parentCoM ;
     //matrix *childCoM;
-    for(int i = 1; i <= 6; i++){
+    for(int i = 1; i <= numBody+1; i++){
 
         //printMatrix(&F_temp);
         //printf("\n\n");
@@ -1569,14 +1571,15 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             setSection(F,0,5,i,i, F_temp);// [N;Nm] Save Wrench Between i,i-1_th Body @ CoM Expressed in BCF
 
 
-            if(i > BC_Start){
-                tempC6n1 = matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempC6n1);
+
+
                 //setSection(C);
                 if(i<numBody+1) {
+                    tempC6n1 = matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempC6n1);
                     matMult(tempC6n1, curr_joint->object->joint->twistR6, temp1);
                     setSection(C, 0, 0, i - 1, i - 1, temp1);
                 }
-            }
+
             /*
              * F_temp = F(:,i) + transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i)- ROBOT{2*i-1}.Mass*d_eta(:,i);
              */
@@ -1664,9 +1667,9 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
         if(curr_body->type == 1) {//flexible body
             //temp6x6n2 = curr_body->object->flex->mass;
-            copyMatrix(curr_body->object->flex->CoM, tempR6n1);
+            copyMatrix(curr_body->object->flex->CoM, tempR6n3);
         }else if(curr_body->type == 0){
-            copyMatrix(curr_body->object->rigid->CoM, tempR6n1);
+            copyMatrix(curr_body->object->rigid->CoM, tempR6n3);
             //temp6x6n2 = curr_body->object->rigid->mass;
         }else{
             assert(1 == 0);//this is a bad way to do errors
@@ -1677,8 +1680,8 @@ matrix *F_Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         getSection(F, 0,5,i-1,i-1, tempR6n1);
         matrix_transpose(tempR6n1, tempR6t);
 
-        matrix_scalar_mul( tempR6n1, -1, tempR6n1);
-        hat_R6(tempR6n1, temp4x4n1);
+        matrix_scalar_mul( tempR6n3, -1, tempR6n3);
+        hat_R6(tempR6n3, temp4x4n1);
         expm_SE3(temp4x4n1, temp4x4n1);
         adj(temp4x4n1, temp6x6n1);
 
@@ -2736,14 +2739,14 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     #if VERBOSE == 1
     printf("HYBRID DONE, status: %d\n", status);
     #endif
-    if (status != 6 ) {
+    if (status != 0 ) {
         #if VERBOSE == 1
         printf("levmar method failed to converge. Trying hybrid\n");
         #endif
         copyMatrix(Theta_DDot_guess, tempGuess);
         status = find_roots_levmarqrt(tempGuess, params, 1);
 
-        if (status != 0) {
+        if (status != 6) {
             #if VERBOSE == 1
             printf("levmar method failed to converge trying newton\n");
             #endif
