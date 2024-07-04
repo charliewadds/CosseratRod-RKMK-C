@@ -379,7 +379,7 @@ int main() {
         printMatrix(fdm->JointAcc);
         printf("-----------------------\n");
 
-        getSection(robot->objects[2*BC_Start]->object->flex->f_prev, 0, 5, robot->objects[2*BC_Start]->object->flex->f_prev->numCols-1,robot->objects[2*BC_Start]->object->flex->f_prev->numCols -1, tempF);
+        getSection(robot->objects[2*BC_Start]->object->flex->f_prev, 0, 5, 0,0, tempF);
         copyMatrix(tempF, F_0);
 
         //theta_ddot = fdm->JointAcc;

@@ -8,7 +8,7 @@
 
 
 #define GSL_ERROR_HANDLER 1
-#define VERBOSE 2
+#define VERBOSE 1
 #define SOLVER_SAVE 1
 #define SOLVER_ERRORS 1
 #define SOLVER_ERROR_TOP 1
