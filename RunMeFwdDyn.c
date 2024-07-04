@@ -381,8 +381,8 @@ int main() {
 
         getSection(robot->objects[2*BC_Start]->object->flex->f_prev, 0, 5, 0,0, tempF);
         copyMatrix(tempF, F_0);
+        //TODO this diverges after the second step
 
-        //theta_ddot = fdm->JointAcc;
         copyMatrix(fdm->JointAcc, theta_ddot);
 
 
