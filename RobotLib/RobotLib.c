@@ -1373,7 +1373,7 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
         }
     }
     str_guess = zeros(F_0->numRows,1);
-    copyMatrix(F_0, str_guess);
+    //copyMatrix(F_0, str_guess);
 
 
     #if VERBOSE >= 2
@@ -1705,6 +1705,12 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
 
     assert(isnan(robot->objects[1]->object->joint->velocity)==0);
     copyMatrix(C_inv, result);
+
+    matrix* temp = matrix_new(1,5);
+    matrix_transpose(C_inv, temp);
+    matrixToFile(temp, "C_inv.csv");
+    matrix_transpose(InitGuess, temp);
+    matrixToFile(temp, "InitGuess.csv");
     return GSL_SUCCESS;
 
 

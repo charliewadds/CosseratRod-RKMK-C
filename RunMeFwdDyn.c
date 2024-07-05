@@ -166,10 +166,10 @@ Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
 
 
     for(int i = 0; i < N; i++){
-        Body_2->object->flex->f_prev->data[2 * N + i] = 1;
-        Body_2->object->flex->f_pprev->data[2 * N + i] = 1;
-        Body_4->object->flex->f_prev->data[2 * N + i] = 1;
-        Body_4->object->flex->f_pprev->data[2 * N + i] = 1;
+        Body_1->object->flex->f_prev->data[2 * N + i] = 1;
+        Body_1->object->flex->f_pprev->data[2 * N + i] = 1;
+        Body_3->object->flex->f_prev->data[2 * N + i] = 1;
+        Body_3->object->flex->f_pprev->data[2 * N + i] = 1;
     }
 
     double pihalf = M_PI/2;
@@ -543,11 +543,15 @@ int main() {
     matrix *temp5x1 = zeros(5,1);
     matrix *temp5xn = zeros(5,timeStep);
     matrix *tempF = zeros(6,1);
+    matrix* negative = ones(1,5);
+    matrix_scalar_mul(negative, 0, negative);
+
     for(int i = 0; i < timeStep; i++){
         printf("\nTime Step: %d\n", i);
 
         stepStart = clock();
-
+        matrixToFile(negative, "C_inv.csv");
+        matrixToFile(negative, "InitGuess.csv");
         setSection(C_des_1, 0, 4, 0, 0, getSection(C_des, 0, 4, i, i, tempLinkx1));
         fdm = FDM_MB_RE(robot, theta, theta_dot, theta_ddot, F_ext, dt, C_des_1 ,F_0, InitGuess);//todo do I need JointAcc in funciton?
         assert(isnan(robot->objects[1]->object->joint->velocity)==0);
