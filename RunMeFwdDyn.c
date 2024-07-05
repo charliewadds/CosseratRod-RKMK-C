@@ -546,12 +546,15 @@ int main() {
     matrix* negative = ones(1,5);
     matrix_scalar_mul(negative, 0, negative);
 
+
     for(int i = 0; i < timeStep; i++){
         printf("\nTime Step: %d\n", i);
 
         stepStart = clock();
+        #if LOG_F_FLEX == 1
         matrixToFile(negative, "C_inv.csv");
         matrixToFile(negative, "InitGuess.csv");
+        #endif
         setSection(C_des_1, 0, 4, 0, 0, getSection(C_des, 0, 4, i, i, tempLinkx1));
         fdm = FDM_MB_RE(robot, theta, theta_dot, theta_ddot, F_ext, dt, C_des_1 ,F_0, InitGuess);//todo do I need JointAcc in funciton?
         assert(isnan(robot->objects[1]->object->joint->velocity)==0);
@@ -592,7 +595,7 @@ int main() {
         }
         assert(isnan(robot->objects[1]->object->joint->velocity)==0);
         printf("step took: %f Seconds\n", ((double) (clock() - stepStart)) / CLOCKS_PER_SEC);
-        saveTimeCSV(i, ((double) (clock() - stepStart)) / CLOCKS_PER_SEC, "time.csv");
+        //saveTimeCSV(i, ((double) (clock() - stepStart)) / CLOCKS_PER_SEC, "time.csv");
     }
     printf("DONE");
 //    matrixToFile(angles, "RigidRandyAngles.csv");

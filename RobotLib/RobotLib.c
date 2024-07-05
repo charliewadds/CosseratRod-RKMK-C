@@ -199,22 +199,17 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
 
     //rigidKin *kin =  malloc(sizeof(rigidKin));
     //memcpy(result->g_cur, g_cur, sizeof(matrix));
-
     copyMatrix(g_cur, result->g_cur);
-    //assert(hasNan(result->g_cur) == 0);
     //result->g_cur = g_cur;
     //memcpy(result->g_act_wrt_prev, g_cur_wrt_prev, sizeof(matrix));
     copyMatrix(g_act_wrt_prev, result->g_act_wrt_prev);
-    //assert(hasNan(result->g_act_wrt_prev) == 0);
     //result->g_act_wrt_prev = g_act_wrt_prev;
     //memcpy(result->eta, eta, sizeof(matrix));
     copyMatrix(eta, result->eta);
-    //assert(hasNan(result->eta) == 0);
     //result->eta = eta;
     //memcpy(result->d_eta, d_eta, sizeof(matrix));
     //result->d_eta = d_eta;
     copyMatrix(d_eta, result->d_eta);
-    //assert(hasNan(result->d_eta) == 0);
 
     matrix_free(eta);
     matrix_free(childCoM);
@@ -611,9 +606,9 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
     matrix_free(eta_t);
 
     matrix_free(f_t);
-
-
-
+    //printMatrix(adj_R6(f));
+//    printMatrix(result->f_s);
+//    printMatrix(result->eta_s);
     return result;
 }
 
@@ -1336,7 +1331,7 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
 
     matrix *theta_ddot = matrix_new(InitGuess->numRows, InitGuess->numCols);
     copyMatrix(InitGuess, theta_ddot);
-
+    copyMatrix(InitGuess, params->Theta_ddot);
 
     matrix *C_des = matrix_new(params->C_des->numRows, params->C_des->numCols);
     copyMatrix(params->C_des, C_des);
@@ -1706,11 +1701,13 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
     assert(isnan(robot->objects[1]->object->joint->velocity)==0);
     copyMatrix(C_inv, result);
 
+    #if LOG_F_FLEX == 1
     matrix* temp = matrix_new(1,5);
     matrix_transpose(C_inv, temp);
     matrixToFile(temp, "C_inv.csv");
     matrix_transpose(InitGuess, temp);
     matrixToFile(temp, "InitGuess.csv");
+    #endif
     return GSL_SUCCESS;
 
 
@@ -2135,16 +2132,16 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, do
             }
             printf("hybrid took %zu iterations\n", iter);
     }
-//    jacobian = gsl_matrix_alloc(n, n);
-//    stat = gsl_multiroot_fdjacobian(&f, &x_vec.vector, s->f, 1e-3, jacobian);
+//    gsl_matrix *jacobian = gsl_matrix_alloc(n, n);
+//    int stat = gsl_multiroot_fdjacobian(&f, &x_vec.vector, s->f, 1e-4, jacobian);
 //    printf("JACOBIAN:\n");
 //    printf("STATUS: %d\n", stat);
 //    printGSLMatrix(jacobian);
 //
-//    determinant = zeros(6,6);
+//    matrix *determinant = zeros(6,6);
 //    gsl_to_matrix(jacobian, determinant);
 //    printf("DETERMINANT: %.15f\n", Det(determinant));
-    //assert(fabs(Det(determinant)) > 0.0000000000000000000000000001);
+//    assert(fabs(Det(determinant)) > 0.0000000000000000000000000001);
     #endif
 
 
@@ -2249,19 +2246,25 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     matrix *tempGuess = matrix_new(6, 1);
     copyMatrix(InitGuess, tempGuess);
+#if VERBOSE >= 1
+
     printf("____________InitGuess_______________________\n");
     printMatrix(InitGuess);
+
+#endif
     assert(hasNan(tempGuess)==0);
     int status = find_roots_hybrid(tempGuess, params, 0, TOLERANCE_INV);
 
     if (status != 0) {
+#if VERBOSE >= 1
         printf("hybrid method failed to converge. Trying newton\n");
-        copyMatrix(InitGuess, tempGuess);
+        //copyMatrix(InitGuess, tempGuess);
+#endif
         status = find_roots_levmarqrt(tempGuess, params, 0, TOLERANCE_INV);
         //copyMatrix(tempGuess, InitGuess);
         if (status != 6) {
             printf("levmar method failed to converge trying newton\n");
-            copyMatrix(InitGuess, tempGuess);
+            //copyMatrix(InitGuess, tempGuess);
             status = find_roots_newton(tempGuess, params, 0, TOLERANCE_INV);
             //copyMatrix(tempGuess, InitGuess);
             if(status != 0){
@@ -2274,12 +2277,13 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         }
     }
         //printMatrix(Theta);
+    copyMatrix(tempGuess, InitGuess);
+        #if VERBOSE >= 1
 
-        copyMatrix(tempGuess, InitGuess);
         printf("_______________SOLUTION______________________\n");
         printMatrix(InitGuess);
         printf("___________________________________________\n\n");
-
+        #endif
         eye(g_ref[0]);
         eye(g_act_wrt_prev[0]);
 
@@ -2730,17 +2734,33 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     matrix *temp6x6n1 = matrix_new(6, 6);
     matrix *temp6x6n2 = matrix_new(6, 6);
 
+    matrix *temp1 = matrix_new(1,1);
+//    int num = 0;
+//
+//    matrix
+//    for(int i = 0; i < (robot->numObjects/2)-1; i++){
+//        if(robot->objects[(i*2)+1]->type == 2){
+//
+//            robot->objects[(2*i)+1]->object->joint->acceleration = JointAcc->data[num];
+//            robot->objects[(2*i)+1]->object->joint->velocity += JointAcc->data[num]*dt;
+//            assert(isnan(robot->objects[(2*i)+1]->object->joint->velocity)==0);
+//            //printf("%f", robot->objects[(2*i)+1]->object->joint->velocity);
+//            num++;
+//        }
+//    }
+
+    matrix *accel_old = zeros(Theta_DDot->numRows,1);
+    matrix *vel_old = zeros(Theta_DDot->numRows,1);
     int num = 0;
     for(int i = 0; i < (robot->numObjects/2)-1; i++){
-        if(robot->objects[(i*2)+1]->type == 2){
-
+        if(robot->objects[(2*i)+1]->type == 2){
+            accel_old->data[num] = robot->objects[(2*i)+1]->object->joint->acceleration;
             robot->objects[(2*i)+1]->object->joint->acceleration = JointAcc->data[num];
 
-
-            robot->objects[(2*i)+1]->object->joint->velocity += JointAcc->data[num]*dt;
+            vel_old->data[num] = robot->objects[(2*i)+1]->object->joint->velocity;
             assert(isnan(robot->objects[(2*i)+1]->object->joint->velocity)==0);
-            //printf("%f", robot->objects[(2*i)+1]->object->joint->velocity);
-            num++;
+            robot->objects[(2*i)+1]->object->joint->velocity += JointAcc->data[num] * dt;
+            num ++;
         }
     }
 
@@ -2761,14 +2781,14 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         #if VERBOSE  >= 1
         printf("hybrid method failed to converge. Trying levmar\n");
         #endif
-        copyMatrix(F_0, StrGuess);
+        //copyMatrix(F_0, StrGuess);
         status = find_roots_levmarqrt(StrGuess, params, 0, TOLERANCE_FWD);
         printMatrix(StrGuess);
         if (status != 6) {
             #if VERBOSE >= 2
             printf("levmar method failed to converge trying newton\n");
             #endif
-            copyMatrix(F_0, StrGuess);
+            //copyMatrix(F_0, StrGuess);
             status = find_roots_newton(StrGuess, params, 0, TOLERANCE_FWD);
             if(status != 0){
                 #if VERBOSE == 1
@@ -2839,6 +2859,12 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
             } else {
                 setSection(F, 0, 5, i, i, F_temp);
             }
+
+            getSection(F, 0, 5, i, i, tempR6n1);
+            matrix_transpose(tempR6n1, tempR6n1t);
+            matMult(tempR6n1t, joint->twistR6, temp1);
+            setSection(C, 0, 0, i-1, i-1, temp1);
+
             F_dist = zeros(6, body->object->flex->N);
 
 
@@ -2880,11 +2906,11 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
             if (i < numBody + 2) {
 
                 //setSection(C, 0,5, i - 1, i - 1, matMult(matrix_transpose(getSection(F, 0,5,i,i)), robot->objects[2*i-2]->object->joint->twistR6));
-                for (int j = 0; j < C->numRows - 1; j++) {
+                if(i < numBody + 1){
 
                     setSection(C, 0, C->numRows - 1, i - 1, i - 1,
                                matMult(matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempR6n1t),
-                                       joint->twistR6, tempR6n1));
+                                       joint->twistR6, temp1));
 
                 }
             }
@@ -2978,6 +3004,20 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
         }
 
+    }
+
+
+    num = 0;
+    for(int i = 0; i < (robot->numObjects/2)-1; i++){
+        if(robot->objects[(i*2)+1]->type == 2){
+
+            robot->objects[(2*i)+1]->object->joint->acceleration = accel_old->data[num];
+
+
+            robot->objects[(2*i)+1]->object->joint->velocity = vel_old->data[num];
+            //printf("%f", robot->objects[(2*i)+1]->object->joint->velocity);
+            num++;
+        }
     }
 
     //free(dyn);//todo write free_flexDyn to fully free
