@@ -10,6 +10,7 @@
 #define GSL_ERROR_HANDLER 0
 #define VERBOSE 1
 
+
 #define SOLVER_SAVE 1
 #define SOLVER_ERRORS 1
 #define SOLVER_ERROR_TOP 1

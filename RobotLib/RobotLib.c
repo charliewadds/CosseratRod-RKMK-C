@@ -1321,6 +1321,7 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
     double dt = params->dt;
 
 
+
     matrix *theta = matrix_new(params->Theta->numRows, params->Theta->numCols);
     copyMatrix(params->Theta, theta);
 
@@ -1331,6 +1332,8 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
 
     matrix *theta_ddot = matrix_new(InitGuess->numRows, InitGuess->numCols);
     copyMatrix(InitGuess, theta_ddot);
+    matrix *theta_ddot_old = zeros(theta_ddot->numRows, theta_ddot->numCols);
+    copyMatrix(params->Theta_ddot, theta_ddot_old);
     copyMatrix(InitGuess, params->Theta_ddot);
 
     matrix *C_des = matrix_new(params->C_des->numRows, params->C_des->numCols);
@@ -1418,6 +1421,7 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
     printf("-------------------F_FLEX END-----------------------------\n");
     #endif
     copyMatrix(tempGuess, str_guess);
+    copyMatrix(theta_ddot_old, params->Theta_ddot);
     //printf("FUFLEX_MB_BCS SOLVER END\n");
     //printMatrix(str_guess);
     //printf("\n");
@@ -2764,7 +2768,8 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         }
     }
 
-
+    matrix* Theta_ddot_old = zeros(Theta_DDot->numRows,1);
+    copyMatrix(params->Theta_ddot, Theta_ddot_old);
     copyMatrix(JointAcc, params->Theta_ddot);
 
     //solve inverse boundary condition
@@ -2800,7 +2805,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
             }
         }
     }
-
+    copyMatrix( Theta_ddot_old, params->Theta_ddot);
 #if VERBOSE >= 2
     printf("-------------------fdm 2 end-----------------------------\n");
 #endif
@@ -2906,13 +2911,10 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
             if (i < numBody + 2) {
 
                 //setSection(C, 0,5, i - 1, i - 1, matMult(matrix_transpose(getSection(F, 0,5,i,i)), robot->objects[2*i-2]->object->joint->twistR6));
-                if(i < numBody + 1){
-
-                    setSection(C, 0, C->numRows - 1, i - 1, i - 1,
+                setSection(C, 0, C->numRows - 1, i - 1, i - 1,
                                matMult(matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempR6n1t),
                                        joint->twistR6, temp1));
 
-                }
             }
 
             if (body->type == 1) {//flex
@@ -3024,9 +3026,15 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     //free(kin);//todo write free_rigidKin to fully free
 
     FDM_MB_RE_OUT *out = (FDM_MB_RE_OUT *) malloc(sizeof(FDM_MB_RE_OUT));
-    out->C = Ct;
-    out->F = F;
-    out->JointAcc = JointAcc;
+    out->C = matrix_new(Ct->numRows, Ct->numCols);
+    copyMatrix(Ct, out->C);
+    //out->C = Ct;
+    out->F = matrix_new(F->numRows, F->numCols);
+    copyMatrix(F, out->F);
+    //out->F = F;
+    out->JointAcc = matrix_new(JointAcc->numRows, JointAcc->numCols);
+    copyMatrix(JointAcc, out->JointAcc);
+    //out->JointAcc = JointAcc;
     //out->robot_new = robot;
 
 
