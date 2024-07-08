@@ -2909,10 +2909,10 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
             setSection(F, 0, 5, i, i, F_temp);// [N;Nm] Save Wrench Between i,i-1_th Body @ CoM Expressed in BCF
 
-            if (i < numBody + 2) {
+            if (i < numBody + 1) {
 
                 //setSection(C, 0,5, i - 1, i - 1, matMult(matrix_transpose(getSection(F, 0,5,i,i)), robot->objects[2*i-2]->object->joint->twistR6));
-                setSection(C, 0, C->numRows - 1, i - 1, i - 1,
+                setSection(C, 0, 0, i - 1, i - 1,
                                matMult(matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempR6n1t),
                                        joint->twistR6, temp1));
 

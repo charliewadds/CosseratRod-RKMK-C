@@ -480,7 +480,7 @@ int main() {
 
 
     double dt = 0.025;
-    int timeStep = 100;
+    int timeStep = 30;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
