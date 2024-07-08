@@ -1386,6 +1386,7 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
 
     copyMatrix(F_0, tempGuess);
     //assert(isnan(robot->objects[1]->object->joint->velocity)==0);
+
     int status = find_roots_hybrid(tempGuess, params, 0, TOLERANCE_INV);
     //assert(isnan(robot->objects[1]->object->joint->velocity)==0);
     if (status != 0) {
@@ -1503,7 +1504,7 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
         setSection(d_eta, 0,5,i,i, kin->d_eta);
 
 
-        matMult(matrix_transpose(adj(g_act_wrt_prev[i], temp6x6n1), temp6x6n2), F_temp, F_temp);//why is this not a pointer
+        matMult(matrix_transpose(adj(g_act_wrt_prev[i], temp6x6n1), temp6x6n2), F_temp, F_temp);
 
         if(curr_body->type == 1) {//flexible body
             if(dyn->eta != NULL){
@@ -3012,6 +3013,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     num = 0;
     for(int i = 0; i < (robot->numObjects/2)-1; i++){
         if(robot->objects[(i*2)+1]->type == 2){
+
 
             robot->objects[(2*i)+1]->object->joint->acceleration = accel_old->data[num];
 

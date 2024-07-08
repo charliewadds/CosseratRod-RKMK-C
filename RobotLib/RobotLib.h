@@ -23,8 +23,8 @@
 #define MAX_ITER_NEWTON 15
 #define MAX_ITER_HYBRID 15
 
-#define TOLERANCE_INV 1e-9
-#define TOLERANCE_FWD 1e-5
+#define TOLERANCE_INV 1e-15
+#define TOLERANCE_FWD 1e-15
 
 #define D_P_LEVMAR 1e-30
 #define STEP_LEVMAR 1e-9
