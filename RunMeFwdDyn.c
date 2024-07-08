@@ -585,14 +585,25 @@ int main() {
         assert(hasNan(theta_dot) == 0);
         assert(hasNan(theta_ddot) == 0);
         assert(isnan(robot->objects[1]->object->joint->velocity)==0);
-        for(int j = 1; j < 10; j+= 2 ) {//todo j should start at firstjoint an
-            if (robot->objects[j]->type == 2) {
-                robot->objects[j]->object->joint->position = theta->data[(currJointIndex * theta->numCols)];
-                robot->objects[j]->object->joint->velocity = theta_dot->data[(currJointIndex * theta_dot->numCols)];
-                robot->objects[j]->object->joint->acceleration = theta_ddot->data[(currJointIndex * theta_ddot->numCols) + i];
-                currJointIndex++;
+
+        int num = 0;
+        for(int j = 0; j < (robot->numObjects/2)-1; j++){
+            if(robot->objects[(2*j)+1]->type == 2){
+                robot->objects[(2*j)+1]->object->joint->position = theta->data[num];
+                robot->objects[(2*j)+1]->object->joint->velocity = theta_dot->data[num];
+                robot->objects[(2*j)+1]->object->joint->acceleration = theta_ddot->data[num];
+                num++;
             }
         }
+
+//        for(int j = 1; j < 10; j+= 2 ) {//todo j should start at firstjoint an
+//            if (robot->objects[j]->type == 2) {
+//                robot->objects[j]->object->joint->position = theta->data[(currJointIndex * theta->numCols)];
+//                robot->objects[j]->object->joint->velocity = theta_dot->data[(currJointIndex * theta_dot->numCols)];
+//                robot->objects[j]->object->joint->acceleration = theta_ddot->data[(currJointIndex * theta_ddot->numCols) + i];
+//                currJointIndex++;
+//            }
+//        }
         assert(isnan(robot->objects[1]->object->joint->velocity)==0);
         printf("step took: %f Seconds\n", ((double) (clock() - stepStart)) / CLOCKS_PER_SEC);
         //saveTimeCSV(i, ((double) (clock() - stepStart)) / CLOCKS_PER_SEC, "time.csv");
