@@ -40,9 +40,11 @@ matrix *expm(matrix *A, matrix *result){
 
     gsl_matrix *gsl_A = gsl_matrix_alloc(A->numRows, A->numCols);
     gsl_matrix *gsl_result = gsl_matrix_alloc(A->numRows, A->numCols);
+    gsl_matrix_set_zero(gsl_result);
     copy_matrix_to_gsl(A, gsl_A);
     //matrix_to_gsl(A, gsl_A);
     gsl_linalg_exponential_ss(gsl_A, gsl_result, GSL_PREC_DOUBLE);
+
 
     gsl_to_matrix(gsl_result, tempResult);
     gsl_matrix_free(gsl_A);
