@@ -482,6 +482,7 @@ def robotCompare(matlab_engine):
     c_robot = robotCall.call_defPaperSample2(theta_m, theta_dot_m, theta_ddot_m)
 
 
+
     print("C Robot")
     print(c_robot)
 

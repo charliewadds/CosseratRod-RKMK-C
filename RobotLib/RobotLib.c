@@ -2993,9 +2993,6 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
         matMult(tempR6t, tempR6n2, temp1);
         setSection(C, 0,0,i-1,i-1,temp1);
-
-
-
     }
 
     matrix *Ct = matrix_new(C->numCols, C->numRows);
@@ -3016,8 +3013,6 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         }
 
     }
-
-
 
     num = 0;
     for(int i = 0; i < (robot->numObjects/2)-1; i++){

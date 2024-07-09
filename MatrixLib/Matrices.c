@@ -129,6 +129,10 @@ matrix *matrix_add3(matrix *m1,matrix *m2, matrix *m3, matrix *result){
     assert(m1->numRows == m3->numRows);
     assert(m1->numCols == m3->numCols);
 
+    assert(result->numRows == m1->numRows);
+    assert(result->numCols == m1->numCols);
+
+
     matrix *temp = matrix_new(m1->numRows, m1->numCols);
     matrix_add(m1, m2, temp);
     matrix_add(temp, m3, result);
@@ -142,7 +146,6 @@ matrix *matrix_scalar_mul(matrix *m, double scalar, matrix *result){
 
     assert(result->numRows == m->numRows);
     assert(result->numCols == m->numCols);
-
 
     matrix *temp;
     if(m == result){
@@ -214,6 +217,8 @@ matrix *matrix_solve(matrix *A, matrix *b, matrix *result){
 matrix *matrix_inverse(matrix *m, matrix *result){
     assert(m->square == 1);
 
+    assert(result->numRows == m->numRows);
+    assert(result->numCols == m->numCols);
 
     //assert(Det(m) != 0);
     gsl_matrix *gsl_m = gsl_matrix_alloc(m->numRows, m->numCols);

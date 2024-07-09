@@ -20,7 +20,7 @@
 
 
 
-#define TEMP_NUMBODY 3
+#define TEMP_NUMBODY 5
 int main() {
 
     clock_t start, end;
@@ -74,9 +74,9 @@ int main() {
 
 
     //matrix *temp1xRowsM1 = matrix_new(5, timeStep);
-    matrix *tempBodiesx1 = matrix_new(5, 1);
+    matrix *tempBodiesx1 = matrix_new(TEMP_NUMBODY, 1);
 
-    Robot *robot = defPaperSample_1(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
+    Robot *robot = defPaperSample_2(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
 
     int BC_Start = 2;//todo, this should be automated
     //int BC_End = 4;
@@ -91,17 +91,19 @@ int main() {
 
     //matrix *EE_POS = zeros(3, timeStep);
 
-    matrix *angles = zeros(((robot->numObjects-1)/2)+1,timeStep);
+    matrix *angles = zeros(((robot->numObjects-1)/2)-1,timeStep);
     IDM_MB_RE_OUT *idm = malloc(sizeof(IDM_MB_RE_OUT));
     matrix *tempLinkx1 = matrix_new(robot->numBody,1);
     for(int i = 0; i < timeStep; i++){
 
         matrix *f = matrix_new(6,1);
-        getSection(robot->objects[(2*robot->BC_Start)]->object->flex->f_prev, 0, robot->objects[(2*robot->BC_Start)]->object->flex->f_prev->numRows -1, 0, 0, f);//todo
+        getSection(robot->objects[(2*robot->BC_Start)]->object->flex->f_prev, 0, robot->objects[(2*robot->BC_Start)]->object->flex->f_prev->numRows - 1, 0, 0, f);//todo
 
         idm = IDM_MB_RE(robot, theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, i, i, tempLinkx1), F_ext, dt, F_0);
+
+        matrixToFile(f, "f.csv");
         matrix *tempf = matrix_new(7, 6);
-        matrixToFile(matrix_transpose(idm->F, tempf), "Finv.csv");
+
 
         //printf("%f", robot->objects[11]->object->joint->limits[0]);
         setSection(C, 0, C->numRows-1, i, i, idm->C);
@@ -119,8 +121,8 @@ int main() {
         setSection(Td_H, 0, robot->numBody, i, i, theta_dot);
 
 
-        theta = matrix_add(theta, matrix_scalar_mul(getSection(theta_dot, 0, robot->numBody, 0, 0, tempLinkx1), dt, tempLinkx1), theta);
-        theta_dot = matrix_add(theta_dot, matrix_scalar_mul(getSection(getSection(theta_ddot, 0, robot->numBody, i, i, tempLinkx1), 0, 4, 0, 0, tempLinkx1), dt, tempLinkx1), theta_dot);//todo this feels wrong
+        theta = matrix_add(theta, matrix_scalar_mul(getSection(theta_dot, 0, robot->numBody-1, 0, 0, tempLinkx1), dt, tempLinkx1), theta);
+        theta_dot = matrix_add(theta_dot, matrix_scalar_mul(getSection(getSection(theta_ddot, 0, robot->numBody-1, i, i, tempLinkx1), 0, robot->numBody-1, 0, 0, tempLinkx1), dt, tempLinkx1), theta_dot);//todo this feels wrong
         int currJointIndex = 0;
         for(int j = 1; j < 10; j+= 2 ) {//todo j should start at firstjoint an
             if (robot->objects[j]->type == 2) {
@@ -141,7 +143,7 @@ int main() {
             }
         }
 
-        //matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot.csv");
+        matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot.csv");
     }
     printf("DONE");
 //    matrixToFile(angles, "RigidRandyAngles.csv");

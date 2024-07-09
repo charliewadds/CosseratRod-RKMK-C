@@ -247,9 +247,5 @@ class robotCall:
 
         objects = []
         for i in range(robot_ptr.contents.numObjects):
-            object = robot_ptr.contents.objects[i]
-            if(object.contents.type == 0):
-                object_u = object.contents.object.contents
-                rigid = object_u.rigid.contents
-                objects.append(rigid)
 
+        return objects
