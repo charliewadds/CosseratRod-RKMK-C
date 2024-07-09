@@ -187,3 +187,69 @@ class matrixCall:
         return result_numpy
 
 
+class robotCall:
+    def call_defPaperSample2(theta: ctypes.POINTER(matrix), theta_dot: ctypes.POINTER(matrix), theta_ddot: ctypes.POINTER(matrix)):
+        robot_ptr = ctypes.POINTER(Robot)()
+        robot_ptr = robotLib.defPaperSample_2(theta, theta_dot, theta_ddot)
+
+
+        return robot_ptr
+
+    def matrixToListStr(self, matrix: ctypes.POINTER(matrix)) -> str:
+        result = '['
+        for i in range(matrix.contents.numRows):
+            for j in range(matrix.contents.numCols):
+                result += str(matrix.contents.data[(i * matrix.contents.numCols) + j]) + ' '
+            result += ']\n'
+        return result
+    def objectToDict(self, object: ctypes.POINTER(Object)) -> list:
+        object_list = []
+        if object.contents.type == 0:
+            object_u = object.contents.object.contents
+            rigid = object_u.rigid.contents
+            object_dict = {
+                'Name': object_u.name.decode('utf-8'),
+                'Type': 'RIGID',
+                'Mass': self.matrixToListStr(rigid.mass),
+                'Transform': self.matrixToListStr(rigid.transform),
+                'Stiff': self.matrixToListStr(rigid.stiffness),
+                'Damp': self.matrixToListStr(rigid.damping),
+                'CoM': self.matrixToListStr(rigid.CoM), # Add other required attributes similarly
+                'F_0': self.matrixToListStr(rigid.F_0),
+
+
+            }
+            object_list.append(object_dict)
+        elif object.contents.type == 1:
+            object_u = object.contents.object.contents
+            flex = object_u.flex.contents
+            object_dict = {
+                'Name': object_u.name.decode('utf-8'),
+                'Type': 'FLEXIBLE',
+                'Mass': self.matrixToListStr(flex.mass),  # Assuming these are similar to the 'Mass' in your provided format
+                'Inertia': flex.inertia  # Add other required attributes similarly
+            }
+            object_list.append(object_dict)
+        elif object.contents.type == 2:
+            object_u = object.contents.object.contents
+            joint = object_u.joint.contents
+            object_dict = {
+                'Name': object_u.name.decode('utf-8'),
+                'Type': 'JOINT',
+                'JointType': joint.type,  # Assuming these are similar to the 'Type' in your provided format
+                'Axis': joint.axis  # Add other required attributes similarly
+            }
+            object_list.append(object_dict)
+
+
+        return object_list
+    def robotToMatlab(self, robot_ptr: ctypes.POINTER(Robot)):
+
+        objects = []
+        for i in range(robot_ptr.contents.numObjects):
+            object = robot_ptr.contents.objects[i]
+            if(object.contents.type == 0):
+                object_u = object.contents.object.contents
+                rigid = object_u.rigid.contents
+                objects.append(rigid)
+

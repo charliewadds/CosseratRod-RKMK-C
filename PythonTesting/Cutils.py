@@ -1,7 +1,9 @@
 import ctypes
 
 import numpy as np
+
 robotLib = ctypes.CDLL('cmake-build-debug/libRobotLib.dylib')
+
 
 class matrix(ctypes.Structure):
     _fields_ = [
@@ -10,6 +12,8 @@ class matrix(ctypes.Structure):
         ('data', ctypes.POINTER(ctypes.c_double)),
         ('square', ctypes.c_uint8)
     ]
+
+
 class rigidBody(ctypes.Structure):
     _fields_ = [
         ('name', ctypes.c_char_p),
@@ -19,32 +23,39 @@ class rigidBody(ctypes.Structure):
 
     ]  # Example fields
 
+
 class flexBody(ctypes.Structure):
     _fields_ = [
-        ('mass', ctypes.POINTER(matrix)),#6x6 mass matrix
-        ('transform', ctypes.POINTER(matrix)),#R6 transformation from start to end
-        ('stiff', ctypes.POINTER(matrix)),#6x6 stiffness matrix
-        ('damping', ctypes.POINTER(matrix)),#6x6 damping matrix
-        ('F_0', ctypes.POINTER(matrix)),#R6 force at start
-        ('N', ctypes.c_int),#number of elements to discretize the continuum todo some of these ints could be uint_8 or 16 to save memory
-        ('L', ctypes.c_double),#length of the continuum
-        ('eta_prev', ctypes.POINTER(matrix)),#6xN matrix of previous eta values
-        ('eta_pprev', ctypes.POINTER(matrix)),#6xN matrix of previous eta values
-        ('f_prev', ctypes.POINTER(matrix)),#6xN matrix of previous f values
-        ('f_pprev', ctypes.POINTER(matrix)),#6xN matrix of previous f values
-        ('CoM', ctypes.POINTER(matrix)),#R6 transformation start to COM todo is start J or I?
+        ('mass', ctypes.POINTER(matrix)),  #6x6 mass matrix
+        ('transform', ctypes.POINTER(matrix)),  #R6 transformation from start to end
+        ('stiff', ctypes.POINTER(matrix)),  #6x6 stiffness matrix
+        ('damping', ctypes.POINTER(matrix)),  #6x6 damping matrix
+        ('F_0', ctypes.POINTER(matrix)),  #R6 force at start
+        ('N', ctypes.c_int),
+        #number of elements to discretize the continuum todo some of these ints could be uint_8 or 16 to save memory
+        ('L', ctypes.c_double),  #length of the continuum
+        ('eta_prev', ctypes.POINTER(matrix)),  #6xN matrix of previous eta values
+        ('eta_pprev', ctypes.POINTER(matrix)),  #6xN matrix of previous eta values
+        ('f_prev', ctypes.POINTER(matrix)),  #6xN matrix of previous f values
+        ('f_pprev', ctypes.POINTER(matrix)),  #6xN matrix of previous f values
+        ('CoM', ctypes.POINTER(matrix)),  #R6 transformation start to COM todo is start J or I?
     ]  # Example fields
+
 
 class Body_u(ctypes.Structure):
     _fields_ = [
         ('rigid', ctypes.POINTER(rigidBody)),
         ('flex', ctypes.POINTER(flexBody))
     ]
+
+
 class Body(ctypes.Structure):
     _fields_ = [
         ('type', ctypes.c_uint8),
         ('body', ctypes.POINTER(Body_u))
     ]
+
+
 class rigidJoint(ctypes.Structure):
     _fields_ = [
         ('name', ctypes.c_char_p),
@@ -60,7 +71,6 @@ class rigidJoint(ctypes.Structure):
     ]  # Example fields
 
 
-
 class Object_u(ctypes.Structure):
     _fields_ = [
         ('name', ctypes.c_char_p),
@@ -68,9 +78,11 @@ class Object_u(ctypes.Structure):
         ('flex', ctypes.POINTER(flexBody)),
         ('joint', ctypes.POINTER(rigidJoint))]
 
+
 class Object(ctypes.Structure):
     _fields_ = [('type', ctypes.c_uint8),
                 ('object', ctypes.POINTER(ctypes.POINTER(Object_u)))]
+
 
 # Define the Robot structure
 class Robot(ctypes.Structure):
@@ -86,13 +98,10 @@ class ODE_output(ctypes.Structure):
         ("eta_s", ctypes.POINTER(matrix)),
         ("f_s", ctypes.POINTER(matrix))
     ]
-#________________-Functions-____________________
 
 
-
-
-
-def makeMatrix(m):
+#________________-Functions-_______________________
+def makeMatrix(m: np.ndarray) -> matrix:
     try:
         rows = m.shape[0]
     except IndexError:
@@ -111,6 +120,7 @@ def makeMatrix(m):
     matrix_c.square = 1 if rows == cols else 0
 
     return matrix_c
+
 
 def makeOdeOutput():
     # Create an instance of ODE_output

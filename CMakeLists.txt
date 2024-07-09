@@ -24,7 +24,7 @@ include_directories(Tests)
 # Source files for libraries
 set(LIE_GROUP_SOURCES LieGroup/LieGroup.c)
 set(MATRIX_LIB_SOURCES MatrixLib/Matrices.c)
-set(ROBOT_LIB_SOURCES RobotLib/RobotLib.c)
+set(ROBOT_LIB_SOURCES RobotLib/RobotLib.c RobotLib/makeRobots.c)
 
 set(FDM_SOURCE FDM/Discretization.c FDM/FDM.c
         RunMeInvDyn.c)
@@ -34,9 +34,9 @@ find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 
 # Create libraries
-add_library(MatrixLib STATIC ${MATRIX_LIB_SOURCES})
-add_library(LieGroup STATIC ${LIE_GROUP_SOURCES})
-add_library(RobotLib STATIC ${ROBOT_LIB_SOURCES})
+add_library(MatrixLib SHARED ${MATRIX_LIB_SOURCES})
+add_library(LieGroup SHARED ${LIE_GROUP_SOURCES})
+add_library(RobotLib SHARED ${ROBOT_LIB_SOURCES})
 
 
 

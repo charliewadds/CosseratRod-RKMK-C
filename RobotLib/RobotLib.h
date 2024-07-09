@@ -23,8 +23,8 @@
 #define MAX_ITER_NEWTON 15
 #define MAX_ITER_HYBRID 15
 
-#define TOLERANCE_INV 1e-15
-#define TOLERANCE_FWD 1e-15
+#define TOLERANCE_INV 1e-9
+#define TOLERANCE_FWD 1e-5
 
 #define D_P_LEVMAR 1e-30
 #define STEP_LEVMAR 1e-9
@@ -271,6 +271,9 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *BODY
 typedef struct robot_s {
     char *name;
     int numObjects;
+    int numBody;
+    int BC_Start;
+    int BC_End;
     Object **objects;
 }Robot;
 
@@ -368,5 +371,6 @@ int F_Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f);
 
 int F_Flex_MB_BCS(matrix *InitGuess, matrix *result, Flex_MB_BCS_params *params);
 matrix *fsolve_idm_mb_re(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
-
+Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot);
+Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot);
 #endif //COSSERATROD_RKMK_C_MATHLIB_H

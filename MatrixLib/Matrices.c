@@ -35,6 +35,7 @@ matrix *expm(matrix *A, matrix *result){
         tempResult = matrix_new(result->numRows, result->numCols);
 
     }else{
+
         tempResult = result;
     }
 
@@ -56,6 +57,7 @@ matrix *expm(matrix *A, matrix *result){
 matrix *gsl_to_matrix(gsl_matrix *gsl_matrix, matrix *result){
     //matrix *m = matrix_new(gsl_matrix->size1, gsl_matrix->size2);
     //zeroMatrix(result);
+    assert(gsl_matrix->size1* gsl_matrix->size2 == result->numRows * result->numCols);
     for(int i = 0; i < result->numRows; i++){
         for(int j = 0; j < result->numCols; j++){
             result->data[(i * result->numCols) + j] = gsl_matrix_get(gsl_matrix, i, j);

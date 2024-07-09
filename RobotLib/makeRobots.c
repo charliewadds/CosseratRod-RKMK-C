@@ -1,226 +1,9 @@
 //
-// Created by Charlie Wadds on 2024-04-09.
-//
-
-#include <time.h>
-#include "RobotLib.h"
-//
-// Created by Charlie Wadds on 2024-03-17.
+// Created by Charlie Wadds on 2024-07-09.
 //
 
 #include "RobotLib.h"
-#include <stdio.h>
-#include <math.h>
-//#include <float.h>
-#include <string.h>
-#include "Matrices.h"
 #include <assert.h>
-
-Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
-    double linkMass = 0.01;
-    double linkLen = 0.1;
-
-    matrix *temp3x3n1 = matrix_new(3,3);
-
-    matrix *temp6x6n1 = matrix_new(6,6);
-
-
-    matrix *tempR6n1 = matrix_new(6,1);
-    matrix *tempR6n2 = matrix_new(6,1);
-    matrix *linkTwist;
-
-
-
-
-    linkTwist = matrix_new(6,1);
-    linkTwist->data[(2 * linkTwist->numCols) + 0] = 1;
-    matrix_scalar_mul(linkTwist, linkLen, linkTwist);
-
-
-
-    matrix *linkCoM = matrix_new(6,1);
-    elemDiv(linkTwist, 2, linkCoM);
-
-    matrix *linkInertia = matrix_new(3,3);
-    matrix_scalar_mul(eye(temp3x3n1), 1.0/12.0 * linkMass * pow(linkLen, 2), linkInertia);
-
-    matrix *M = matrix_new(6,6);
-    eye(M);
-
-    setSection(M, 0, 2, 0, 2, matrix_scalar_mul(eye(temp3x3n1),linkMass, temp3x3n1));
-    setSection(M, 3, 5, 3, 5, linkInertia);
-
-    matrix *Z = zeros(6,1);
-
-    //SE3 *Z_SE3 = new_SE3_zeros();
-
-    double L_0 = 0.4;
-    matrix *F_0 = zeros(6,1);
-    F_0->data[(2 * F_0->numCols) + 0] = 1;
-
-    double rho = 75e1;
-    double mu = 5e5;
-    double r = 0.01;
-    double E = 1e8;
-    double G = E/(2*(1+0.3));
-    double I = M_PI/4*pow(r,4);
-    double A = M_PI*pow(r,2);
-    int N = 21;
-
-
-    //diag(2I,I,I)
-    matrix *J = zeros(3,3);
-    J->data[(0 * J->numCols) + 0] = 2*I;
-    J->data[(1 * J->numCols) + 1] = I;
-    J->data[(2 * J->numCols) + 2] = I;
-
-    matrix *Kbt = zeros(3,3);
-    Kbt->data[(0 * Kbt->numCols) + 0] = 2*G*I;
-    Kbt->data[(1 * Kbt->numCols) + 1] = E*I;
-    Kbt->data[(2 * Kbt->numCols) + 2] = E*I;
-
-    matrix *Kse = zeros(3,3);
-    Kse->data[(0 * Kse->numCols) + 0] = E*A;
-    Kse->data[(1 * Kse->numCols) + 1] = G*A;
-    Kse->data[(2 * Kse->numCols) + 2] = G*A;
-
-    matrix *Cse = zeros(3,3);
-    Cse->data[(0 * Cse->numCols) + 0] = 3*A;
-    Cse->data[(1 * Cse->numCols) + 1] = A;
-    Cse->data[(2 * Cse->numCols) + 2] = A;
-    matrix_scalar_mul(Cse, mu, Cse);
-
-    matrix *Cbt = zeros(3,3);
-    Cbt->data[(0 * Cbt->numCols) + 0] = 2*I;
-    Cbt->data[(1 * Cbt->numCols) + 1] = I;
-    Cbt->data[(2 * Cbt->numCols) + 2] = I;
-    matrix_scalar_mul(Cbt, mu, Cbt);
-
-    matrix *K = zeros(6,6);
-    setSection(K, 0, 2, 0, 2, Kse);
-    setSection(K, 3, 5, 3, 5, Kbt);
-
-    matrix *C = zeros(6,6);
-    setSection(C, 0, 2, 0, 2, Cse);
-    setSection(C, 3, 5, 3, 5, Cbt);
-
-
-    matrix *Mf = zeros(6,6);
-    setSection(Mf, 0, 2, 0, 2, matrix_scalar_mul(eye(temp3x3n1),rho*A, temp3x3n1));
-    setSection(Mf, 3, 5, 3, 5, matrix_scalar_mul(J,rho, temp3x3n1));
-
-
-    Object *base = malloc(sizeof(struct object_s));
-    base->type = 0;
-    base->object = malloc(sizeof(union object_u));
-    base->object->rigid = newRigidBody("base", matrix_scalar_mul(eye(temp6x6n1), INFINITY, temp6x6n1), Z, Z);//todo dbl max to replace inf
-
-    Object *Body_1 =  malloc(sizeof(struct object_s));
-    Body_1->type = 1;
-    Body_1->object = malloc(sizeof(union object_u));
-    Body_1->object->flex = newFlexBody("Body_1", Mf,  K,C, F_0, N, L_0);
-
-
-    Object *Body_2 =  malloc(sizeof(struct object_s));
-    Body_2->type = 0;
-    Body_2->object = malloc(sizeof(union object_u));
-    Body_2->object->rigid = newRigidBody("Body_2", M,  linkTwist, linkCoM);
-
-
-
-
-    Object *Body_3 =  malloc(sizeof(struct object_s));
-    Body_3->type = 1;
-    Body_3->object = malloc(sizeof(union object_u));
-    Body_3->object->flex = newFlexBody("Body_3", Mf,  K,C, F_0, N, L_0);
-
-    Object *EE =      malloc(sizeof(struct object_s));
-    EE->type = 0;
-    EE->object = malloc(sizeof(union object_u));
-    EE->object->rigid = newRigidBody("EE", zeros(6,6),  Z, Z);
-
-    matrix *r6_2 = zeros(6,1);
-    r6_2->data[(2 * r6_2->numCols) + 0] = 1;
-
-    matrix *r6_3 = zeros(6,1);
-    r6_3->data[(3 * r6_3->numCols) + 0] = 1;
-
-    matrix *r6_4 = zeros(6,1);
-    r6_4->data[(4 * r6_4->numCols) + 0] = 1;
-
-    matrix *r6_5 = zeros(6,1);
-    r6_5->data[(5 * r6_5->numCols) + 0] = 1;
-
-    double *lims = malloc(sizeof(double) * 2);
-    lims[0] = -M_PI;
-    lims[1] = M_PI;
-
-
-
-    //Body_2->object->flex->eta_prev = zeros(6,Body_2->object->flex->N);
-    //Body_2->object->flex->eta_pprev = zeros(6,Body_2->object->flex->N);
-
-    //Body_4->object->flex->eta_prev = zeros(6,Body_4->object->flex->N);
-    //Body_4->object->flex->eta_pprev = zeros(6,Body_4->object->flex->N);
-    //Body_2->object->flex->f_prev
-
-
-    for(int i = 0; i < N; i++){
-        Body_1->object->flex->f_prev->data[2 * N + i] = 1;
-        Body_1->object->flex->f_pprev->data[2 * N + i] = 1;
-        Body_3->object->flex->f_prev->data[2 * N + i] = 1;
-        Body_3->object->flex->f_pprev->data[2 * N + i] = 1;
-    }
-
-    double pihalf = M_PI/2;
-
-    Object **robotList = calloc(13, sizeof(Object));
-
-    for (int i = 0; i < 13; i++){
-        robotList[i] = malloc(sizeof(Object));
-    }
-    //todo this should be in a function like createObject or something
-
-    robotList[1]->type = 2;
-    robotList[1]->object = malloc(sizeof(union object_u));
-
-    robotList[1]->object->joint = newRigidJoint("Joint_1", r6_5, theta->data[(0 * theta->numCols) + 0], theta_dot->data[(0 * theta_dot->numCols) + 0], theta_ddot->data[(0 * theta_ddot->numCols) + 0], lims, 0, base, Body_1);
-
-    //Object *Joint_2 = malloc(sizeof(Object));
-    robotList[3]->type = 2;
-    robotList[3]->object = malloc(sizeof(union object_u));
-    robotList[3]->object->joint = newRigidJoint("Joint_2", r6_3, theta->data[(1 * theta->numCols) + 0], theta_dot->data[(1 * theta_dot->numCols) + 0], theta_ddot->data[(1 * theta_ddot->numCols) + 0], lims, pihalf, Body_1, Body_2);
-
-    //Object *Joint_3= malloc(sizeof(Object));
-    robotList[5]->type = 2;
-    robotList[5]->object = malloc(sizeof(union object_u));
-    robotList[5]->object->joint = newRigidJoint("Joint_3", r6_4, theta->data[(2 * theta->numCols) + 0], theta_dot->data[(2 * theta_dot->numCols) + 0], theta_ddot->data[(2 * theta_ddot->numCols) + 0], lims, 0, Body_2, Body_3);
-
-
-    double zero[2] = {0,0};
-    zeroMatrix(r6_2);//this is just so I dont need to create another matrix
-    //Object *joint_EE = malloc(sizeof(struct object_s));
-    robotList[7]->type = 2;
-    robotList[7]->object = malloc(sizeof(union object_u));
-    robotList[7]->object->joint =  newRigidJoint("joint_EE", r6_2, 0, 0, 0, zero, 0, Body_3, EE);
-
-    Robot *newRobot = malloc(sizeof(Robot));
-    newRobot->name = "RigidRandy_1";
-
-    robotList[0] = base;
-    //robotList[1] = Joint_1;
-    robotList[2] = Body_1;
-    //robotList[3] = Joint_2;
-    robotList[4] = Body_2;
-    //robotList[5] = Joint_3;
-    robotList[6] = Body_3;
-    robotList[8] = EE;
-    newRobot->numObjects = 9;
-
-    newRobot->objects = robotList;
-    return newRobot;
-
-}
 
 Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     assert(theta->numCols == 1);//todo add asserts like this to all functions with matrix args
@@ -453,6 +236,8 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 
     newRobot->objects = robotList;
+    newRobot->numBody = 5;
+    newRobot->BC_Start = 2;
 
     newRobot->numObjects = 13;
 
@@ -480,197 +265,211 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 }
 
 
+Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
+    double linkMass = 0.01;
+    double linkLen = 0.1;
 
-void saveTimeCSV(int step, double time, char *filename){
-    FILE *f = fopen(filename, "a");
-    if (f == NULL)
-    {
-        printf("Error opening file!\n");
-        exit(1);
+    matrix *temp3x3n1 = matrix_new(3,3);
+
+    matrix *temp6x6n1 = matrix_new(6,6);
+
+
+    matrix *tempR6n1 = matrix_new(6,1);
+    matrix *tempR6n2 = matrix_new(6,1);
+    matrix *linkTwist;
+
+
+
+
+    linkTwist = matrix_new(6,1);
+    linkTwist->data[(2 * linkTwist->numCols) + 0] = 1;
+    matrix_scalar_mul(linkTwist, linkLen, linkTwist);
+
+
+
+    matrix *linkCoM = matrix_new(6,1);
+    elemDiv(linkTwist, 2, linkCoM);
+
+    matrix *linkInertia = matrix_new(3,3);
+    matrix_scalar_mul(eye(temp3x3n1), 1.0/12.0 * linkMass * pow(linkLen, 2), linkInertia);
+
+    matrix *M = matrix_new(6,6);
+    eye(M);
+
+    setSection(M, 0, 2, 0, 2, matrix_scalar_mul(eye(temp3x3n1),linkMass, temp3x3n1));
+    setSection(M, 3, 5, 3, 5, linkInertia);
+
+    matrix *Z = zeros(6,1);
+
+    //SE3 *Z_SE3 = new_SE3_zeros();
+
+    double L_0 = 0.4;
+    matrix *F_0 = zeros(6,1);
+    F_0->data[(2 * F_0->numCols) + 0] = 1;
+
+    double rho = 75e1;
+    double mu = 5e5;
+    double r = 0.01;
+    double E = 1e8;
+    double G = E/(2*(1+0.3));
+    double I = M_PI/4*pow(r,4);
+    double A = M_PI*pow(r,2);
+    int N = 21;
+
+
+    //diag(2I,I,I)
+    matrix *J = zeros(3,3);
+    J->data[(0 * J->numCols) + 0] = 2*I;
+    J->data[(1 * J->numCols) + 1] = I;
+    J->data[(2 * J->numCols) + 2] = I;
+
+    matrix *Kbt = zeros(3,3);
+    Kbt->data[(0 * Kbt->numCols) + 0] = 2*G*I;
+    Kbt->data[(1 * Kbt->numCols) + 1] = E*I;
+    Kbt->data[(2 * Kbt->numCols) + 2] = E*I;
+
+    matrix *Kse = zeros(3,3);
+    Kse->data[(0 * Kse->numCols) + 0] = E*A;
+    Kse->data[(1 * Kse->numCols) + 1] = G*A;
+    Kse->data[(2 * Kse->numCols) + 2] = G*A;
+
+    matrix *Cse = zeros(3,3);
+    Cse->data[(0 * Cse->numCols) + 0] = 3*A;
+    Cse->data[(1 * Cse->numCols) + 1] = A;
+    Cse->data[(2 * Cse->numCols) + 2] = A;
+    matrix_scalar_mul(Cse, mu, Cse);
+
+    matrix *Cbt = zeros(3,3);
+    Cbt->data[(0 * Cbt->numCols) + 0] = 2*I;
+    Cbt->data[(1 * Cbt->numCols) + 1] = I;
+    Cbt->data[(2 * Cbt->numCols) + 2] = I;
+    matrix_scalar_mul(Cbt, mu, Cbt);
+
+    matrix *K = zeros(6,6);
+    setSection(K, 0, 2, 0, 2, Kse);
+    setSection(K, 3, 5, 3, 5, Kbt);
+
+    matrix *C = zeros(6,6);
+    setSection(C, 0, 2, 0, 2, Cse);
+    setSection(C, 3, 5, 3, 5, Cbt);
+
+
+    matrix *Mf = zeros(6,6);
+    setSection(Mf, 0, 2, 0, 2, matrix_scalar_mul(eye(temp3x3n1),rho*A, temp3x3n1));
+    setSection(Mf, 3, 5, 3, 5, matrix_scalar_mul(J,rho, temp3x3n1));
+
+
+    Object *base = malloc(sizeof(struct object_s));
+    base->type = 0;
+    base->object = malloc(sizeof(union object_u));
+    base->object->rigid = newRigidBody("base", matrix_scalar_mul(eye(temp6x6n1), INFINITY, temp6x6n1), Z, Z);//todo dbl max to replace inf
+
+    Object *Body_1 =  malloc(sizeof(struct object_s));
+    Body_1->type = 1;
+    Body_1->object = malloc(sizeof(union object_u));
+    Body_1->object->flex = newFlexBody("Body_1", Mf,  K,C, F_0, N, L_0);
+
+
+    Object *Body_2 =  malloc(sizeof(struct object_s));
+    Body_2->type = 0;
+    Body_2->object = malloc(sizeof(union object_u));
+    Body_2->object->rigid = newRigidBody("Body_2", M,  linkTwist, linkCoM);
+
+
+
+
+    Object *Body_3 =  malloc(sizeof(struct object_s));
+    Body_3->type = 1;
+    Body_3->object = malloc(sizeof(union object_u));
+    Body_3->object->flex = newFlexBody("Body_3", Mf,  K,C, F_0, N, L_0);
+
+    Object *EE =      malloc(sizeof(struct object_s));
+    EE->type = 0;
+    EE->object = malloc(sizeof(union object_u));
+    EE->object->rigid = newRigidBody("EE", zeros(6,6),  Z, Z);
+
+    matrix *r6_2 = zeros(6,1);
+    r6_2->data[(2 * r6_2->numCols) + 0] = 1;
+
+    matrix *r6_3 = zeros(6,1);
+    r6_3->data[(3 * r6_3->numCols) + 0] = 1;
+
+    matrix *r6_4 = zeros(6,1);
+    r6_4->data[(4 * r6_4->numCols) + 0] = 1;
+
+    matrix *r6_5 = zeros(6,1);
+    r6_5->data[(5 * r6_5->numCols) + 0] = 1;
+
+    double *lims = malloc(sizeof(double) * 2);
+    lims[0] = -M_PI;
+    lims[1] = M_PI;
+
+
+
+    //Body_2->object->flex->eta_prev = zeros(6,Body_2->object->flex->N);
+    //Body_2->object->flex->eta_pprev = zeros(6,Body_2->object->flex->N);
+
+    //Body_4->object->flex->eta_prev = zeros(6,Body_4->object->flex->N);
+    //Body_4->object->flex->eta_pprev = zeros(6,Body_4->object->flex->N);
+    //Body_2->object->flex->f_prev
+
+
+
+    for(int i = 0; i < N; i++){
+        Body_1->object->flex->f_prev->data[2 * N + i] = 1;
+        Body_1->object->flex->f_pprev->data[2 * N + i] = 1;
+        Body_3->object->flex->f_prev->data[2 * N + i] = 1;
+        Body_3->object->flex->f_pprev->data[2 * N + i] = 1;
     }
 
-    fprintf(f, "%d, %f\n", step, time);
+    double pihalf = M_PI/2;
 
-    fclose(f);
-}
-int main() {
+    Object **robotList = calloc(13, sizeof(Object));
 
-    clock_t start, end;
-    double cpu_time_used;
-
-    start = clock();
-    clock_t stepStart = 0;
-
-
-
-    double dt = 0.025;
-    int timeStep = 100;
-    //double restTime = 0;
-
-    matrix *t1 = matrix_new(1, timeStep);
-    t1->data[(0 * t1->numCols) + 0] = dt;
-    for (int i = 0; i < timeStep; i++) {
-        t1->data[(0 * t1->numCols) + i] = t1->data[(0 * t1->numCols) + (i-1)] + dt;
-
+    for (int i = 0; i < 13; i++){
+        robotList[i] = malloc(sizeof(Object));
     }
+    //todo this should be in a function like createObject or something
 
-    matrix *shape = zeros(5, 1);
-    shape->data[(0 * shape->numCols) + 0] = 0.4;
-    shape->data[(1 * shape->numCols) + 0] = -0.5 * 0.4;
-    shape->data[(2 * shape->numCols) + 0] = 0.5 * 0.4;
-    shape->data[(3 * shape->numCols) + 0] = -0.7 * 0.4;
-    shape->data[(4 * shape->numCols) + 0] = 0.1 * -0.4;
+    robotList[1]->type = 2;
+    robotList[1]->object = malloc(sizeof(union object_u));
 
-    matrix *theta_ddot = zeros(5, 1);
-    matrix *theta = zeros(5, 1);
-    matrix *theta_dot = zeros(5, 1);
-    matrix *tempTStep = matrix_new(1, timeStep);
+    robotList[1]->object->joint = newRigidJoint("Joint_1", r6_5, theta->data[(0 * theta->numCols) + 0], theta_dot->data[(0 * theta_dot->numCols) + 0], theta_ddot->data[(0 * theta_ddot->numCols) + 0], lims, 0, base, Body_1);
 
-    matrix *F_ext = zeros(6, 1);
-    matrix *F_0 = zeros(6, 1);
-    F_0->data[(0 * F_0->numCols)] = 0;
-    F_0->data[(1 * F_0->numCols)] = 0;
-    F_0->data[(2 * F_0->numCols)] = 1;
-    F_0->data[(3 * F_0->numCols)] = 0;
-    F_0->data[(4 * F_0->numCols)] = 0;
-    F_0->data[(5 * F_0->numCols)] = 0;
+    //Object *Joint_2 = malloc(sizeof(Object));
+    robotList[3]->type = 2;
+    robotList[3]->object = malloc(sizeof(union object_u));
+    robotList[3]->object->joint = newRigidJoint("Joint_2", r6_3, theta->data[(1 * theta->numCols) + 0], theta_dot->data[(1 * theta_dot->numCols) + 0], theta_ddot->data[(1 * theta_ddot->numCols) + 0], lims, pihalf, Body_1, Body_2);
 
-    //matrix *temp1xRowsM1 = matrix_new(5, timeStep);
-    matrix *tempBodiesx1 = matrix_new(5, 1);
-
-    Robot *robot = defPaperSample_1(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
-
-    int BC_Start = 2;//todo, this should be automated
-    //int BC_End = 4;
-
-    matrix *t = zeros(1, timeStep);
-    for(int i = 0; i < timeStep; i++){
-        t->data[(0 * t->numCols) + i] = i*dt;
-    }
-    matrix *C = zeros(5, timeStep);//todo 5 should be num bodies
-    matrix *T_H = zeros(5, timeStep);//todo 5 should be num bodies
-    matrix *Tdd_H = zeros(5, timeStep);//todo 5 should be num bodies
-
-    //matrix *EE_POS = zeros(3, timeStep);
-//(lldb) br set --name malloc_error_break
-//(lldb) br set -n malloc_error_break
-    matrix *angles = zeros(((robot->numObjects-1)/2)+1,timeStep);
-    FDM_MB_RE_OUT *fdm = malloc(sizeof(FDM_MB_RE_OUT));
-    matrix *tempLinkx1 = matrix_new(5,1);
-    matrix *InitGuess = zeros(5,1);
+    //Object *Joint_3= malloc(sizeof(Object));
+    robotList[5]->type = 2;
+    robotList[5]->object = malloc(sizeof(union object_u));
+    robotList[5]->object->joint = newRigidJoint("Joint_3", r6_4, theta->data[(2 * theta->numCols) + 0], theta_dot->data[(2 * theta_dot->numCols) + 0], theta_ddot->data[(2 * theta_ddot->numCols) + 0], lims, 0, Body_2, Body_3);
 
 
-    matrix *C_des = matrix_new(5,100);
-    matrixFromFile("Control_good.csv", C_des);
-    matrix *C_des_1 = zeros(5,1);
+    double zero[2] = {0,0};
+    zeroMatrix(r6_2);//this is just so I dont need to create another matrix
+    //Object *joint_EE = malloc(sizeof(struct object_s));
+    robotList[7]->type = 2;
+    robotList[7]->object = malloc(sizeof(union object_u));
+    robotList[7]->object->joint =  newRigidJoint("joint_EE", r6_2, 0, 0, 0, zero, 0, Body_3, EE);
 
-    matrix *temp5x1 = zeros(5,1);
-    matrix *temp5xn = zeros(5,timeStep);
-    matrix *tempF = zeros(6,1);
-    matrix* negative = ones(1,5);
-    matrix_scalar_mul(negative, 0, negative);
+    Robot *newRobot = malloc(sizeof(Robot));
+    newRobot->name = "RigidRandy_1";
 
+    robotList[0] = base;
+    //robotList[1] = Joint_1;
+    robotList[2] = Body_1;
+    //robotList[3] = Joint_2;
+    robotList[4] = Body_2;
+    //robotList[5] = Joint_3;
+    robotList[6] = Body_3;
+    robotList[8] = EE;
+    newRobot->numObjects = 9;
+    newRobot->numBody = 3;
+    newRobot->BC_Start = 1;
+    newRobot->BC_End = 3;
+    newRobot->objects = robotList;
+    return newRobot;
 
-    for(int i = 0; i < timeStep; i++){
-        printf("\nTime Step: %d\n", i);
-
-        stepStart = clock();
-        #if LOG_F_FLEX == 1
-        matrixToFile(negative, "C_inv.csv");
-        matrixToFile(negative, "InitGuess.csv");
-        #endif
-        setSection(C_des_1, 0, 4, 0, 0, getSection(C_des, 0, 4, i, i, tempLinkx1));
-
-
-        fdm = FDM_MB_RE(robot, theta, theta_dot, theta_ddot, F_ext, dt, C_des_1 ,F_0, InitGuess);//todo do I need JointAcc in funciton?
-
-
-        matrix *tempT6 = matrix_new(1, 6);
-        matrix *tempf = matrix_new(7, 6);
-        matrix *tempT = matrix_new(1, 5);
-        matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
-        matrixToFile(matrix_transpose(fdm->JointAcc, tempT), "JointAcc.csv");
-        matrixToFile(matrix_transpose(fdm->F, tempf), "F.csv");
-
-
-
-
-
-        assert(isnan(robot->objects[1]->object->joint->velocity)==0);
-        setSection(T_H, 0, T_H->numRows-1, i, i, theta);
-        setSection(Tdd_H, 0, Tdd_H->numRows-1, i, i, theta_ddot);
-        setSection(C, 0, C->numRows-1, i, i, fdm->C);
-
-        copyMatrix(fdm->JointAcc, InitGuess);
-        printf("Joint Acc in main: \n");
-        printMatrix(fdm->JointAcc);
-        printf("-----------------------\n");
-
-        getSection(robot->objects[2*BC_Start]->object->flex->f_prev, 0, 5, 0,0, tempF);
-        copyMatrix(tempF, F_0);
-        //TODO this diverges after the second step
-
-        copyMatrix(fdm->JointAcc, theta_ddot);
-
-        matrix_scalar_mul(theta_ddot, dt, temp5x1);
-        matrix_add(temp5x1, theta, theta_dot);
-
-        matrix_scalar_mul(theta_dot, dt, temp5x1);
-        matrix_add(temp5x1, theta, theta);
-
-        int currJointIndex = 0;
-        assert(hasNan(theta) == 0);
-        assert(hasNan(theta_dot) == 0);
-        assert(hasNan(theta_ddot) == 0);
-        assert(isnan(robot->objects[1]->object->joint->velocity)==0);
-
-        int num = 0;
-        for(int j = 0; j < (robot->numObjects/2)-1; j++){
-            if(robot->objects[(2*j)+1]->type == 2){
-                robot->objects[(2*j)+1]->object->joint->position = theta->data[num];
-                robot->objects[(2*j)+1]->object->joint->velocity = theta_dot->data[num];
-                robot->objects[(2*j)+1]->object->joint->acceleration = theta_ddot->data[num];
-                num++;
-            }
-        }
-
-//        for(int j = 1; j < 10; j+= 2 ) {//todo j should start at firstjoint an
-//            if (robot->objects[j]->type == 2) {
-//                robot->objects[j]->object->joint->position = theta->data[(currJointIndex * theta->numCols)];
-//                robot->objects[j]->object->joint->velocity = theta_dot->data[(currJointIndex * theta_dot->numCols)];
-//                robot->objects[j]->object->joint->acceleration = theta_ddot->data[(currJointIndex * theta_ddot->numCols) + i];
-//                currJointIndex++;
-//            }
-//        }
-        assert(isnan(robot->objects[1]->object->joint->velocity)==0);
-        printf("step took: %f Seconds\n", ((double) (clock() - stepStart)) / CLOCKS_PER_SEC);
-        //saveTimeCSV(i, ((double) (clock() - stepStart)) / CLOCKS_PER_SEC, "time.csv");
-    }
-    printf("DONE");
-//    matrixToFile(angles, "RigidRandyAngles.csv");
-//    robotToFile(robot, "testRobotOut.json");
-
-    matrix_free(tempBodiesx1);
-    matrix_free(tempLinkx1);
-    matrix_free(shape);
-    matrix_free(C);
-    matrix_free(T_H);
-    matrix_free(Tdd_H);
-
-
-    matrix_free(fdm->C);
-    matrix_free(fdm->F);
-    matrix_free(fdm->JointAcc);
-    free(fdm);
-
-    matrix_free(F_ext);
-    matrix_free(F_0);
-    robotFree(robot);
-    matrix_free(theta);
-    matrix_free(theta_dot);
-    matrix_free(theta_ddot);
-
-    end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("Time: %f\n", cpu_time_used);
 }
