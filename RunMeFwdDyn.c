@@ -105,9 +105,11 @@ int main() {
 
 
     for(int i = 0; i <= timeStep; i++){
+#if VERBOSE > 0
         printf("\nTime Step: %d\n", i);
 
         stepStart = clock();
+#endif
         #if LOG_F_FLEX == 1
         matrixToFile(negative, "C_inv.csv");
         matrixToFile(negative, "InitGuess.csv");
@@ -121,9 +123,9 @@ int main() {
         matrix *tempT6 = matrix_new(1, 6);
         matrix *tempf = matrix_new(7, 6);
         matrix *tempT = matrix_new(1, 5);
-        matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
-        matrixToFile(matrix_transpose(fdm->JointAcc, tempT), "JointAcc.csv");
-        matrixToFile(matrix_transpose(fdm->F, tempf), "F.csv");
+        //matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
+        //matrixToFile(matrix_transpose(fdm->JointAcc, tempT), "JointAcc.csv");
+        //matrixToFile(matrix_transpose(fdm->F, tempf), "F.csv");
 
 
 
@@ -133,12 +135,13 @@ int main() {
         setSection(T_H, 0, T_H->numRows-1, i, i, theta);
         setSection(Tdd_H, 0, Tdd_H->numRows-1, i, i, theta_ddot);
         setSection(C, 0, C->numRows-1, i, i, fdm->C);
-
         copyMatrix(fdm->JointAcc, InitGuess);
+#if VERBOSE > 0
+
         printf("Joint Acc in main: \n");
         printMatrix(fdm->JointAcc);
         printf("-----------------------\n");
-
+#endif
         getSection(robot->objects[2*BC_Start]->object->flex->f_prev, 0, 5, 0,0, tempF);
         copyMatrix(tempF, F_0);
         //TODO this diverges after the second step
@@ -170,15 +173,20 @@ int main() {
         for(int j = 0; j < robot->numObjects; j++){
             if(robot->objects[j]->type == 2){
                 curr ++;
+                #if VERBOSE > 0
                 printf("Joint %d: %f\n", j, robot->objects[j]->object->joint->position);
+                #endif
                 angles->data[(curr * angles->numCols) + i] = robot->objects[j]->object->joint->position;
 
             }
         }
 
         assert(isnan(robot->objects[1]->object->joint->velocity)==0);
+
+#if VERBOSE > 0
         printf("step took: %f Seconds\n", ((double) (clock() - stepStart)) / CLOCKS_PER_SEC);
-        matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot_fwd.csv");
+#endif
+        //matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot_fwd.csv");
         //saveTimeCSV(i, ((double) (clock() - stepStart)) / CLOCKS_PER_SEC, "time.csv");
     }
     printf("DONE");

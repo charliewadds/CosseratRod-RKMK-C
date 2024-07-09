@@ -8,20 +8,18 @@
 
 
 #define GSL_ERROR_HANDLER 0
-#define VERBOSE 1
-
+#define VERBOSE 0
 
 #define SOLVER_SAVE 1
 #define SOLVER_ERRORS 1
 #define SOLVER_ERROR_TOP 1
-#define TOLERANCE_STEP 1e-6
 #define LOG_F_FLEX 0
 #define INV_SAVE 1
 
 
-#define MAX_ITER_LEVMAR 200
-#define MAX_ITER_NEWTON 50
-#define MAX_ITER_HYBRID 50
+#define MAX_ITER_LEVMAR 100
+#define MAX_ITER_NEWTON 15
+#define MAX_ITER_HYBRID 15
 
 #define TOLERANCE_INV 1e-9
 #define TOLERANCE_FWD 1e-5

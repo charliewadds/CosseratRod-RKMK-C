@@ -2762,14 +2762,14 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     printf("-------------------fdm 2-----------------------------\n");
     #endif
     status = find_roots_hybrid(StrGuess, params, 0, TOLERANCE_FWD);
-    printMatrix(StrGuess);
+    //printMatrix(StrGuess);
     if (status != 0) {
         #if VERBOSE  >= 1
         printf("hybrid method failed to converge. Trying levmar\n");
         #endif
         //copyMatrix(F_0, StrGuess);
         status = find_roots_levmarqrt(StrGuess, params, 0, TOLERANCE_FWD);
-        printMatrix(StrGuess);
+        //printMatrix(StrGuess);
         if (status != 6) {
             #if VERBOSE >= 2
             printf("levmar method failed to converge trying newton\n");
