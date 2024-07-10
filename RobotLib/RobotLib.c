@@ -2040,7 +2040,7 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, do
     const gsl_multiroot_fsolver_type *T;
     //gsl_multiroot_fsolver *s;
     assert(hasNan(InitGuess) == 0);
-    T = gsl_multiroot_fsolver_hybrid;
+    T = gsl_multiroot_fsolver_hybrids;
     //s = gsl_multiroot_fsolver_allc(T, 6);
     int status;
     size_t iter = 0;
@@ -2761,20 +2761,21 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     #if VERBOSE >= 2
     printf("-------------------fdm 2-----------------------------\n");
     #endif
+    //matrixToFile(StrGuess, "fdmSecondSolveInit.csv");
     status = find_roots_hybrid(StrGuess, params, 0, TOLERANCE_FWD);
     //printMatrix(StrGuess);
     if (status != 0) {
         #if VERBOSE  >= 1
         printf("hybrid method failed to converge. Trying levmar\n");
         #endif
-        //copyMatrix(F_0, StrGuess);
+        copyMatrix(F_0, StrGuess);
         status = find_roots_levmarqrt(StrGuess, params, 0, TOLERANCE_FWD);
         //printMatrix(StrGuess);
         if (status != 6) {
             #if VERBOSE >= 2
             printf("levmar method failed to converge trying newton\n");
             #endif
-            //copyMatrix(F_0, StrGuess);
+            copyMatrix(F_0, StrGuess);
             status = find_roots_newton(StrGuess, params, 0, TOLERANCE_FWD);
             if(status != 0){
                 #if VERBOSE == 1
@@ -2787,6 +2788,8 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         }
     }
     copyMatrix( Theta_ddot_old, params->Theta_ddot);
+
+    matrixToFile(StrGuess, "fdmSecondSolve.csv");
 #if VERBOSE >= 2
     printf("-------------------fdm 2 end-----------------------------\n");
 #endif

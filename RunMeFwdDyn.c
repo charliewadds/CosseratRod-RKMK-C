@@ -123,9 +123,9 @@ int main() {
         matrix *tempT6 = matrix_new(1, 6);
         matrix *tempf = matrix_new(7, 6);
         matrix *tempT = matrix_new(1, 5);
-        //matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
-        //matrixToFile(matrix_transpose(fdm->JointAcc, tempT), "JointAcc.csv");
-        //matrixToFile(matrix_transpose(fdm->F, tempf), "F.csv");
+        matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
+        matrixToFile(matrix_transpose(theta, tempT), "theta_fwd.csv");
+        matrixToFile(matrix_transpose(fdm->F, tempf), "F.csv");
 
 
 
@@ -186,7 +186,7 @@ int main() {
 #if VERBOSE > 0
         printf("step took: %f Seconds\n", ((double) (clock() - stepStart)) / CLOCKS_PER_SEC);
 #endif
-        //matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot_fwd.csv");
+        matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot_fwd.csv");
         //saveTimeCSV(i, ((double) (clock() - stepStart)) / CLOCKS_PER_SEC, "time.csv");
     }
     printf("DONE");

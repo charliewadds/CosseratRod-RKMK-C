@@ -7,7 +7,7 @@ cmake_policy(SET CMP0079 NEW)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 set(ENV{OPENBLAS_NUM_THREADS} 0)
 
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
 link_directories("/opt/homebrew/lib")
 include_directories("/opt/homebrew/include")
 #find_package(GSL REQUIRED)

@@ -117,14 +117,14 @@ int main() {
         //robot = idm->robot_new;
 
 
-        setSection(T_H, 0, robot->numBody, i, i, theta);
-        setSection(Td_H, 0, robot->numBody, i, i, theta_dot);
+        setSection(T_H, 0, T_H->numRows-1, i, i, theta);
+        setSection(Td_H, 0, Td_H->numRows-1, i, i, theta_dot);
 
 
         theta = matrix_add(theta, matrix_scalar_mul(getSection(theta_dot, 0, robot->numBody-1, 0, 0, tempLinkx1), dt, tempLinkx1), theta);
         theta_dot = matrix_add(theta_dot, matrix_scalar_mul(getSection(getSection(theta_ddot, 0, robot->numBody-1, i, i, tempLinkx1), 0, robot->numBody-1, 0, 0, tempLinkx1), dt, tempLinkx1), theta_dot);//todo this feels wrong
         int currJointIndex = 0;
-        for(int j = 1; j < 10; j+= 2 ) {//todo j should start at firstjoint an
+        for(int j = 1; j < 13; j+= 2 ) {//todo j should start at firstjoint an
             if (robot->objects[j]->type == 2) {
                 robot->objects[j]->object->joint->position = theta->data[(currJointIndex * theta->numCols)];
                 robot->objects[j]->object->joint->velocity = theta_dot->data[(currJointIndex * theta_dot->numCols)];
@@ -136,10 +136,10 @@ int main() {
         int curr = 0;
         for(int j = 0; j < robot->numObjects; j++){
             if(robot->objects[j]->type == 2){
-                curr ++;
-                //printf("Joint %d: %f\n", j, robot->objects[j]->object->joint->position);
-                angles->data[(curr * angles->numCols) + i] = robot->objects[j]->object->joint->position;
 
+                //printf("Joint %d: %f\n", j, robot->objects[j]->object->joint->position);
+                angles->data[(curr * angles->numCols) + (i)] = robot->objects[j]->object->joint->position;
+                curr ++;
             }
         }
 
