@@ -133,7 +133,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     Object *Body_5 =  malloc(sizeof(struct object_s));
     Body_5->type = 0;
     Body_5->object = malloc(sizeof(union object_u));
-    Body_5->object->rigid = newRigidBody("Body_5", elemDiv(M,2, temp6x6n1), elemDiv(linkTwist,2, tempR6n1), elemDiv(linkCoM,2, tempR6n2));
+    Body_5->object->rigid = newRigidBody("Body_5", matrix_scalar_mul(M,0.5, temp6x6n1), matrix_scalar_mul(linkTwist,0.5, tempR6n1), matrix_scalar_mul(linkCoM,0.5, tempR6n2));
 
     Object *EE =      malloc(sizeof(struct object_s));
     EE->type = 0;
@@ -213,7 +213,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     //Object *joint_EE = malloc(sizeof(struct object_s));
     robotList[11]->type = 2;
     robotList[11]->object = malloc(sizeof(union object_u));
-    robotList[11]->object->joint =  newRigidJoint("joint_EE", r6_2, 0, 0, 0, zero, 0, Body_5, EE);
+    robotList[11]->object->joint =  newRigidJoint("joint_EE", zeros(6,1), 0, 0, 0, zero, 0, Body_5, EE);
 
     Robot *newRobot = malloc(sizeof(Robot));
     newRobot->name = "RigidRandy";

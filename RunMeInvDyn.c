@@ -121,8 +121,8 @@ int main() {
         setSection(Td_H, 0, Td_H->numRows-1, i, i, theta_dot);
 
 
-        theta = matrix_add(theta, matrix_scalar_mul(getSection(theta_dot, 0, robot->numBody-1, 0, 0, tempLinkx1), dt, tempLinkx1), theta);
-        theta_dot = matrix_add(theta_dot, matrix_scalar_mul(getSection(getSection(theta_ddot, 0, robot->numBody-1, i, i, tempLinkx1), 0, robot->numBody-1, 0, 0, tempLinkx1), dt, tempLinkx1), theta_dot);//todo this feels wrong
+        theta = matrix_add(theta, matrix_scalar_mul(getSection(theta_dot, 0, theta_dot->numRows-1, 0, 0, tempLinkx1), dt, tempLinkx1), theta);
+        theta_dot = matrix_add(theta_dot, matrix_scalar_mul(getSection(theta_ddot, 0, theta_ddot->numRows-1, i, i, tempLinkx1), dt, tempLinkx1), theta_dot);//todo this feels wrong
         int currJointIndex = 0;
         for(int j = 1; j < 13; j+= 2 ) {//todo j should start at firstjoint an
             if (robot->objects[j]->type == 2) {

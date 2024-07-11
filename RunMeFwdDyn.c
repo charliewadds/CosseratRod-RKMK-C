@@ -114,7 +114,7 @@ int main() {
         matrixToFile(negative, "C_inv.csv");
         matrixToFile(negative, "InitGuess.csv");
         #endif
-        setSection(C_des_1, 0, 4, 0, 0, getSection(C_des, 0, 4, i, i, tempLinkx1));
+        setSection(C_des_1, 0, C_des_1->numRows-1, 0, 0, getSection(C_des, 0, C_des->numRows-1, i, i, tempLinkx1));
 
 
         fdm = FDM_MB_RE(robot, theta, theta_dot, theta_ddot, F_ext, dt, C_des_1 ,F_0, InitGuess);//todo do I need JointAcc in funciton?
@@ -124,7 +124,8 @@ int main() {
         matrix *tempf = matrix_new(7, 6);
         matrix *tempT = matrix_new(1, 5);
         matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
-        matrixToFile(matrix_transpose(theta, tempT), "theta_fwd.csv");
+        matrixToFile(matrix_transpose(fdm->JointAcc, tempT), "jointAcc.csv");
+        matrixToFile(matrix_transpose(theta_dot, tempT), "theta_dot.csv");
         matrixToFile(matrix_transpose(fdm->F, tempf), "F.csv");
 
 
@@ -142,7 +143,7 @@ int main() {
         printMatrix(fdm->JointAcc);
         printf("-----------------------\n");
 #endif
-        getSection(robot->objects[2*BC_Start]->object->flex->f_prev, 0, 5, 0,0, tempF);
+        getSection(robot->objects[2*BC_Start]->object->flex->f_prev, 0, robot->objects[2*BC_Start]->object->flex->f_prev->numRows-1, 0,0, tempF);
         copyMatrix(tempF, F_0);
         //TODO this diverges after the second step
 
