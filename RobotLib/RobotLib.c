@@ -1847,7 +1847,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
      */
     if(fwd) {
         //opts[5] = {1e-3, 1e-9, 1e-5, 1e-5, -1e-9};
-        opts[0] = 1e-6; // scale factor for initial mu
+        opts[0] = 1e-8; // scale factor for initial mu
         opts[1] = 1e-15; // stopping thresholds for ||J^T e||_inf
         opts[2] = D_P_LEVMAR; // stopping thresholds for ||Dp||_2
         opts[3] = tol; // stopping thresholds for ||e||_2
@@ -1856,10 +1856,10 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
     }else{
         //{1e-3, 1e-15, 1e-9, 1e-9, 1e-6};
 
-        opts[0] = 1e-3;
+        opts[0] = 1e-8;
         opts[1] = 1e-15;
         opts[2] = D_P_LEVMAR;
-        opts[3] = 1e-12;
+        opts[3] = tol;
         opts[4] = STEP_LEVMAR;
     }
     assert(isnan(params->robot->objects[1]->object->joint->velocity)==0);
@@ -2247,6 +2247,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         printf("hybrid method failed to converge. Trying levmar\n");
         //copyMatrix(InitGuess, tempGuess);
 #endif
+        //copyMatrix(InitGuess, tempGuess);
         status = find_roots_levmarqrt(tempGuess, params, 0, TOLERANCE_INV);
         //copyMatrix(tempGuess, InitGuess);
         if (status != 6) {

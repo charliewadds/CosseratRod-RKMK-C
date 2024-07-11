@@ -104,7 +104,7 @@ int main() {
     matrix_scalar_mul(negative, 0, negative);
 
 
-    for(int i = 0; i <= timeStep; i++){
+    for(int i = 0; i < timeStep; i++){
 #if VERBOSE > 0
         printf("\nTime Step: %d\n", i);
 

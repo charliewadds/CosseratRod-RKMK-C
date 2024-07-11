@@ -101,14 +101,14 @@ int main() {
 
         idm = IDM_MB_RE(robot, theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, i, i, tempLinkx1), F_ext, dt, F_0);
 
-        matrixToFile(f, "f.csv");
-        matrix *tempf = matrix_new(7, 6);
 
+        matrix *tempf = matrix_new(7, 6);
+        matrixToFile(matrix_transpose(idm->F, tempf), "Finv_main.csv");
 
         //printf("%f", robot->objects[11]->object->joint->limits[0]);
         setSection(C, 0, C->numRows-1, i, i, idm->C);
 
-
+        matrixToFile(idm->C, "C_inv.csv");
         //flexBody *flex = robot->objects[2*BC_Start ]->object->flex;
         //flexBody *flexNew = robot->objects[2*BC_Start]->object->flex;
 

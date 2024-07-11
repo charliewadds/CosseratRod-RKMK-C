@@ -8,7 +8,7 @@
 
 
 #define GSL_ERROR_HANDLER 0
-#define VERBOSE 2
+#define VERBOSE 3
 
 #define SOLVER_SAVE 0
 #define SOLVER_ERRORS 1
@@ -22,10 +22,10 @@
 #define MAX_ITER_HYBRID 200
 
 #define TOLERANCE_INV 1e-9
-#define TOLERANCE_FWD 1e-5
+#define TOLERANCE_FWD 1e-6
 
 #define D_P_LEVMAR 1e-30
-#define STEP_LEVMAR 1e-3
+#define STEP_LEVMAR (1e-6)
 
 #ifndef COSSERATROD_RKMK_C_ROBOTLIB_H
 #define COSSERATROD_RKMK_C_ROBOTLIB_H
