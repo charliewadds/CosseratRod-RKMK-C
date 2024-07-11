@@ -171,7 +171,7 @@ int main() {
             }
         }
         int curr = 0;
-        for(int j = 0; j < robot->numObjects; j++){
+        for(int j = 0; j < robot->numObjects-1; j++){
             if(robot->objects[j]->type == 2){
                 curr ++;
                 #if VERBOSE > 0

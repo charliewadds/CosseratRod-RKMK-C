@@ -96,6 +96,7 @@ int main() {
     matrix *tempLinkx1 = matrix_new(robot->numBody,1);
     for(int i = 0; i < timeStep; i++){
 
+        printf("Time Step: %d\n", i);
         matrix *f = matrix_new(6,1);
         getSection(robot->objects[(2*robot->BC_Start)]->object->flex->f_prev, 0, robot->objects[(2*robot->BC_Start)]->object->flex->f_prev->numRows - 1, 0, 0, f);//todo
 
@@ -109,6 +110,7 @@ int main() {
         setSection(C, 0, C->numRows-1, i, i, idm->C);
 
         matrixToFile(idm->C, "C_inv.csv");
+
         //flexBody *flex = robot->objects[2*BC_Start ]->object->flex;
         //flexBody *flexNew = robot->objects[2*BC_Start]->object->flex;
 
@@ -124,7 +126,7 @@ int main() {
         theta = matrix_add(theta, matrix_scalar_mul(getSection(theta_dot, 0, theta_dot->numRows-1, 0, 0, tempLinkx1), dt, tempLinkx1), theta);
         theta_dot = matrix_add(theta_dot, matrix_scalar_mul(getSection(theta_ddot, 0, theta_ddot->numRows-1, i, i, tempLinkx1), dt, tempLinkx1), theta_dot);//todo this feels wrong
         int currJointIndex = 0;
-        for(int j = 1; j < 13; j+= 2 ) {//todo j should start at firstjoint an
+        for(int j = 1; j < 11; j+= 2 ) {//todo j should start at firstjoint an
             if (robot->objects[j]->type == 2) {
                 robot->objects[j]->object->joint->position = theta->data[(currJointIndex * theta->numCols)];
                 robot->objects[j]->object->joint->velocity = theta_dot->data[(currJointIndex * theta_dot->numCols)];
@@ -146,9 +148,8 @@ int main() {
         matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot.csv");
     }
     printf("DONE");
-//    matrixToFile(angles, "RigidRandyAngles.csv");
-//    robotToFile(robot, "testRobotOut.json");
-    //matrixToFile(C, "ControlSim2.csv");
+
+
 #if INV_SAVE == 1
     matrixToFile(angles, "RigidRandyAngles.csv");
     //robotToFile(robot, "testRobotOut.json");
