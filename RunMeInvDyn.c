@@ -20,7 +20,7 @@
 
 
 
-#define TEMP_NUMBODY 5
+#define TEMP_NUMBODY 3
 int main() {
 
     clock_t start, end;
@@ -32,7 +32,7 @@ int main() {
     matrix *theta_dot = zeros(TEMP_NUMBODY , 1);
 
     double dt = 0.025;
-    int timeStep = 100;
+    int timeStep = 50;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -42,25 +42,69 @@ int main() {
 
     }
 
-    matrix *shape = zeros(TEMP_NUMBODY, 1);
-    shape->data[(0 * shape->numCols) + 0] = 0.4;
-    shape->data[(1 * shape->numCols) + 0] = -0.5 * 0.4;
-    shape->data[(2 * shape->numCols) + 0] = 0.5 * 0.4;
-    shape->data[(3 * shape->numCols) + 0] = -0.7 * 0.4;
-    shape->data[(4 * shape->numCols) + 0] = 0.1 * -0.4;
+//    matrix *shape = zeros(TEMP_NUMBODY, 1);
+//    shape->data[(0 * shape->numCols) + 0] = 0.4;
+//    shape->data[(1 * shape->numCols) + 0] = -0.5 * 0.4;
+//    shape->data[(2 * shape->numCols) + 0] = 0.5 * 0.4;
+//    shape->data[(3 * shape->numCols) + 0] = -0.7 * 0.4;
+//    shape->data[(4 * shape->numCols) + 0] = 0.1 * -0.4;
+//
+//    matrix *theta_ddot = zeros(TEMP_NUMBODY, timeStep);
 
-    matrix *theta_ddot = zeros(TEMP_NUMBODY, timeStep);
+
+//    matrix *tempTStep = matrix_new(1, timeStep);
+//
+//    for(int i = 0; i < TEMP_NUMBODY; i++){
+//
+//        zeroMatrix(tempTStep);
+//        matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),shape->data[(i * shape->numCols)], tempTStep);
+//        //memcpy(theta_ddot->data[i],tempTStep->data[0],  sizeof * theta_ddot->data[i] * timeStep);
+//        setSection(theta_ddot, i, i, 0, timeStep-1, tempTStep);
+//
+//    }
+
+    /*
+ * %Shape       = [6;-4;-6];                                %[rad/s2]   Actuated Joint Acceleration Shape
+%Theta_ddot1 = Shape .* ones(1,TimeStep);                %[rad/s2]   Joint Trajectory 1
+%Theta_ddot2 = -Shape.* ones(1,TimeStep);                %[rad/s2]   Joint Trajectory 2
+%Theta_ddot3 = 0 .* Shape .* ones(1,TimeStep*RestTime);  %[rad/s2]   Joint Trajectory 3
+%Theta_ddot  = [Theta_ddot1, Theta_ddot2, Theta_ddot3];  %[rad/s2]   Joint Trajectory Combined
+
+ */
+    matrix *shape = matrix_new(TEMP_NUMBODY, 1);
+    shape->data[(0 * shape->numCols)] = 6;
+    shape->data[(1 * shape->numCols)] = -4;
+    shape->data[(2 * shape->numCols)] = -6;
+
+    matrix *theta_ddot1 = ones(TEMP_NUMBODY, 10);
+    matrix *theta_ddot2 = ones(TEMP_NUMBODY, 10);
+    matrix *theta_ddot3 = zeros(TEMP_NUMBODY, 50);
+
+    matrix *theta_ddot = matrix_new(TEMP_NUMBODY, timeStep);
 
     matrix *tempTStep = matrix_new(1, timeStep);
+    matrix *tempTStep1 = ones(1, 10);
+    matrix *tempTStep2 = ones(1, 10);
 
+    matrix *add = ones(1, 10);
     for(int i = 0; i < TEMP_NUMBODY; i++){
 
-        zeroMatrix(tempTStep);
-        matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),shape->data[(i * shape->numCols)], tempTStep);
-        //memcpy(theta_ddot->data[i],tempTStep->data[0],  sizeof * theta_ddot->data[i] * timeStep);
-        setSection(theta_ddot, i, i, 0, timeStep-1, tempTStep);
+        matrix_scalar_mul(tempTStep1,shape->data[(i * shape->numCols)], tempTStep1);
+        matrix_scalar_mul(tempTStep2,shape->data[(i * shape->numCols)] * -1, tempTStep2);
 
+        setSection(theta_ddot1, i, i, 0, 9, tempTStep1);
+        setSection(theta_ddot2, i, i, 0, 9, tempTStep2);
+        setSection(theta_ddot, i, i, 20, theta_ddot->numCols-1, theta_ddot3);
+
+        zeroMatrix(tempTStep1);
+        zeroMatrix(tempTStep2);
+        matrix_add(tempTStep1, add, tempTStep1);
+        matrix_add(tempTStep2, add, tempTStep2);
     }
+    setSection(theta_ddot, 0, 2, 0, 9, theta_ddot1);
+    setSection(theta_ddot, 0, 2, 10, 19, theta_ddot2);
+
+
 
     matrix *F_ext = zeros(6, 1);
     matrix *F_0 = zeros(6, 1);
@@ -76,13 +120,13 @@ int main() {
     //matrix *temp1xRowsM1 = matrix_new(5, timeStep);
     matrix *tempBodiesx1 = matrix_new(TEMP_NUMBODY, 1);
 
-    Robot *robot = defPaperSample_2(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
+    Robot *robot = defPaperSample_1(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
 
     int BC_Start = 2;//todo, this should be automated
     //int BC_End = 4;
 
     matrix *t = zeros(1, timeStep);
-    for(int i = 0; i < timeStep; i++){
+    for(int i = 0; i < theta_ddot->numCols; i++){
         t->data[(0 * t->numCols) + i] = i*dt;
     }
     matrix *C = zeros(robot->numBody, timeStep);
@@ -94,7 +138,8 @@ int main() {
     matrix *angles = zeros(((robot->numObjects-1)/2)-1,timeStep);
     IDM_MB_RE_OUT *idm = malloc(sizeof(IDM_MB_RE_OUT));
     matrix *tempLinkx1 = matrix_new(robot->numBody,1);
-    for(int i = 0; i < timeStep; i++){
+
+    for(int i = 0; i < theta_ddot->numCols; i++){
 
         printf("Time Step: %d\n", i);
         matrix *f = matrix_new(6,1);

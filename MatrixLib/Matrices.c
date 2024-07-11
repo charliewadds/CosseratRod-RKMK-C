@@ -505,7 +505,6 @@ matrix *matMult_chain(matrix *m1, matrix *m2){
             for(int k = 0; k < m1->numCols; k++){
 
                 result->data[(i * result->numCols) + j] += m1->data[(i * m1->numCols) + j] * m2->data[(i * m2->numCols) + j];
-                //assert(result->data[i][j] != NAN);
             }
         }
     }
@@ -515,35 +514,6 @@ matrix *matMult_chain(matrix *m1, matrix *m2){
     return result;
 }
 
-//matrix *matMult_alloc(matrix m1, matrix m2){
-//
-//    assert(m1.numCols == m2.numRows);
-//    matrix *result = matrix_new(m1.numRows, m2.numCols);
-//    for(int i = 0; i < m1.numRows; i++){
-//        for(int j = 0; j < m2.numCols; j++){
-//            for(int k = 0; k < m1.numCols; k++){
-//
-//                result->data[(i * result->numCols) + j] += m1.data[i][k] * m2.data[k][j];
-//                //assert(result->data[i][j] != NAN);
-//            }
-//        }
-//    }
-//
-//    return result;
-//}
-
-//matrix *matrix_outerProduct(matrix *m1, matrix *m2){
-//    assert(m1->numCols == m2->numRows);
-//    assert(m1->numRows == m2->numCols);
-//    matrix *result = matrix_new(m1->numRows, m2->numCols);
-//    for(int i = 0; i < m1->numRows; i++){
-//        for(int j = 0; j < m2->numCols; j++){
-//            result->data[i][j] = m1->data[i][j] * m2->data[j][i];
-//        }
-//    }
-//    return result;
-//
-//}
 
 matrix *matMult_elem(matrix *m1, matrix *m2){
     assert(m1->numCols == m2->numCols);

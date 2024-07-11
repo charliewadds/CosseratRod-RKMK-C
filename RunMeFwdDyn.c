@@ -117,6 +117,7 @@ int main() {
         setSection(C_des_1, 0, C_des_1->numRows-1, 0, 0, getSection(C_des, 0, C_des->numRows-1, i, i, tempLinkx1));
 
 
+
         fdm = FDM_MB_RE(robot, theta, theta_dot, theta_ddot, F_ext, dt, C_des_1 ,F_0, InitGuess);//todo do I need JointAcc in funciton?
 
 

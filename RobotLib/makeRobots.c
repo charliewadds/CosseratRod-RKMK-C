@@ -186,27 +186,27 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     robotList[1]->type = 2;
     robotList[1]->object = malloc(sizeof(union object_u));
 
-    robotList[1]->object->joint = newRigidJoint("Joint_1", r6_5, theta->data[(0 * theta->numCols) + 0], theta_dot->data[(0 * theta_dot->numCols) + 0], theta_ddot->data[(0 * theta_ddot->numCols) + 0], lims, 0, base, Body_1);
+    robotList[1]->object->joint = newRigidJoint("Joint_1", r6_5, theta->data[0], theta_dot->data[(0 * theta_dot->numCols) + 0], theta_ddot->data[(0 * theta_ddot->numCols) + 0], lims, 0, base, Body_1);
 
     //Object *Joint_2 = malloc(sizeof(Object));
     robotList[3]->type = 2;
     robotList[3]->object = malloc(sizeof(union object_u));
-    robotList[3]->object->joint = newRigidJoint("Joint_2", r6_3, theta->data[(1 * theta->numCols) + 0], theta_dot->data[(1 * theta_dot->numCols) + 0], theta_ddot->data[(1 * theta_ddot->numCols) + 0], lims, pihalf, Body_1, Body_2);
+    robotList[3]->object->joint = newRigidJoint("Joint_2", r6_3, theta->data[1], theta_dot->data[(1 * theta_dot->numCols) + 0], theta_ddot->data[(1 * theta_ddot->numCols) + 0], lims, pihalf, Body_1, Body_2);
 
     //Object *Joint_3= malloc(sizeof(Object));
     robotList[5]->type = 2;
     robotList[5]->object = malloc(sizeof(union object_u));
-    robotList[5]->object->joint = newRigidJoint("Joint_3", r6_4, theta->data[(2 * theta->numCols) + 0], theta_dot->data[(2 * theta_dot->numCols) + 0], theta_ddot->data[(2 * theta_ddot->numCols) + 0], lims, 0, Body_2, Body_3);
+    robotList[5]->object->joint = newRigidJoint("Joint_3", r6_4, theta->data[2], theta_dot->data[(2 * theta_dot->numCols) + 0], theta_ddot->data[(2 * theta_ddot->numCols) + 0], lims, 0, Body_2, Body_3);
 
     //Object *Joint_4= malloc(sizeof(Object));
     robotList[7]->type = 2;
     robotList[7]->object = malloc(sizeof(union object_u));
-    robotList[7]->object->joint = newRigidJoint("Joint_4", r6_3, theta->data[(3 * theta->numCols) + 0], theta_dot->data[(3 * theta_dot->numCols) + 0], theta_ddot->data[(3 * theta_ddot->numCols) + 0], lims, 0, Body_3, Body_4);
+    robotList[7]->object->joint = newRigidJoint("Joint_4", r6_3, theta->data[3], theta_dot->data[(3 * theta_dot->numCols) + 0], theta_ddot->data[(3 * theta_ddot->numCols) + 0], lims, 0, Body_3, Body_4);
 
     //Object *Joint_5 = malloc(sizeof(Object));
     robotList[9]->type = 2;
     robotList[9]->object = malloc(sizeof(union object_u));
-    robotList[9]->object->joint = newRigidJoint("Joint_5", r6_2, theta->data[(4 * theta->numCols) + 0], theta_dot->data[(4 * theta_dot->numCols) + 0], theta_ddot->data[(4 * theta_ddot->numCols) + 0], lims, 0, Body_4, Body_5);
+    robotList[9]->object->joint = newRigidJoint("Joint_5", r6_2, theta->data[4], theta_dot->data[(4 * theta_dot->numCols) + 0], theta_ddot->data[(4 * theta_ddot->numCols) + 0], lims, 0, Body_4, Body_5);
 
     double zero[2] = {0,0};
     zeroMatrix(r6_2);//this is just so I dont need to create another matrix
@@ -434,12 +434,12 @@ Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
     robotList[1]->type = 2;
     robotList[1]->object = malloc(sizeof(union object_u));
 
-    robotList[1]->object->joint = newRigidJoint("Joint_1", r6_5, theta->data[(0 * theta->numCols) + 0], theta_dot->data[(0 * theta_dot->numCols) + 0], theta_ddot->data[(0 * theta_ddot->numCols) + 0], lims, 0, base, Body_1);
+    robotList[1]->object->joint = newRigidJoint("Joint_1", r6_4, theta->data[(0 * theta->numCols) + 0], theta_dot->data[(0 * theta_dot->numCols) + 0], theta_ddot->data[(0 * theta_ddot->numCols) + 0], lims, 0, base, Body_1);
 
     //Object *Joint_2 = malloc(sizeof(Object));
     robotList[3]->type = 2;
     robotList[3]->object = malloc(sizeof(union object_u));
-    robotList[3]->object->joint = newRigidJoint("Joint_2", r6_3, theta->data[(1 * theta->numCols) + 0], theta_dot->data[(1 * theta_dot->numCols) + 0], theta_ddot->data[(1 * theta_ddot->numCols) + 0], lims, pihalf, Body_1, Body_2);
+    robotList[3]->object->joint = newRigidJoint("Joint_2", r6_4, theta->data[(1 * theta->numCols) + 0], theta_dot->data[(1 * theta_dot->numCols) + 0], theta_ddot->data[(1 * theta_ddot->numCols) + 0], lims, 0, Body_1, Body_2);
 
     //Object *Joint_3= malloc(sizeof(Object));
     robotList[5]->type = 2;

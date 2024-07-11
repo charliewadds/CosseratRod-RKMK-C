@@ -17,9 +17,9 @@
 #define INV_SAVE 1
 
 
-#define MAX_ITER_LEVMAR 100
-#define MAX_ITER_NEWTON 200
-#define MAX_ITER_HYBRID 200
+#define MAX_ITER_LEVMAR 500
+#define MAX_ITER_NEWTON 500
+#define MAX_ITER_HYBRID 500
 
 #define TOLERANCE_INV 1e-9
 
@@ -27,6 +27,7 @@
 
 #define D_P_LEVMAR 1e-9
 #define STEP_LEVMAR (1e-8)
+
 
 
 #ifndef COSSERATROD_RKMK_C_ROBOTLIB_H

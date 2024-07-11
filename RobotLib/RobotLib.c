@@ -407,7 +407,7 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double v
 
 matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
-    matrix *POS = zeros(3,91);//todo this is a hack, I need to make this dynamic
+    matrix *POS = zeros(3,100);//todo this is a hack, I need to make this dynamic
     matrix *g = matrix_new(4,4);
     eye(g);
 
@@ -435,8 +435,7 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
             }
 
             getSetSection(g, POS, 0, 2, 3, 3, 0, 2, iii, iii);
-//            setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
-//            getSetSection(g, POS, 0, 2, 3, 3, 0, 2, iii, iii);
+
             iii++;
 
        }
@@ -1052,9 +1051,9 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         g_act_wrt_prev[i] = zeros(4,4);
     }
 
-    matrix *eta = zeros(6,7);      //todo magic number         //[se(3) X N+2]  Twists for each BCF + Base + EE in BCF
-    matrix *d_eta = zeros(6,7);        //todo magic number     //[se(3) X N+2]  Twist Rate for each BCF + Base + EE Frame in BCF
-    matrix *F = zeros(6,6);   //todo magic number              //[se(3) X N+1]  Wrench for each Joint + EE in BCF
+    matrix *eta = zeros(6,robot->numBody + 2);      //todo magic number         //[se(3) X N+2]  Twists for each BCF + Base + EE in BCF
+    matrix *d_eta = zeros(6,robot->numBody + 2);        //todo magic number     //[se(3) X N+2]  Twist Rate for each BCF + Base + EE Frame in BCF
+    matrix *F = zeros(6,robot->numBody + 1);   //todo magic number              //[se(3) X N+1]  Wrench for each Joint + EE in BCF
 
     // Set Initial Conditions
 
@@ -1535,8 +1534,8 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
             //d_eta[i] = *dyn->d_eta_end;
 
 
-            matMult(curr_body->object->flex->stiff, matrix_sub(getSection(dyn->f,0,5,dyn->f->numCols-1,dyn->f->numCols-1, tempR6n1), curr_body->object->flex->F_0, tempR6n1), F_temp);
-            setSection(eta,0,eta->numRows-1,i, i, getSection(dyn->eta,0,5,dyn->eta->numCols-1, dyn->eta->numCols-1, tempR6n1));
+            matMult(curr_body->object->flex->stiff, matrix_sub(getSection(dyn->f,0,dyn->f->numRows-1,dyn->f->numCols-1,dyn->f->numCols-1, tempR6n1), curr_body->object->flex->F_0, tempR6n1), F_temp);
+            setSection(eta,0,eta->numRows-1,i, i, getSection(dyn->eta,0,dyn->eta->numRows-1,dyn->eta->numCols-1, dyn->eta->numCols-1, tempR6n1));
 
 
         }else if(i>BC_Start) {//rigid bodies
@@ -1864,9 +1863,9 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
     }
     assert(isnan(params->robot->objects[1]->object->joint->velocity)==0);
     if(fwd){
-        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, 5, 5, MAX_ITER_LEVMAR, opts, info, NULL, NULL, params);
+        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, MAX_ITER_LEVMAR, opts, info, NULL, NULL, params);
     }else {
-        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, 6, 6, MAX_ITER_LEVMAR, opts, info, NULL, NULL, params);//TODO SOMETING ON THIS LINE MADE Inv Dyn work. not sure what, changed them all to main
+        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, n, n, MAX_ITER_LEVMAR, opts, info, NULL, NULL, params);//TODO SOMETING ON THIS LINE MADE Inv Dyn work. not sure what, changed them all to main
     }
 
     #if SOLVER_SAVE
@@ -2194,13 +2193,11 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     //todo implement 3d zeros()
     //todo this might not need +2, I dont remember if numBodies includes base and EE
-    matrix **g_ref = malloc(sizeof(matrix) * (numBody +
-                                              2));           //[SE(3) X N+2]  Transformation to i_th C-BCF from/in base BCF for RRC
+    matrix **g_ref = malloc(sizeof(matrix) * (numBody + 2));           //[SE(3) X N+2]  Transformation to i_th C-BCF from/in base BCF for RRC
     for (int i = 0; i < numBody + 2; i++) {
         g_ref[i] = zeros(4, 4);
     }
-    matrix **g_act_wrt_prev = malloc(
-            sizeof(matrix) * (numBody + 2));  //[SE(3) X N+2]  Transformation to i-1_th C-BCF from/in i_th BCF for RAC
+    matrix **g_act_wrt_prev = malloc(sizeof(matrix) * (numBody + 2));  //[SE(3) X N+2]  Transformation to i-1_th C-BCF from/in i_th BCF for RAC
     for (int i = 0; i < numBody + 2; i++) {
         g_act_wrt_prev[i] = zeros(4, 4);
     }
@@ -2217,14 +2214,6 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     double c2 = .5 / dt;//20
     //options = optimset('Display','OFF','TolFun',1e-9);
 
-    //todo does this need to find ALL roots or just the one 'nearest' to the initial guess?
-    //matrix *InitGuess = fsolve(@(InitGuess)Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, ...
-    //THETA_DDOT, F_ext, c0, c1, c2),InitGuess,options);
-    //printf("INIT_GUESS pre\n");
-
-    //printMatrix(matrix_sub(ones(6,1),InitGuess));
-    //printMatrix(Flex_MB_BCS(InitGuess, robot, *F_ext, c0,c1,c2 ));
-    //assert(!isnan(InitGuess->data[0][0]));
 
     Flex_MB_BCS_params *params = malloc(sizeof(Flex_MB_BCS_params));
     params->robot = robot;
@@ -2240,7 +2229,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     params->inv = 0;
     params->F_0 = matrix_new(6, 1);
 
-    matrix *tempGuess = matrix_new(6, 1);
+    matrix *tempGuess = matrix_new(InitGuess->numRows, 1);
     copyMatrix(InitGuess, tempGuess);
     matrix *tempT = matrix_new(1, 6);
     matrixToFile(matrix_transpose(InitGuess, tempT), "idmSolveInit.csv");
@@ -2276,8 +2265,8 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     eye(g_ref[0]);
     eye(g_act_wrt_prev[0]);
 
-    setSection(eta, 0, 5, 0, 0, zeros(6, 1));
-    setSection(d_eta, 0, 5, 0, 0, zeros(6, 1));
+    setSection(eta, 0, eta->numRows-1, 0, 0, zeros(6, 1));
+    setSection(d_eta, 0, eta->numRows-1, 0, 0, zeros(6, 1));
 
         matrix *F_temp = zeros(6, 1);
         Theta = zeros(numBody, 1);
@@ -2470,22 +2459,22 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
                     objMass = body->object->rigid->mass;
                     objCoM = body->object->rigid->CoM;
                 }
-                setSection(F, 0, 5, i - 1, i - 1,
+                setSection(F, 0, F->numRows-1, i - 1, i - 1,
                            matrix_add(
                                    matMult(matrix_transpose(adj(g_act_wrt_prev[i + 1], temp6x6n1), temp6x6n1),
-                                           getSection(F, 0, 5, i, i, tempR6n1), tempR6n1),
-                                   matrix_sub(matMult(objMass, getSection(d_eta, 0, 5, i, i, tempR6n2), tempR6n2),
+                                           getSection(F, 0, eta->numRows-1, i, i, tempR6n1), tempR6n1),
+                                   matrix_sub(matMult(objMass, getSection(d_eta, 0, eta->numRows-1, i, i, tempR6n2), tempR6n2),
                                               matMult(matrix_transpose(
-                                                              adj_R6(getSection(eta, 0, 5, i, i, tempR6n3), temp6x6n2),
+                                                              adj_R6(getSection(eta, 0, eta->numRows-1, i, i, tempR6n3), temp6x6n2),
                                                               temp6x6n2),
-                                                      matMult(objMass, getSection(eta, 0, 5, i, i, tempR6n4), tempR6n4),
+                                                      matMult(objMass, getSection(eta, 0, eta->numRows-1, i, i, tempR6n4), tempR6n4),
                                                       tempR6n3), tempR6n2),
                                    tempR6n1));
 
 
             setSection(C, 0, C->numRows - 1, i-1, i-1,
                        matMult(
-                       matrix_transpose(getSection(F, 0, 5, i-1, i-1, tempR6n1), tempR6n1t),
+                       matrix_transpose(getSection(F, 0, F->numRows-1, i-1, i-1, tempR6n1), tempR6n1t),
                        matMult(
                                adj(expm_SE3(hat_R6(matrix_scalar_mul(objCoM,-1, tempR6n1),temp4x4n1), temp4x4n1), temp6x6n1),
                                joint->twistR6,
