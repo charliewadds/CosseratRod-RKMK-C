@@ -849,10 +849,10 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
 
     matrix *temp4x4n1 = matrix_new(4,4);
     //assert(hasNan(result->f) == 0);
-    setSection(result->f, 0, 5, 0, 0, matrix_add(matrix_solve(body->stiff,F_base, tempR6n1), body->F_0, tempR6n1));
+    setSection(result->f, 0, result->f->numRows-1, 0, 0, matrix_add(matrix_solve(body->stiff,F_base, tempR6n1), body->F_0, tempR6n1));
     //assert(hasNan(result->f) == 0);
 
-    setSection(result->eta, 0, 5, 0, 0, eta_base);
+    setSection(result->eta, 0, result->eta->numRows-1, 0, 0, eta_base);
     //memcpy(g[0], g_base, sizeof(matrix));
     copyMatrix(g_base, g[0]);
     //g[0] = g_base;
@@ -927,6 +927,7 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
     for(int i = 0; i < body->N; i++){
         matrix_free(g[i]);
     }
+    free(g);
     matrix_free(temp6xNn1);
     matrix_free(temp6xNn2);
     matrix_free(tempR6n1);
@@ -938,6 +939,7 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
     matrix_free(f_h);
     matrix_free(eta_h);
     matrix_free(f_sh);
+
 
     //matrix_free(eta);
     return result;
@@ -1263,7 +1265,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
     matrix *out = matrix_new(6,1);
     matrix_sub(F_temp, getSection(F,0,5,BC_End,BC_End, out), out);
     //free(bodyMass);
-    matrix_free(eta);
+    //matrix_free(eta);
     //assert(1 == 0);
 
 
@@ -1858,7 +1860,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
         opts[0] = 1e-6;
         opts[1] = 1e-15;
         opts[2] = tol;
-        opts[3] = pow(tol, 2);
+        opts[3] = tol;
         opts[4] = STEP_LEVMAR;
     }
     assert(isnan(params->robot->objects[1]->object->joint->velocity)==0);

@@ -59,9 +59,11 @@ matrix *matrix_new(uint8_t num_rows, uint8_t num_cols) {
     assert(num_cols != 0);
 
     matrix *m = malloc(sizeof(matrix));
+    assert(m != NULL);
     m->numRows = num_rows;
     m->numCols = num_cols;
     m->data = calloc((num_rows*num_cols), sizeof(double));
+    assert(m->data != NULL);
     if(num_rows == num_cols) {
         m->square = 1;
     }

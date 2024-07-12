@@ -32,7 +32,7 @@ int main() {
     matrix *theta_dot = zeros(TEMP_NUMBODY , 1);
 
     double dt = 0.025;
-    int timeStep = 50;
+    int timeStep = 10;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -80,7 +80,7 @@ int main() {
     matrix *theta_ddot2 = ones(TEMP_NUMBODY, 10);
     matrix *theta_ddot3 = zeros(TEMP_NUMBODY, 50);
 
-    matrix *theta_ddot = matrix_new(TEMP_NUMBODY, timeStep);
+    matrix *theta_ddot = matrix_new(TEMP_NUMBODY, 70);
 
     matrix *tempTStep = matrix_new(1, timeStep);
     matrix *tempTStep1 = ones(1, 10);
@@ -129,9 +129,9 @@ int main() {
     for(int i = 0; i < theta_ddot->numCols; i++){
         t->data[(0 * t->numCols) + i] = i*dt;
     }
-    matrix *C = zeros(robot->numBody, timeStep);
-    matrix *T_H = zeros(robot->numBody, timeStep);
-    matrix *Td_H = zeros(robot->numBody, timeStep);
+    matrix *C = zeros(robot->numBody, theta_ddot->numCols);//todo 5 should be num bodies
+    matrix *T_H = zeros(robot->numBody, theta_ddot->numCols);
+    matrix *Td_H = zeros(robot->numBody, theta_ddot->numCols);
 
     //matrix *EE_POS = zeros(3, timeStep);
 
@@ -190,13 +190,13 @@ int main() {
             }
         }
 
-        matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot.csv");
+        matrixToFile(plotRobotConfig(robot, theta, 2), "sample1Plot.csv");
     }
     printf("DONE");
 
 
 #if INV_SAVE == 1
-    matrixToFile(angles, "RigidRandyAngles.csv");
+    matrixToFile(angles, "sample1Angles.csv");
     //robotToFile(robot, "testRobotOut.json");
     matrixToFile(C, "Control_good.csv");
 #endif

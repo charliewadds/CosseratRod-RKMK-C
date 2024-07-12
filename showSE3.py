@@ -13,7 +13,7 @@ fig1 = plt.figure()
 az = fig1.add_subplot()
 # Read data from CSV
 data = []
-with open('cmake-build-debug/RigidRandyPlot.csv', 'r') as file:
+with open('cmake-build-debug/sample1Plot.csv', 'r') as file:
     reader = csv.reader(file)
     #next(reader)  # Skip header
     for row in reader:
@@ -29,7 +29,7 @@ with open('cmake-build-debug/RigidRandyPlot.csv', 'r') as file:
 
 # Read data from CSV
 data1 = []
-with open('testData/FLEX_OUT.csv', 'r') as file:
+with open('testData/FLEX_OUT_1.csv', 'r') as file:
     reader = csv.reader(file)
     #next(reader)  # Skip header
     for row in reader:
