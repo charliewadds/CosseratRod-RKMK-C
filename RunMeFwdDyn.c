@@ -162,7 +162,7 @@ int main() {
         assert(isnan(robot->objects[1]->object->joint->velocity)==0);
 
         int num = 0;
-        for(int j = 0; j < (robot->numObjects/2)-1; j++){
+        for(int j = 0; j < (robot->numObjects/2); j++){
             if(robot->objects[(2*j)+1]->type == 2){
                 robot->objects[(2*j)+1]->object->joint->position = theta->data[num];
                 robot->objects[(2*j)+1]->object->joint->velocity = theta_dot->data[num];

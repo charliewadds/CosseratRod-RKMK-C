@@ -142,16 +142,16 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 
     matrix *r6_2 = zeros(6,1);
-    r6_2->data[(2 * r6_2->numCols) + 0] = 1;
+    r6_2->data[2] = 1;
 
     matrix *r6_3 = zeros(6,1);
-    r6_3->data[(3 * r6_3->numCols) + 0] = 1;
+    r6_3->data[3] = 1;
 
     matrix *r6_4 = zeros(6,1);
-    r6_4->data[(4 * r6_4->numCols) + 0] = 1;
+    r6_4->data[4] = 1;
 
     matrix *r6_5 = zeros(6,1);
-    r6_5->data[(5 * r6_5->numCols) + 0] = 1;
+    r6_5->data[5] = 1;
 
     double *lims = malloc(sizeof(double) * 2);
     lims[0] = -M_PI;
