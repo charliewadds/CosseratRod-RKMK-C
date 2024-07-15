@@ -1032,9 +1032,9 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
     int Inv = params->inv;
 
 
-    int BC_Start = getBCStart(robot);
-    int BC_End = getBCEnd(robot);
-    int numBody = (robot->numObjects-3)/2;
+    int BC_Start = robot->BC_Start;
+    int BC_End = robot->BC_End;
+    int numBody = robot->numBody;
 
     if(BC_Start == -1){
         //todo not sure what to do here, it might just work?
@@ -1337,18 +1337,18 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
 
 
 
-    int BC_Start = getBCStart(robot);//todo these dont work
-    int BC_End = getBCEnd(robot);
+    int BC_Start = robot->BC_Start;//todo these dont work
+    int BC_End = robot->BC_End;
     int numBody = (robot->numObjects-3)/2;
 
 
 
     matrix *str_guess;
     assert(isnan(robot->objects[1]->object->joint->velocity)==0);
-    matrix *accel_old = zeros(theta_ddot->numRows,1);
-    matrix *vel_old = zeros(theta_dot->numRows,1);
+    matrix *accel_old = zeros(theta_ddot->numRows+1,1);
+    matrix *vel_old = zeros(theta_dot->numRows+1,1);
     int num = 0;
-    for(int i = 0; i < (robot->numObjects/2)-1; i++){
+    for(int i = 0; i < (robot->numObjects/2); i++){
         if(robot->objects[(2*i)+1]->type == 2){
             accel_old->data[num] = robot->objects[(2*i)+1]->object->joint->acceleration;
             robot->objects[(2*i)+1]->object->joint->acceleration = InitGuess->data[num];
@@ -1665,7 +1665,7 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
 
 
     num = 0;
-    for(int i = 0; i < (robot->numObjects/2)-1; i++){
+    for(int i = 0; i < (robot->numObjects/2); i++){
         if(robot->objects[(i*2)+1]->type == 2){
 
             robot->objects[(2*i)+1]->object->joint->acceleration = accel_old->data[num];
