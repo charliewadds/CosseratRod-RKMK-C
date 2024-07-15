@@ -338,6 +338,10 @@ matrix *zeros(uint8_t num_rows, uint8_t num_cols){
 
 //todo I am sure there is some bitwise wizardry that can be done here
 matrix *zeroMatrix(matrix *m){
+
+    if(m == NULL){
+        return NULL;
+    }
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
             m->data[(i * m->numCols) + j] = 0;

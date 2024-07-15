@@ -1095,7 +1095,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
 
-        actuateRigidJoint(g_ref[i-1], CoM2CoM, curr_joint->object->joint, getSection(eta, 0,5,i-1,i-1, tempR6n1), getSection(d_eta, 0,5,i-1,i-1, tempR6n2), kin);
+        actuateRigidJoint(g_ref[i-1], CoM2CoM, curr_joint->object->joint, getSection(eta, 0,eta->numRows-1,i-1,i-1, tempR6n1), getSection(d_eta, 0,d_eta->numRows-1,i-1,i-1, tempR6n2), kin);
         //memcpy(g_ref[i], kin->g_cur, sizeof(matrix));
         //g_ref[i] = kin->g_cur;
         copyMatrix(kin->g_cur, g_ref[i]);
@@ -1105,9 +1105,9 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         copyMatrix(kin->g_act_wrt_prev, g_act_wrt_prev[i]);
 
         //assert(hasNan(eta) == 0);
-        setSection(eta, 0,5,i,i, kin->eta);
+        setSection(eta, 0,eta->numRows-1,i,i, kin->eta);
         //assert(hasNan(eta) == 0);
-        setSection(d_eta, 0,5,i,i, kin->d_eta);
+        setSection(d_eta, 0,d_eta->numRows-1,i,i, kin->d_eta);
 
 
         matMult(matrix_transpose(adj(g_act_wrt_prev[i], temp6x6n1), temp6x6n2), F_temp, F_temp);//why is this not a pointer
@@ -1133,7 +1133,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
                 //printMatrix(F);
             } else{
                 //assert(hasNan(F) == 0);
-                setSection(F,0,5,i,i, F_temp);
+                setSection(F,0,F->numRows-1,i,i, F_temp);
 
                 //assert(hasNan(F) == 0);
             }
@@ -1144,10 +1144,10 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             F_dist = zeros(6, curr_body->object->flex->N);
 
 
-            flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i, tempR6n1), curr_body->object->flex,
-                     getSection(eta, 0, 5, i, i, tempR6n2), c0, c1, c2, dyn);
+            flex_dyn(g_ref[i], F_dist, getSection(F, 0, F->numRows-1, i, i, tempR6n1), curr_body->object->flex,
+                     getSection(eta, 0, eta->numRows-1, i, i, tempR6n2), c0, c1, c2, dyn);
 
-            setSection(d_eta, 0,5,i,i, dyn->d_eta_end);
+            setSection(d_eta, 0,d_eta->numRows-1,i,i, dyn->d_eta_end);
             //memcpy(g_ref[i], dyn->g_end, sizeof(matrix));
             copyMatrix(dyn->g_end, g_ref[i]);
             //assert(hasNan(g_ref[i]) == 0);
@@ -1155,26 +1155,26 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             //d_eta[i] = *dyn->d_eta_end;
 
 
-            matMult(curr_body->object->flex->stiff, matrix_sub(getSection(dyn->f,0,5,dyn->f->numCols-1,dyn->f->numCols-1, tempR6n1), curr_body->object->flex->F_0, tempR6n1), F_temp);
-            setSection(eta,0,5,i, i, getSection(dyn->eta,0,5,dyn->eta->numCols-1, dyn->eta->numCols-1, tempR6n1));
+            matMult(curr_body->object->flex->stiff, matrix_sub(getSection(dyn->f,0,dyn->f->numRows-1,dyn->f->numCols-1,dyn->f->numCols-1, tempR6n1), curr_body->object->flex->F_0, tempR6n1), F_temp);
+            setSection(eta,0,eta->numRows-1,i, i, getSection(dyn->eta,0,dyn->eta->numRows-1,dyn->eta->numCols-1, dyn->eta->numCols-1, tempR6n1));
 
 
         }else if(i>BC_Start) {//rigid bodies
-            setSection(F,0,5,i,i, F_temp);// [N;Nm] Save Wrench Between i,i-1_th Body @ CoM Expressed in BCF
+            setSection(F,0,F->numRows-1,i,i, F_temp);// [N;Nm] Save Wrench Between i,i-1_th Body @ CoM Expressed in BCF
 
             /*
              * F_temp = F(:,i) + transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i)- ROBOT{2*i-1}.Mass*d_eta(:,i);
              */
-            getSection(F, 0,5,i,i, tempR6n1);
-            getSection(eta,0,5,i,i, tempR6n2);
+            getSection(F, 0,F->numRows-1,i,i, tempR6n1);
+            getSection(eta,0,eta->numRows-1,i,i, tempR6n2);
             adj_R6(tempR6n2, temp6x6n1);
             matrix_transpose(temp6x6n1, temp6x6n1);
-            matMult(curr_body->object->rigid->mass, getSection(eta,0,5,i,i, tempR6n3), tempR6n3);
+            matMult(curr_body->object->rigid->mass, getSection(eta,0,eta->numRows-1,i,i, tempR6n3), tempR6n3);
             matMult(temp6x6n1, tempR6n3, tempR6n2);
             matrix_add(tempR6n1, tempR6n2, tempR6n1);
 
 
-            matMult(curr_body->object->rigid->mass, getSection(d_eta,0,5,i,i, tempR6n2), tempR6n3);
+            matMult(curr_body->object->rigid->mass, getSection(d_eta,0,d_eta->numRows-1,i,i, tempR6n2), tempR6n3);
             matrix_sub(tempR6n1
                     ,tempR6n3, F_temp);
 //            F_temp = *matrix_sub(matrix_add(
@@ -1192,7 +1192,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     // ALGORITHM FOR LAST ELASTIC BODY TO END OF MANIPULATOR FOR BC LOADS
 
-    for(int i = BC_End+1; i < numBody+2; i++){
+    for(int i = BC_End+1; i < numBody+2; i++){//todo fix magic number
         curr_joint = robot->objects[2 * (i - 1)+1];
 
 
@@ -1242,7 +1242,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         }
 
         //got distracted halfway through this so it could be wrong (it was)
-        setSection(F,0,5,i-1,i-1,
+        setSection(F,0,F->numRows-1,i-1,i-1,
                    matrix_sub(
                    matrix_add(
                    matMult(
@@ -1310,8 +1310,8 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
 
 
 
-//    matrix *theta = matrix_new(params->Theta->numRows, params->Theta->numCols);
-//    copyMatrix(params->Theta, theta);
+    matrix *theta = matrix_new(params->Theta->numRows, params->Theta->numCols);
+    copyMatrix(params->Theta, theta);
 
 
     matrix *theta_dot = matrix_new(params->Theta_dot->numRows, params->Theta_dot->numCols);
@@ -1337,7 +1337,7 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
 
 
 
-    int BC_Start = robot->BC_Start;//todo these dont work
+    int BC_Start = robot->BC_Start;
     int BC_End = robot->BC_End;
     int numBody = (robot->numObjects-3)/2;
 
@@ -1384,7 +1384,7 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
         #endif
         copyMatrix(F_0, tempGuess);
         status = find_roots_levmarqrt(tempGuess, params, 0, TOLERANCE_INV);
-        if (status != 6 ) {
+        if (status != 6 && status != 2) {
             #if VERBOSE >= 2
             printf("\t\tlevmar method failed to converge in F_FLEX trying newton\n");
             #endif
@@ -2246,7 +2246,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 #endif
         status = find_roots_levmarqrt(tempGuess, params, 0, TOLERANCE_INV);
         //copyMatrix(tempGuess, InitGuess);
-        if (status != 6) {
+        if (status != 6 && status != 2) {
             printf("levmar method failed to converge trying newton\n");
             //copyMatrix(InitGuess, tempGuess);
             status = find_roots_newton(tempGuess, params, 0, TOLERANCE_INV);
