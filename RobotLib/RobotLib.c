@@ -16,9 +16,6 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     matrix *childCoM;
 
 
-
-
-
     if(joint->parent->type == 0){
         parentCoM = joint->parent->body->rigid->CoM;
     }else if(joint->parent->type == 1){
@@ -407,7 +404,7 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double v
 
 matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
-    matrix *POS = zeros(3,100);//todo this is a hack, I need to make this dynamic
+    matrix *POS = zeros(3,88);//todo this is a hack, I need to make this dynamic
     matrix *g = matrix_new(4,4);
     eye(g);
 
@@ -461,7 +458,7 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
     //free(currObj);
     matrix_free(g);
-
+    //matrix_free(POS);
     matrix_free(temp6n1);
     matrix_free(temp4x4n1);
 
@@ -1033,9 +1030,9 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
     int Inv = params->inv;
 
 
-    int BC_Start = getBCStart(robot);
-    int BC_End = getBCEnd(robot);
-    int numBody = (robot->numObjects-3)/2;
+    int BC_Start = robot->BC_Start;
+    int BC_End = robot->BC_End;
+    int numBody = robot->numBody;
 
     if(BC_Start == -1){
         //todo not sure what to do here, it might just work?
@@ -1228,34 +1225,39 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
     matrix *bodyMass = matrix_new(6,6);
-    for(int i = BC_End+1; i >= numBody ; i--){
+    if(BC_End != numBody) {//if the last body is not flexible
+        for (int i = BC_End + 1; i > numBody; i--) {
 
 
 
-        //    %[]         End of {SECTION III} Algorithm
-        curr_body = robot->objects[2 * i ];
-        if(curr_body->type == 1){//flex
-            //bodyMass = curr_body->object->flex->mass;
-            copyMatrix(curr_body->object->flex->mass, bodyMass);
+            //    %[]         End of {SECTION III} Algorithm
+            curr_body = robot->objects[2 * i];
+            if (curr_body->type == 1) {//flex
+                //bodyMass = curr_body->object->flex->mass;
+                copyMatrix(curr_body->object->flex->mass, bodyMass);
 
-        }else if(curr_body->type == 0){//rigid
-            //bodyMass = curr_body->object->rigid->mass;
-            copyMatrix(curr_body->object->flex->mass, bodyMass);
+            } else if (curr_body->type == 0) {//rigid
+                //bodyMass = curr_body->object->rigid->mass;
+                copyMatrix(curr_body->object->flex->mass, bodyMass);
+            }
+
+            //got distracted halfway through this so it could be wrong (it was)
+            setSection(F, 0, 5, i - 1, i - 1,
+                       matrix_sub(
+                               matrix_add(
+                                       matMult(
+                                               matrix_transpose(adj(g_act_wrt_prev[i + 1], temp6x6n1), temp6x6n1),
+                                               getSection(F, 0, F->numRows - 1, i, i, tempR6n1), tempR6n1),
+                                       matMult(bodyMass, getSection(d_eta, 0, d_eta->numRows - 1, i, i, tempR6n2),
+                                               tempR6n2), tempR6n2),
+                               matMult(matMult(matrix_transpose(
+                                               adj_R6(getSection(eta, 0, eta->numRows - 1, i, i, tempR6n3), temp6x6n2),
+                                               temp6x6n2), bodyMass, temp6x6n2),
+                                       getSection(eta, 0, eta->numRows - 1, i, i, tempR6n3), tempR6n3),
+                               tempR6n1));
+
+            //printMatrix(F);
         }
-
-        //got distracted halfway through this so it could be wrong (it was)
-        setSection(F,0,5,i-1,i-1,
-                   matrix_sub(
-                   matrix_add(
-                   matMult(
-                   matrix_transpose(adj(g_act_wrt_prev[i+1], temp6x6n1), temp6x6n1),
-                   getSection(F,0,F->numRows-1,i,i, tempR6n1)
-                   , tempR6n1),
-                   matMult(bodyMass, getSection(d_eta,0,d_eta->numRows-1,i,i, tempR6n2), tempR6n2), tempR6n2),
-                   matMult(matMult(matrix_transpose(adj_R6(getSection(eta,0,eta->numRows-1,i,i, tempR6n3), temp6x6n2), temp6x6n2), bodyMass, temp6x6n2), getSection(eta,0,eta->numRows-1,i,i, tempR6n3), tempR6n3),
-                   tempR6n1));
-
-        //printMatrix(F);
     }
 
 
@@ -1275,7 +1277,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         matrix_free(g_ref[i]);
         matrix_free(g_act_wrt_prev[i]);
     }
-    matrix_free(F_dist);
+    //matrix_free(F_dist);
     freeFlexDyn(dyn);
     freeRigidKin(kin);
     matrix_free(F);
@@ -1431,13 +1433,14 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
         g_act_wrt_prev[i] = zeros(4,4);
     }
 
-    matrix *eta = zeros(6,7);      //todo magic number         //[se(3) X N+2]  Twists for each BCF + Base + EE in BCF
-    matrix *d_eta = zeros(6,7);        //todo magic number     //[se(3) X N+2]  Twist Rate for each BCF + Base + EE Frame in BCF
-    matrix *F = zeros(6,7);   //todo magic number              //[se(3) X N+1]  Wrench for each Joint + EE in BCF
+    matrix *eta = zeros(6,robot->numBody + 2);      //[se(3) X N+2]  Twists for each BCF + Base + EE in BCF
+    matrix *d_eta = zeros(6,robot->numBody + 2);        //[se(3) X N+2]  Twist Rate for each BCF + Base + EE Frame in BCF
+    matrix *F = zeros(6,robot->numBody + 1);
+
 
     matrix *C;
     if(Inv) {
-        C = zeros(1, numBody);   //todo magic number
+        C = zeros(1, numBody);
     }
     // Set Initial Conditions
 
@@ -2183,7 +2186,7 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, do
  */
 IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *InitGuess) {
 
-    int numBody = 5;//todo this should not be a magic number
+    int numBody = robot->numBody;//todo this should not be a magic number
     int BC_Start = getBCStart(robot);
     //int BC_End = getBCEnd(robot);
 
@@ -2234,7 +2237,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     matrix *tempGuess = matrix_new(InitGuess->numRows, 1);
     copyMatrix(InitGuess, tempGuess);
     matrix *tempT = matrix_new(1, 6);
-    matrixToFile(matrix_transpose(InitGuess, tempT), "idmSolveInit.csv");
+    //matrixToFile(matrix_transpose(InitGuess, tempT), "idmSolveInit.csv");
 
     assert(hasNan(tempGuess)==0);
     int status = find_roots_hybrid(tempGuess, params, 0, TOLERANCE_INV);
@@ -2793,10 +2796,11 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     printf("-------------------fdm 2 end-----------------------------\n");
 #endif
 
+    rigidJoint *joint;
     for (int i = 1; i < numBody + 2; i++) {
         //printMatrix(C);
         //printf("\n\n");
-        rigidJoint *joint = robot->objects[2 * (i - 1) + 1]->object->joint;
+        joint = robot->objects[2 * (i - 1) + 1]->object->joint;
         Object *body = robot->objects[2 * i];
         assert(robot->objects[2 * (i - 1) + 1]->type == 2);
         assert(robot->objects[2 * i - 2]->type == 1 || robot->objects[2 * i - 2]->type == 0);

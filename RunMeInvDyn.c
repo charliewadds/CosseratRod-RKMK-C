@@ -33,7 +33,7 @@ int main() {
 
     double dt = 0.025;
     int timeStep = 10;
-    //double restTime = 0;
+    double restTime = 20;
 
     matrix *t1 = matrix_new(1, timeStep);
     t1->data[(0 * t1->numCols) + 0] = dt;
@@ -78,9 +78,9 @@ int main() {
 
     matrix *theta_ddot1 = ones(TEMP_NUMBODY, 10);
     matrix *theta_ddot2 = ones(TEMP_NUMBODY, 10);
-    matrix *theta_ddot3 = zeros(TEMP_NUMBODY, 50);
+    matrix *theta_ddot3 = zeros(TEMP_NUMBODY, restTime*10);
 
-    matrix *theta_ddot = matrix_new(TEMP_NUMBODY, 70);
+    matrix *theta_ddot = matrix_new(TEMP_NUMBODY, 10+10+(restTime*10));
 
     matrix *tempTStep = matrix_new(1, timeStep);
     matrix *tempTStep1 = ones(1, 10);
@@ -125,7 +125,7 @@ int main() {
     int BC_Start = 2;//todo, this should be automated
     //int BC_End = 4;
 
-    matrix *t = zeros(1, timeStep);
+    matrix *t = zeros(1, theta_ddot->numCols);
     for(int i = 0; i < theta_ddot->numCols; i++){
         t->data[(0 * t->numCols) + i] = i*dt;
     }
@@ -148,7 +148,7 @@ int main() {
         idm = IDM_MB_RE(robot, theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, i, i, tempLinkx1), F_ext, dt, F_0);
 
 
-        matrix *tempf = matrix_new(7, 6);
+        matrix *tempf = matrix_new(idm->F->numCols, idm->F->numRows);
         matrixToFile(matrix_transpose(idm->F, tempf), "Finv_main.csv");
 
         //printf("%f", robot->objects[11]->object->joint->limits[0]);

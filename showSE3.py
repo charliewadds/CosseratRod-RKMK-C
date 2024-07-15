@@ -83,7 +83,7 @@ def animate(i, data, data1):
 
 
 
-ani = animation.FuncAnimation(fig, animate, fargs=(data, data1), frames=len(data) // 3, interval=500)
+ani = animation.FuncAnimation(fig, animate, fargs=(data, data1), frames=len(data) // 3, interval=100)
 
 ax.autoscale(False)
 # ax.set_xlim(-2, 2)

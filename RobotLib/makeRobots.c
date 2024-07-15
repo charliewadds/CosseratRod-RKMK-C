@@ -267,7 +267,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
     double linkMass = 0.01;
-    double linkLen = 0.1;
+    double linkLen = 0.3;
 
     matrix *temp3x3n1 = matrix_new(3,3);
 
@@ -305,7 +305,7 @@ Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
 
     double L_0 = 0.4;
     matrix *F_0 = zeros(6,1);
-    F_0->data[(2 * F_0->numCols) + 0] = 1;
+    F_0->data[2] = 1;
 
     double rho = 75e1;
     double mu = 5e5;
@@ -470,6 +470,28 @@ Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
     newRobot->BC_Start = 1;
     newRobot->BC_End = 3;
     newRobot->objects = robotList;
+
+
+    matrix_free(linkTwist);
+    matrix_free(linkCoM);
+    matrix_free(linkInertia);
+    matrix_free(Z);
+    matrix_free(J);
+    matrix_free(Kbt);
+    matrix_free(Kse);
+    matrix_free(Cse);
+    matrix_free(Cbt);
+    matrix_free(F_0);
+    matrix_free(r6_2);
+    matrix_free(r6_3);
+    matrix_free(r6_4);
+    matrix_free(r6_5);
+
+    matrix_free(temp3x3n1);
+    matrix_free(temp6x6n1);
+    matrix_free(tempR6n1);
+    matrix_free(tempR6n2);
+
     return newRobot;
 
 }

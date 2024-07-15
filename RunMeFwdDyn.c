@@ -74,7 +74,7 @@ int main() {
     //matrix *temp1xRowsM1 = matrix_new(5, timeStep);
     matrix *tempBodiesx1 = matrix_new(5, 1);
 
-    Robot *robot = defPaperSample_2(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
+    Robot *robot = defPaperSample_1(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
 
     int BC_Start = 2;//todo, this should be automated
     //int BC_End = 4;
@@ -188,7 +188,7 @@ int main() {
 #if VERBOSE > 0
         printf("step took: %f Seconds\n", ((double) (clock() - stepStart)) / CLOCKS_PER_SEC);
 #endif
-        matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot_fwd.csv");
+        matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot_1.csv");
         //saveTimeCSV(i, ((double) (clock() - stepStart)) / CLOCKS_PER_SEC, "time.csv");
     }
     printf("DONE");

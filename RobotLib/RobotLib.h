@@ -17,9 +17,9 @@
 #define INV_SAVE 1
 
 
-#define MAX_ITER_LEVMAR 500
-#define MAX_ITER_NEWTON 500
-#define MAX_ITER_HYBRID 500
+#define MAX_ITER_LEVMAR 50
+#define MAX_ITER_NEWTON 10
+#define MAX_ITER_HYBRID 10
 
 #define TOLERANCE_INV 1e-9
 
