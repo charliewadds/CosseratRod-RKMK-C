@@ -17,16 +17,16 @@
 #define INV_SAVE 1
 
 
-#define MAX_ITER_LEVMAR 50
-#define MAX_ITER_NEWTON 10
-#define MAX_ITER_HYBRID 10
+#define MAX_ITER_LEVMAR 500
+#define MAX_ITER_NEWTON 50
+#define MAX_ITER_HYBRID 50
 
 #define TOLERANCE_INV 1e-9
 
 #define TOLERANCE_FWD 1e-5
 
 #define D_P_LEVMAR 1e-9
-#define STEP_LEVMAR (1e-8)
+#define STEP_LEVMAR (1e-1)
 
 
 

@@ -404,7 +404,7 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double v
 
 matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
-    matrix *POS = zeros(3,88);//todo this is a hack, I need to make this dynamic
+    matrix *POS = zeros(3,100);//todo this is a hack, I need to make this dynamic
     matrix *g = matrix_new(4,4);
     eye(g);
 
@@ -1278,7 +1278,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         matrix_free(g_act_wrt_prev[i]);
     }
     //matrix_free(F_dist);
-    freeFlexDyn(dyn);
+    //freeFlexDyn(dyn);
     freeRigidKin(kin);
     matrix_free(F);
     matrix_free(d_eta);

@@ -31,17 +31,17 @@ int main() {
     matrix *theta = zeros(TEMP_NUMBODY , 1);
     matrix *theta_dot = zeros(TEMP_NUMBODY , 1);
 
-    double dt = 0.025;
-    int timeStep = 10;
-    double restTime = 20;
-
-    matrix *t1 = matrix_new(1, timeStep);
-    t1->data[(0 * t1->numCols) + 0] = dt;
-    for (int i = 1; i < timeStep; i++) {
-        t1->data[(0 * t1->numCols) + i] = t1->data[(0 * t1->numCols) + (i-1)] + dt;
-
-    }
-
+//    double dt = 0.025;
+//    int timeStep = 10;
+//    double restTime = 20;
+//
+//    matrix *t1 = matrix_new(1, timeStep);
+//    t1->data[(0 * t1->numCols) + 0] = dt;
+//    for (int i = 1; i < timeStep; i++) {
+//        t1->data[(0 * t1->numCols) + i] = t1->data[(0 * t1->numCols) + (i-1)] + dt;
+//
+//    }
+//
 //    matrix *shape = zeros(TEMP_NUMBODY, 1);
 //    shape->data[(0 * shape->numCols) + 0] = 0.4;
 //    shape->data[(1 * shape->numCols) + 0] = -0.5 * 0.4;
@@ -49,9 +49,7 @@ int main() {
 //    shape->data[(3 * shape->numCols) + 0] = -0.7 * 0.4;
 //    shape->data[(4 * shape->numCols) + 0] = 0.1 * -0.4;
 //
-//    matrix *theta_ddot = zeros(TEMP_NUMBODY, timeStep);
-
-
+//    matrix *theta_ddot = zeros(TEMP_NUMBODY, timeStep)
 //    matrix *tempTStep = matrix_new(1, timeStep);
 //
 //    for(int i = 0; i < TEMP_NUMBODY; i++){
@@ -71,16 +69,18 @@ int main() {
 %Theta_ddot  = [Theta_ddot1, Theta_ddot2, Theta_ddot3];  %[rad/s2]   Joint Trajectory Combined
 
  */
+
+    //________________________sample 2________________________________________________
+
+    double dt = 0.025;
+    int timeStep = 100;
+    int restTime = 1;//1 for no rest time
     matrix *shape = matrix_new(TEMP_NUMBODY, 1);
     shape->data[(0 * shape->numCols)] = 6;
     shape->data[(1 * shape->numCols)] = -4;
     shape->data[(2 * shape->numCols)] = -6;
 
-    matrix *theta_ddot1 = ones(TEMP_NUMBODY, 10);
-    matrix *theta_ddot2 = ones(TEMP_NUMBODY, 10);
-    matrix *theta_ddot3 = zeros(TEMP_NUMBODY, restTime*10);
-
-    matrix *theta_ddot = matrix_new(TEMP_NUMBODY, 10+10+(restTime*10));
+    matrix *theta_ddot = matrix_new(TEMP_NUMBODY, timeStep);
 
     matrix *tempTStep = matrix_new(1, timeStep);
     matrix *tempTStep1 = ones(1, 10);
@@ -104,7 +104,7 @@ int main() {
     setSection(theta_ddot, 0, 2, 0, 9, theta_ddot1);
     setSection(theta_ddot, 0, 2, 10, 19, theta_ddot2);
 
-
+//_____________________________________________________________________________________________________________________
 
     matrix *F_ext = zeros(6, 1);
     matrix *F_0 = zeros(6, 1);
