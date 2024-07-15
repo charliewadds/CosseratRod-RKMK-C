@@ -94,7 +94,7 @@ int main() {
 
 
     matrix *C_des = matrix_new(5,100);
-    matrixFromFile("Control_good.csv", C_des);
+    matrixFromFile("matlab_out_1.csv", C_des);
     matrix *C_des_1 = zeros(5,1);
 
     matrix *temp5x1 = zeros(5,1);

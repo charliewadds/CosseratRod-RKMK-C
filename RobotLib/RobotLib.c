@@ -846,10 +846,10 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
 
     matrix *temp4x4n1 = matrix_new(4,4);
     //assert(hasNan(result->f) == 0);
-    setSection(result->f, 0, result->f->numRows-1, 0, 0, matrix_add(matrix_solve(body->stiff,F_base, tempR6n1), body->F_0, tempR6n1));
+    setSection(result->f, 0, 5, 0, 0, matrix_add(matrix_solve(body->stiff,F_base, tempR6n1), body->F_0, tempR6n1));
     //assert(hasNan(result->f) == 0);
 
-    setSection(result->eta, 0, result->eta->numRows-1, 0, 0, eta_base);
+    setSection(result->eta, 0, 5, 0, 0, eta_base);
     //memcpy(g[0], g_base, sizeof(matrix));
     copyMatrix(g_base, g[0]);
     //g[0] = g_base;
@@ -1032,7 +1032,13 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     int BC_Start = robot->BC_Start;
     int BC_End = robot->BC_End;
+    int numBody = (robot->numObjects-3)/2;
+
+    /*
+     * int BC_Start = robot->BC_Start;
+    int BC_End = robot->BC_End;
     int numBody = robot->numBody;
+     */
 
     if(BC_Start == -1){
         //todo not sure what to do here, it might just work?
@@ -1435,7 +1441,7 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
 
     matrix *eta = zeros(6,robot->numBody + 2);      //[se(3) X N+2]  Twists for each BCF + Base + EE in BCF
     matrix *d_eta = zeros(6,robot->numBody + 2);        //[se(3) X N+2]  Twist Rate for each BCF + Base + EE Frame in BCF
-    matrix *F = zeros(6,robot->numBody + 1);
+    matrix *F = zeros(6,robot->numBody + 2);//todo maybe +1?
 
 
     matrix *C;
@@ -1863,7 +1869,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
         opts[0] = 1e-6;
         opts[1] = 1e-15;
         opts[2] = tol;
-        opts[3] = tol;
+        opts[3] = pow(tol, 2);
         opts[4] = STEP_LEVMAR;
     }
     assert(isnan(params->robot->objects[1]->object->joint->velocity)==0);
@@ -2796,11 +2802,10 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     printf("-------------------fdm 2 end-----------------------------\n");
 #endif
 
-    rigidJoint *joint;
     for (int i = 1; i < numBody + 2; i++) {
         //printMatrix(C);
         //printf("\n\n");
-        joint = robot->objects[2 * (i - 1) + 1]->object->joint;
+        rigidJoint *joint = robot->objects[2 * (i - 1) + 1]->object->joint;
         Object *body = robot->objects[2 * i];
         assert(robot->objects[2 * (i - 1) + 1]->type == 2);
         assert(robot->objects[2 * i - 2]->type == 1 || robot->objects[2 * i - 2]->type == 0);
