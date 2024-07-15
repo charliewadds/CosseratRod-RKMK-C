@@ -407,11 +407,11 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double v
 
 matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
-    matrix *POS = zeros(3,90);//todo this is a hack, I need to make this dynamic
+    matrix *POS = zeros(3,100);//todo this is a hack, I need to make this dynamic
     matrix *g = matrix_new(4,4);
     eye(g);
 
-    int iii = 0;//num points plotted
+    int iii = 1;//num points plotted
     //int i_R = 1;
     matrix *temp6n1 = matrix_new(6,1);
     matrix *temp4x4n1 = matrix_new(4,4);
@@ -433,13 +433,12 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
             }else if(currObj->joint->child->type == 1){
                 matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->flex->transform, temp4x4n1), temp4x4n1),g);
             }
-            //g = matMult(g, expm_SE3(hat_R6(currObj->joint->child->body->rigid->Transform)));
 
-            //setSection(POS, 0,2, iii, iii, getSection(g, 0, 2, 3, 3));
             getSetSection(g, POS, 0, 2, 3, 3, 0, 2, iii, iii);
+
             iii++;
 
-       }
+        }
         else if(currObj->joint->child->type == 1){
 
 
@@ -447,14 +446,14 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
             double ds = currObj->joint->child->body->flex->L / currObj->joint->child->body->flex->N;
 
-            for(int j = 0; j < currObj->joint->child->body->flex->N * numStep; j++){
-                int index = ceil(j/numStep);
-                if(currObj->joint->child->type )
+            for(int j = 0; j < (currObj->joint->child->body->flex->N * numStep); j++){
+                int index = ceil((j+1)/numStep)-1;
+
                 temp6n1 = getSection(currObj->joint->child->body->flex->f_prev, 0, 5, index, index, temp6n1);
                 expm_SE3(hat_R6(matrix_scalar_mul(temp6n1, ds/numStep, temp6n1), temp4x4n1), temp4x4n1);
                 g = matMult(g, temp4x4n1, g);
                 getSetSection(g, POS, 0, 2, 3, 3, 0, 2, iii, iii);
-                iii +=1;
+                iii ++;
 
             }
         }
@@ -462,7 +461,7 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
     //free(currObj);
     matrix_free(g);
-
+    //matrix_free(POS);
     matrix_free(temp6n1);
     matrix_free(temp4x4n1);
 
