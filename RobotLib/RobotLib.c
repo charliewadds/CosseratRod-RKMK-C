@@ -1071,6 +1071,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
     matrix *tempR6n1 = matrix_new(6,1);
     matrix *tempR6n2 = matrix_new(6,1);
     matrix *tempR6n3 = matrix_new(6,1);
+    matrix *tempR6n4 = matrix_new(6,1);
 
     matrix *temp6x6n1 = matrix_new(6,6);
     matrix *temp6x6n2 = matrix_new(6,6);
@@ -1088,7 +1089,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         curr_joint = robot->objects[2 * (i - 1)+1];
         curr_body = robot->objects[2 * i ];
 
-        //printMatrix(eta);
+
         CoM2CoM = getCoM2CoM(curr_joint->object->joint, CoM2CoM);
 
         //todo double check matrix sizes
@@ -1126,16 +1127,10 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
             if(i == BC_Start ) {
                 //ROBOT{2*i-1}.Stiff * (InitGuess - ROBOT{2*i-1}.F_0);
-                //assert(hasNan(F) == 0);
                 setSection(F, 0, 5, i, i, matMult(curr_body->object->flex->stiff,
                                                   matrix_sub(InitGuess, curr_body->object->flex->F_0, tempR6n1), tempR6n1));
-                //assert(hasNan(F) == 0);
-                //printMatrix(F);
             } else{
-                //assert(hasNan(F) == 0);
-                setSection(F,0,F->numRows-1,i,i, F_temp);
-
-                //assert(hasNan(F) == 0);
+                setSection(F,0,5,i,i, F_temp);
             }
 
             if(F_dist != NULL){
@@ -1144,37 +1139,37 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             F_dist = zeros(6, curr_body->object->flex->N);
 
 
-            flex_dyn(g_ref[i], F_dist, getSection(F, 0, F->numRows-1, i, i, tempR6n1), curr_body->object->flex,
-                     getSection(eta, 0, eta->numRows-1, i, i, tempR6n2), c0, c1, c2, dyn);
+            flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i, tempR6n1), curr_body->object->flex,
+                     getSection(eta, 0, 5, i, i, tempR6n2), c0, c1, c2, dyn);
 
-            setSection(d_eta, 0,d_eta->numRows-1,i,i, dyn->d_eta_end);
+            setSection(d_eta, 0,5,i,i, dyn->d_eta_end);
             //memcpy(g_ref[i], dyn->g_end, sizeof(matrix));
             copyMatrix(dyn->g_end, g_ref[i]);
-            //assert(hasNan(g_ref[i]) == 0);
+
 //            g_ref[i] = dyn->g_end;//is this the leak??
             //d_eta[i] = *dyn->d_eta_end;
 
 
-            matMult(curr_body->object->flex->stiff, matrix_sub(getSection(dyn->f,0,dyn->f->numRows-1,dyn->f->numCols-1,dyn->f->numCols-1, tempR6n1), curr_body->object->flex->F_0, tempR6n1), F_temp);
-            setSection(eta,0,eta->numRows-1,i, i, getSection(dyn->eta,0,dyn->eta->numRows-1,dyn->eta->numCols-1, dyn->eta->numCols-1, tempR6n1));
+            matMult(curr_body->object->flex->stiff, matrix_sub(getSection(dyn->f,0,5,dyn->f->numCols-1,dyn->f->numCols-1, tempR6n1), curr_body->object->flex->F_0, tempR6n1), F_temp);
+            setSection(eta,0,5,i, i, getSection(dyn->eta,0,5,dyn->eta->numCols-1, dyn->eta->numCols-1, tempR6n1));
 
 
         }else if(i>BC_Start) {//rigid bodies
-            setSection(F,0,F->numRows-1,i,i, F_temp);// [N;Nm] Save Wrench Between i,i-1_th Body @ CoM Expressed in BCF
+            setSection(F,0,5,i,i, F_temp);// [N;Nm] Save Wrench Between i,i-1_th Body @ CoM Expressed in BCF
 
             /*
              * F_temp = F(:,i) + transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i)- ROBOT{2*i-1}.Mass*d_eta(:,i);
              */
-            getSection(F, 0,F->numRows-1,i,i, tempR6n1);
-            getSection(eta,0,eta->numRows-1,i,i, tempR6n2);
+            getSection(F, 0,5,i,i, tempR6n1);
+            getSection(eta,0,5,i,i, tempR6n2);
             adj_R6(tempR6n2, temp6x6n1);
             matrix_transpose(temp6x6n1, temp6x6n1);
-            matMult(curr_body->object->rigid->mass, getSection(eta,0,eta->numRows-1,i,i, tempR6n3), tempR6n3);
+            matMult(curr_body->object->rigid->mass, getSection(eta,0,5,i,i, tempR6n3), tempR6n3);
             matMult(temp6x6n1, tempR6n3, tempR6n2);
             matrix_add(tempR6n1, tempR6n2, tempR6n1);
 
 
-            matMult(curr_body->object->rigid->mass, getSection(d_eta,0,d_eta->numRows-1,i,i, tempR6n2), tempR6n3);
+            matMult(curr_body->object->rigid->mass, getSection(d_eta,0,5,i,i, tempR6n2), tempR6n3);
             matrix_sub(tempR6n1
                     ,tempR6n3, F_temp);
 //            F_temp = *matrix_sub(matrix_add(
@@ -1210,8 +1205,8 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         copyMatrix(kin->g_act_wrt_prev, g_act_wrt_prev[i]);
 
 
-        setSection(eta, 0,eta->numRows-1,i,i, kin->eta);
-        setSection(d_eta, 0,d_eta->numRows-1,i,i, kin->d_eta);
+        setSection(eta, 0,5,i,i, kin->eta);
+        setSection(d_eta, 0,5,i,i, kin->d_eta);
 
 
     }
@@ -1221,16 +1216,13 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 //        matrix_free(g_act_wrt_prev[i]);
 //    }
 
-    setSection(F, 0,F->numRows-1,F->numCols - 1,F->numCols - 1, F_ext); //TODO this needs to be added back in, it is the applied wrench to the end effector
+    setSection(F, 0,5,F->numCols - 1,F->numCols - 1, F_ext); //TODO this needs to be added back in, it is the applied wrench to the end effector
 
 
 
     matrix *bodyMass = matrix_new(6,6);
     for(int i = BC_End+1; i >= numBody ; i--){
 
-
-
-        //    %[]         End of {SECTION III} Algorithm
         curr_body = robot->objects[2 * i ];
         if(curr_body->type == 1){//flex
             //bodyMass = curr_body->object->flex->mass;
@@ -1252,6 +1244,46 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
                    matMult(bodyMass, getSection(d_eta,0,d_eta->numRows-1,i,i, tempR6n2), tempR6n2), tempR6n2),
                    matMult(matMult(matrix_transpose(adj_R6(getSection(eta,0,eta->numRows-1,i,i, tempR6n3), temp6x6n2), temp6x6n2), bodyMass, temp6x6n2), getSection(eta,0,eta->numRows-1,i,i, tempR6n3), tempR6n3),
                    tempR6n1));
+
+        //F(:,i-1) = transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i) + ROBOT{2*i-1}.Mass*d_eta(:,i) - transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i);
+
+
+//        //transpose(Ad(g_act_wrt_prev(:,:,i+1)))
+//        adj(g_act_wrt_prev[i+1], temp6x6n1);
+//        matrix_transpose(temp6x6n1, temp6x6n1);
+//
+//        //F(:,i)
+//        getSection(F,0,F->numRows-1,i,i, tempR6n1);
+//
+//
+//        //ROBOT{2*i-1}.Mass*d_eta(:,i)
+//        getSection(F,0,F->numRows-1,i,i, tempR6n2);
+//        matMult(bodyMass, tempR6n1, tempR6n2);
+//
+//        //transpose(adj(eta(:,i)))
+//        getSection(eta,0,eta->numRows-1,i,i, tempR6n3);
+//        adj_R6(tempR6n3, temp6x6n2);
+//
+//        //ROBOT{2*i-1}.Mass*eta(:,i)
+//        matMult(bodyMass, tempR6n3, tempR6n3);
+//
+//
+//
+//        //transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i)
+//        matMult(temp6x6n1, tempR6n1, tempR6n1);
+//
+//
+//        //transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i)
+//        matMult(temp6x6n2, tempR6n3, tempR6n3);
+//
+//        //transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i) + ROBOT{2*i-1}.Mass*d_eta(:,i)
+//        matrix_add(tempR6n1, tempR6n2, tempR6n1);
+//
+//        //F(:,i-1) = transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i) + ROBOT{2*i-1}.Mass*d_eta(:,i) - transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i);
+//        matrix_sub(tempR6n1, tempR6n3, tempR6n1);
+//
+//        setSection(F,0,F->numRows-1,i-1,i-1, tempR6n1);
+
 
         //printMatrix(F);
     }
