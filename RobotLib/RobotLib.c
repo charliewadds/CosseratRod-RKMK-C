@@ -1189,24 +1189,18 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     for(int i = BC_End+1; i < numBody+2; i++){//todo fix magic number
         curr_joint = robot->objects[2 * (i - 1)+1];
-
-
-
         CoM2CoM = getCoM2CoM(curr_joint->object->joint, CoM2CoM);
-
 
         //% Use Rigid-Body Kinematic Equations to find Velocities, Accelerations and Transformations
         //        [g_ref(:,:,i),g_act_wrt_prev(:,:,i),eta(:,i),d_eta(:,i)] = Rigid_Kin(g_ref(:,:,i-1), CoM2CoM, ROBOT{2*(i-1)}, eta(:,i-1), d_eta(:,i-1));
         actuateRigidJoint(g_ref[i - 1], CoM2CoM, curr_joint->object->joint, getSection(eta, 0,5,i-1,i-1, tempR6n1), getSection(d_eta, 0,5,i-1,i-1, tempR6n2), kin);
-
         //g_ref[i] = kin->g_cur;
         copyMatrix(kin->g_cur, g_ref[i]);
         //g_act_wrt_prev[i] = kin->g_act_wrt_prev;//same here as above, is this a leak??
         copyMatrix(kin->g_act_wrt_prev, g_act_wrt_prev[i]);
 
-
-        setSection(eta, 0,5,i,i, kin->eta);
-        setSection(d_eta, 0,5,i,i, kin->d_eta);
+        setSection(eta, 0,eta->numRows-1,i,i, kin->eta);
+        setSection(d_eta, 0,eta->numRows-1,i,i, kin->d_eta);
 
 
     }
@@ -1248,33 +1242,31 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         //F(:,i-1) = transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i) + ROBOT{2*i-1}.Mass*d_eta(:,i) - transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i);
 
 
-//        //transpose(Ad(g_act_wrt_prev(:,:,i+1)))
+        //transpose(Ad(g_act_wrt_prev(:,:,i+1)))
 //        adj(g_act_wrt_prev[i+1], temp6x6n1);
 //        matrix_transpose(temp6x6n1, temp6x6n1);
-//
 //        //F(:,i)
 //        getSection(F,0,F->numRows-1,i,i, tempR6n1);
+//        //transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i)
+//        matMult(temp6x6n1, tempR6n1, tempR6n1);
 //
 //
 //        //ROBOT{2*i-1}.Mass*d_eta(:,i)
 //        getSection(F,0,F->numRows-1,i,i, tempR6n2);
 //        matMult(bodyMass, tempR6n1, tempR6n2);
 //
+//
 //        //transpose(adj(eta(:,i)))
 //        getSection(eta,0,eta->numRows-1,i,i, tempR6n3);
 //        adj_R6(tempR6n3, temp6x6n2);
 //
-//        //ROBOT{2*i-1}.Mass*eta(:,i)
-//        matMult(bodyMass, tempR6n3, tempR6n3);
-//
-//
-//
-//        //transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i)
-//        matMult(temp6x6n1, tempR6n1, tempR6n1);
-//
+//        //transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass
+//        matMult(temp6x6n2, bodyMass, temp6x6n2);
 //
 //        //transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i)
 //        matMult(temp6x6n2, tempR6n3, tempR6n3);
+//
+//
 //
 //        //transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i) + ROBOT{2*i-1}.Mass*d_eta(:,i)
 //        matrix_add(tempR6n1, tempR6n2, tempR6n1);

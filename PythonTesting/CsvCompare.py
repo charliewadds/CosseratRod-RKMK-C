@@ -18,7 +18,7 @@ import numpy as np
 def compare_csv(file1, file2):
     m1 = np.loadtxt(file1, dtype=np.double, delimiter=",")
     m2 = scipy.io.loadmat(file2)
-    np.setprecision(30)
+    #np.setprecision(30)
     err = np.zeros(m1.shape)
     absErr = np.zeros(m1.shape)
 
