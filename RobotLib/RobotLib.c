@@ -407,7 +407,7 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double v
 
 matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
-    matrix *POS = zeros(3,100);//todo this is a hack, I need to make this dynamic
+    matrix *POS = zeros(3,200);//todo this is a hack, I need to make this dynamic
     matrix *g = matrix_new(4,4);
     eye(g);
 
@@ -1871,8 +1871,8 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
         //opts[5] = {1e-3, 1e-9, 1e-5, 1e-5, -1e-9};
         opts[0] = 1e-6; // scale factor for initial mu
         opts[1] = 1e-15; // stopping thresholds for ||J^T e||_inf
-        opts[2] = pow(tol, 2); // stopping thresholds for ||Dp||_2
-        opts[3] = pow(tol,2); // stopping thresholds for ||e||_2
+        opts[2] = tol; // stopping thresholds for ||Dp||_2
+        opts[3] = 1e-18; // stopping thresholds for ||e||_2
         opts[4] = STEP_LEVMAR; // the step used in difference approximation to the Jacobian
 
     }else{
@@ -1880,15 +1880,58 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
 
         opts[0] = 1e-3;
         opts[1] = 1e-15;
-        opts[2] = pow(tol, 2);
-        opts[3] = tol;
+        opts[2] = tol;
+        opts[3] = 1e-18;
         opts[4] = STEP_LEVMAR;
     }
     assert(isnan(params->robot->objects[1]->object->joint->velocity)==0);
     if(fwd){
-        dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, 5, 5, MAX_ITER_LEVMAR, opts, info, NULL, NULL, params);
+        int iters = 0;
+        while(iters < MAX_ITER_LEVMAR) {
+            dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, 5, 5, MAX_ITER_LEVMAR - iters, opts, info, NULL, NULL, params);
+            iters += info[5];
+            if(info[6] == 6){
+                break;
+            }
+            if(info[6] == 2){
+                if(info[1] < sqrt(tol)){
+                    break;
+                }
+
+            }
+            if(info[6] == 3){
+                break;
+            }
+        }
     }else {
-        dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, 6, 6, MAX_ITER_LEVMAR, opts, info, NULL, NULL, params);//TODO SOMETING ON THIS LINE MADE Inv Dyn work. not sure what, changed them all to main
+        int iters = 0;
+        int success = 0;
+        while(iters < MAX_ITER_LEVMAR) {
+            dlevmar_dif(Flex_MB_BCS_wrapper_levmar, p, NULL, 6, 6, MAX_ITER_LEVMAR-iters, opts, info, NULL, NULL, params);
+            iters+=info[5]+1;
+            if(info[6] == 6){
+                success = 1;
+                break;
+            }
+            if(info[6] == 2){
+                if(info[1] < sqrt(tol)){
+                    success = 1;
+                    break;
+                }
+
+            }
+            if(info[6] == 3){
+                break;
+            }
+        }
+        // set iters
+        info[5] = iters;
+        if(success == 0){
+            printf("epsrel ok, epsabs not ok");
+
+            info[6] = 3;
+        }
+
     }
 
     #if SOLVER_SAVE
@@ -1958,8 +2001,8 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
 
 int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, double tol) {
     const gsl_multiroot_fsolver_type *T;
-    gsl_multiroot_fsolver *s;
-
+    //gsl_multiroot_fsolver *s;
+    assert(hasNan(InitGuess) == 0);
     T = gsl_multiroot_fsolver_dnewton;
     //s = gsl_multiroot_fsolver_allc(T, 6);
     int status;
@@ -1969,82 +2012,89 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, do
 
 
 
-
-    gsl_multiroot_function *f = malloc(sizeof(gsl_multiroot_function));
+    gsl_multiroot_function f = {&Flex_MB_BCS_wrapper, n, params};
     // Set parameters
-    if(fwd == 1){
-        f->f = &F_Flex_MB_BCS_wrapper;
-        f->n = n;
-        f->params = params;
+    if(fwd) {
 
-    }else {
-        f->f = &Flex_MB_BCS_wrapper;
-        f->n = n;
-        f->params = params;
+        f.f = &F_Flex_MB_BCS_wrapper;
     }
-    //f.params = &params;
 
-    // Define initial guess
-    double x_init[n];
+    double x_init[InitGuess->numRows];
 
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < InitGuess->numRows; i++) {
         x_init[i] = InitGuess->data[i * InitGuess->numCols];
     }
 
     gsl_vector_view x_vec = gsl_vector_view_array(x_init, n);
-    s = gsl_multiroot_fsolver_alloc(T, n);
-    gsl_multiroot_fsolver_set(s, f, &x_vec.vector);
+    gsl_multiroot_fsolver *s = gsl_multiroot_fsolver_alloc(T, n);
+    gsl_multiroot_fsolver_set(s, &f, &x_vec.vector);
 
 
-    #if VERBOSE >= 2
-    // output the jacobian
-    gsl_matrix *jacobian = gsl_matrix_alloc(n, n);
-    int stat = gsl_multiroot_fdjacobian(f, &x_vec.vector, s->f, 1e-9, jacobian);
-//    printf("JACOBIAN:\n");
-//    printf("STATUS: %d\n", stat);
-//    printGSLMatrix(jacobian);
-//    printf("determinant of the jacobian is: %.15f", Det(jacobian));
-    #endif
     do {
         iter++;
         status = gsl_multiroot_fsolver_iterate(s);
-        #if VERBOSE >= 2
+
+#if VERBOSE >= 2
         if (status) {
             printf("STATUS: %s\n", gsl_strerror(status));
             break;
         }
-        #endif
+#endif
 
 
         status = gsl_multiroot_test_residual(s->f, tol);
 
+        if(status == GSL_CONTINUE){
+            if(fwd) {
+                status = gsl_multiroot_test_delta(s->dx, s->x, tol, pow(tol,2));
+            }else {
+                status = gsl_multiroot_test_delta(s->dx, s->x, tol, pow(tol,2));
+            }
+        }
 
-    } while (status == GSL_CONTINUE && iter < MAX_ITER_NEWTON);
+    } while (status == GSL_CONTINUE && iter < MAX_ITER_HYBRID);
 
 
 #if SOLVER_SAVE ==1
     double residual = 0;
-
     residual = gsl_blas_dnrm2(s->f);
-
     if(fwd){
-        solverSave("newton", "newtonSaveFwd.csv", status, (int)iter, residual, 1);
+        solverSave("hybrid", "hybridSaveFwd.csv", status, (int)iter, residual, 1);
     }else {
-        solverSave("newton", "newtonSave.csv", status, (int) iter, residual, fwd);
+        solverSave("hybrid", "hybridSave.csv", status, (int) iter, residual, fwd);
     }
 #endif
+#if VERBOSE >= 2
+    if(fwd) {
+        if (status != GSL_SUCCESS) {
+            printf("\tSTATUS: %d\n", status);
+            printf("\tSTATUS: %s\n", gsl_strerror(status));
+        }
+        printf("\tnewton took %zu iterations\n", iter);\
 
-    #if VERBOSE >= 2
-    if (status) {
-        printf("STATUS: %d\n", status);
-        printf("STATUS: %s\n", gsl_strerror(status));
-    }else{
-        printf("Newton Solver Converged in %zu iterations\n", iter);
     }
-    #endif
+    else{
+        if (status != GSL_SUCCESS){
+            printf("STATUS: %d\n", status);
+            printf("STATUS: %s\n", gsl_strerror(status));
+        }
+        printf("newton took %zu iterations\n", iter);
+    }
+//    gsl_matrix *jacobian = gsl_matrix_alloc(n, n);
+//    int stat = gsl_multiroot_fdjacobian(&f, &x_vec.vector, s->f, 1e-4, jacobian);
+//    printf("JACOBIAN:\n");
+//    printf("STATUS: %d\n", stat);
+//    printGSLMatrix(jacobian);
+//
+//    matrix *determinant = zeros(6,6);
+//    gsl_to_matrix(jacobian, determinant);
+//    printf("DETERMINANT: %.15f\n", Det(determinant));
+//    assert(fabs(Det(determinant)) > 0.0000000000000000000000000001);
+#endif
 
-    //printf("took %zu iterations\n", iter);
-    //assert(!isnan(s->f->data[0]));
+
+
+    //assert(!isnan(s->f->data[1]));
     // Extract solution
     //matrix *solution = zeros(6, 1);
     for (int i = 0; i < InitGuess->numRows; i++) {
@@ -2052,8 +2102,6 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, do
     }
 
     gsl_multiroot_fsolver_free(s);
-    free(f);
-
     return status;
 }
 
@@ -2163,6 +2211,8 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, do
     return status;
 }
 
+
+
 //int find_roots_deriv(matrix InitGuess, F)
 
 
@@ -2192,8 +2242,8 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, do
  */
 IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *InitGuess) {
 
-    int numBody = 5;//todo this should not be a magic number
-    int BC_Start = getBCStart(robot);
+    int numBody = robot->numBody;//todo this should not be a magic number
+    int BC_Start = robot->BC_Start;
     //int BC_End = getBCEnd(robot);
 
     if (BC_Start == -1) {
@@ -2286,7 +2336,8 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     }
         //printMatrix(Theta);
     copyMatrix(tempGuess, InitGuess);
-
+    //matrix *tempT = matrix_new(1, 5);
+    matrixToFile(matrix_transpose(InitGuess, tempT), "idmSolve.csv");
 
         #if VERBOSE >= 1
 
@@ -2677,7 +2728,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         copyMatrix(Theta_DDot_guess, tempGuess);
         status = find_roots_levmarqrt(tempGuess, params, 1, TOLERANCE_FWD);
 
-        if (status != 6) {
+        if (status != 6 && status != 2) {
             #if VERBOSE >= 2
             printf("levmar method failed to converge trying newton\n");
             #endif
@@ -2799,7 +2850,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         copyMatrix(F_0, StrGuess);
         status = find_roots_levmarqrt(StrGuess, params, 0, TOLERANCE_FWD);
         //printMatrix(StrGuess);
-        if (status != 6) {
+        if (status != 6 && status != 2) {
             #if VERBOSE >= 2
             printf("levmar method failed to converge trying newton\n");
             #endif

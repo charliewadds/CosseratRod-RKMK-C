@@ -439,7 +439,7 @@ matrix *matrix_sin(matrix *m){//todo update to use result matrix
     matrix *result = matrix_new(m->numRows, m->numCols);
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            result->data[(i * result->numCols) + j] =(double) sinl(m->data[(i * m->numCols) + j]);
+            result->data[(i * result->numCols) + j] = (double) sinl((double) m->data[(i * m->numCols) + j]);
         }
     }
     return result;

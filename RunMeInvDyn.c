@@ -32,7 +32,7 @@ int main() {
     matrix *theta_dot = zeros(TEMP_NUMBODY , 1);
 
     double dt = 0.025;
-    int timeStep = 100;
+    int timeStep = 50;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -56,7 +56,7 @@ int main() {
     for(int i = 0; i < TEMP_NUMBODY; i++){
 
         zeroMatrix(tempTStep);
-        matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, PI/(dt*timeStep), tempTStep)),shape->data[(i * shape->numCols)], tempTStep);
+        matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, M_PI/(dt*timeStep), tempTStep)),shape->data[(i * shape->numCols)], tempTStep);
         //memcpy(theta_ddot->data[i],tempTStep->data[0],  sizeof * theta_ddot->data[i] * timeStep);
         setSection(theta_ddot, i, i, 0, timeStep-1, tempTStep);
 
@@ -72,6 +72,7 @@ int main() {
     F_0->data[(5 * F_0->numCols)] = 0;
 
 
+    matrixToFile(theta_ddot, "theta_ddot_in.csv");
 
     //matrix *temp1xRowsM1 = matrix_new(5, timeStep);
     matrix *tempBodiesx1 = matrix_new(TEMP_NUMBODY, 1);
@@ -96,12 +97,14 @@ int main() {
     matrix *tempLinkx1 = matrix_new(robot->numBody,1);
     for(int i = 0; i < timeStep; i++){
 
+        printf("Time Step: %d\n", i);
         matrix *f = matrix_new(6,1);
         getSection(robot->objects[(2*robot->BC_Start)]->object->flex->f_prev, 0, robot->objects[(2*robot->BC_Start)]->object->flex->f_prev->numRows - 1, 0, 0, f);//todo
 
         idm = IDM_MB_RE(robot, theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, i, i, tempLinkx1), F_ext, dt, F_0);
 
-        matrixToFile(f, "f.csv");
+        matrix *tempT = matrix_new(1, 5);
+        matrixToFile(matrix_transpose(idm->C, tempT), "c_inv_idm.csv");
         matrix *tempf = matrix_new(7, 6);
 
 

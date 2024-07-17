@@ -40,7 +40,7 @@ int main() {
 
 
     double dt = 0.025;
-    int timeStep = 100;
+    int timeStep = 50;//why does this effect convergence at 80?????
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -76,7 +76,8 @@ int main() {
 
     Robot *robot = defPaperSample_2(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
 
-    int BC_Start = 2;//todo, this should be automated
+
+    int BC_Start = robot->BC_Start;//todo, this should be automated
     //int BC_End = 4;
 
     matrix *t = zeros(1, timeStep);
@@ -93,8 +94,8 @@ int main() {
     matrix *InitGuess = zeros(5,1);
 
 
-    matrix *C_des = matrix_new(5,100);
-    matrixFromFile("matlab_out_1.csv", C_des);
+    matrix *C_des = matrix_new(5,timeStep);
+    matrixFromFile("Control_good.csv", C_des);
     matrix *C_des_1 = zeros(5,1);
 
     matrix *temp5x1 = zeros(5,1);
@@ -104,7 +105,7 @@ int main() {
     matrix_scalar_mul(negative, 0, negative);
 
 
-    for(int i = 0; i <= timeStep; i++){
+    for(int i = 0; i < timeStep; i++){
 #if VERBOSE > 0
         printf("\nTime Step: %d\n", i);
 
@@ -125,8 +126,8 @@ int main() {
         matrix *tempT = matrix_new(1, 5);
         matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
         matrixToFile(matrix_transpose(fdm->JointAcc, tempT), "jointAcc.csv");
-        matrixToFile(matrix_transpose(theta_dot, tempT), "theta_dot.csv");
-        matrixToFile(matrix_transpose(fdm->F, tempf), "F.csv");
+        matrixToFile(matrix_transpose(theta, tempT), "theta.csv");
+        matrixToFile(fdm->F, "F.csv");
 
 
 
