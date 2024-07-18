@@ -8,7 +8,7 @@
 
 
 #define GSL_ERROR_HANDLER 0
-#define VERBOSE 1
+#define VERBOSE 3
 
 
 #define SOLVER_SAVE 0
@@ -22,17 +22,27 @@
 #define MAX_ITER_NEWTON 200
 #define MAX_ITER_HYBRID 200
 
-#define TOLERANCE_INV 1e-9
-#define TOLERANCE_FWD 1e-9
+#define EPSREL_HYBRID 1e-12
+#define EPSABS_HYBRID 1e-5
+
+#define TOLERANCE_INV 1e-15
+#define TOLERANCE_FWD 1e-15
 
 #define D_P_LEVMAR 1e-30
-#define STEP_LEVMAR 1e-8
+#define STEP_LEVMAR 1e-3
 
 #ifndef COSSERATROD_RKMK_C_ROBOTLIB_H
 #define COSSERATROD_RKMK_C_ROBOTLIB_H
 
-
+#include <assert.h>
 #include "LieGroup.h"
+#include "../levmar-2.6/levmar.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <gsl/gsl_blas.h>
+#include <gsl/gsl_errno.h>
 //#include "FDM.h"
 #include <gsl/gsl_deriv.h>
 typedef struct rigidBody_s{
@@ -349,6 +359,8 @@ typedef struct {
     int inv;
 
 } Flex_MB_BCS_params;
+rigidKin *rigidKinAlloc();
+flexDyn *flexDynAlloc();
 
 void robotToFile(Robot *robot, char *filename);
 void addRobotState(Robot *robot, char* filename, int num);
@@ -367,7 +379,8 @@ int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *p, int fwd, double 
  */
 matrix *Flex_MB_BCS(matrix *InitGuess,Flex_MB_BCS_params *params);
 int F_Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f);
-
+void freeRigidKin(rigidKin *kin);
+void freeFlexDyn(flexDyn *dyn);
 int F_Flex_MB_BCS(matrix *InitGuess, matrix *result, Flex_MB_BCS_params *params);
 matrix *fsolve_idm_mb_re(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
 Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot);

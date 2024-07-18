@@ -40,7 +40,7 @@ int main() {
 
 
     double dt = 0.025;
-    int timeStep = 50;//why does this effect convergence at 80?????
+    int timeStep = 100;//why does this effect convergence at 80?????
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -104,13 +104,12 @@ int main() {
     matrix* negative = ones(1,5);
     matrix_scalar_mul(negative, 0, negative);
 
-
     for(int i = 0; i < timeStep; i++){
-#if VERBOSE > 0
+        #if VERBOSE > 0
         printf("\nTime Step: %d\n", i);
 
         stepStart = clock();
-#endif
+        #endif
         #if LOG_F_FLEX == 1
         matrixToFile(negative, "C_inv.csv");
         matrixToFile(negative, "InitGuess.csv");
