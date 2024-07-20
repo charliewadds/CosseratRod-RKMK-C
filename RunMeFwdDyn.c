@@ -65,7 +65,7 @@ int main() {
 
     //matrix *temp1xRowsM1 = matrix_new(5, timeStep);
     matrix *C_des = matrix_new(robot->numBody,totTime);
-    matrixFromFile("../testData/C_DES_MATLAB/PaperSample2_mat.csv", C_des);
+    matrixFromFile("ControlSim2.csv", C_des);
 
 #endif
 

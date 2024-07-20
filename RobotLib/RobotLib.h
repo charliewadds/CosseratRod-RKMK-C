@@ -19,15 +19,16 @@
 #define HYBRID_DELTA 0
 
 #define SOLVER_SAVE 0
-#define SOLVER_ERRORS 1
+#define SOLVER_ERRORS 0
 #define SOLVER_ERROR_TOP 1
 #define LOG_F_FLEX 0
-#define INV_SAVE 1
+#define INV_SAVE 0
 
 
-#define MAX_ITER_LEVMAR 15
+#define MAX_ITER_LEVMAR 150
 #define MAX_ITER_NEWTON 15
-#define MAX_ITER_HYBRID 15
+#define MAX_ITER_HYBRID 150
+
 
 
 #define EPSREL_LEVMAR 1e-12
@@ -41,9 +42,11 @@
 
 #define NUM1 1
 #define NUM2 1
-#define INV_STEP_LEVMAR (-sqrt(TOLERANCE_INV * NUM1))
-#define FWD_STEP_LEVMAR (-sqrt(TOLERANCE_FWD * NUM2))
+#define INV_STEP_LEVMAR sqrt(TOLERANCE_INV * NUM1)
+#define FWD_STEP_LEVMAR sqrt(TOLERANCE_FWD * NUM2)
 
+
+#define LEVMAR_STEP_MUL 1
 
 #define INV_HYBRID_STEP (sqrt(TOLERANCE_INV * NUM1))
 #define FWD_HYBRID_STEP sqrt(TOLERANCE_FWD * NUM2)

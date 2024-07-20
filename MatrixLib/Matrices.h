@@ -4,6 +4,7 @@
 #ifndef _MATRICES_H_
 #define _MATRICES_H_
 
+//#define NEON
 #include <stdlib.h>
 #include <stdint.h>
 #include <gsl/gsl_matrix.h>

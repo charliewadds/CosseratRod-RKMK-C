@@ -31,6 +31,8 @@ int main() {
     matrix *theta = zeros(TEMP_NUMBODY , 1);
     matrix *theta_dot = zeros(TEMP_NUMBODY , 1);
 
+
+#ifdef SAMPLE2
     double dt = 0.025;
     int timeStep = 100;
     //double restTime = 0;
@@ -53,6 +55,7 @@ int main() {
 
     matrix *tempTStep = matrix_new(1, timeStep);
 
+#endif
     for(int i = 0; i < TEMP_NUMBODY; i++){
 
         zeroMatrix(tempTStep);
@@ -72,7 +75,7 @@ int main() {
     F_0->data[(5 * F_0->numCols)] = 0;
 
 
-    matrixToFile(theta_ddot, "theta_ddot_in.csv");
+    //matrixToFile(theta_ddot, "theta_ddot_in.csv");
 
     //matrix *temp1xRowsM1 = matrix_new(5, timeStep);
     matrix *tempBodiesx1 = matrix_new(TEMP_NUMBODY, 1);
@@ -103,9 +106,9 @@ int main() {
 
         idm = IDM_MB_RE(robot, theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, i, i, tempLinkx1), F_ext, dt, F_0);
 
-        matrix *tempT = matrix_new(1, 5);
-        matrixToFile(matrix_transpose(idm->C, tempT), "c_inv_idm.csv");
-        matrix *tempf = matrix_new(7, 6);
+        //matrix *tempT = matrix_new(1, 5);
+        //matrixToFile(matrix_transpose(idm->C, tempT), "c_inv_idm.csv");
+        //matrix *tempf = matrix_new(7, 6);
 
 
         //printf("%f", robot->objects[11]->object->joint->limits[0]);
@@ -151,7 +154,7 @@ int main() {
     printf("DONE");
 //    matrixToFile(angles, "RigidRandyAngles.csv");
 //    robotToFile(robot, "testRobotOut.json");
-    //matrixToFile(C, "ControlSim2.csv");
+    matrixToFile(C, "ControlSim2.csv");
 #if INV_SAVE == 1
     matrixToFile(angles, "RigidRandyAngles.csv");
     //robotToFile(robot, "testRobotOut.json");

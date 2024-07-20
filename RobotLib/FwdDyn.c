@@ -538,7 +538,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         printf("Hybrid\n");
     }
     copyMatrix(tempGuess, JointAcc);
-    matrixToFile(matrix_transpose(JointAcc, tempT), "fdmFirstSolve.csv");
+    //matrixToFile(matrix_transpose(JointAcc, tempT), "fdmFirstSolve.csv");
 
 #if VERBOSE >= 2
     printf("_______________FORWARD BCS SOLUTION______________________\n");
@@ -634,7 +634,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 #if VERBOSE >= 2
     printf("-------------------fdm 2-----------------------------\n");
 #endif
-    matrixToFile(StrGuess, "fdmSecondSolveInit.csv");
+    //matrixToFile(StrGuess, "fdmSecondSolveInit.csv");
     status = find_roots_hybrid(StrGuess, params, 0, TOLERANCE_FWD);
     //printMatrix(StrGuess);
     if (status != 0) {
@@ -668,7 +668,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     }
     copyMatrix( Theta_ddot_old, params->Theta_ddot);
 
-    matrixToFile(StrGuess, "fdmSecondSolve.csv");
+    //matrixToFile(StrGuess, "fdmSecondSolve.csv");
 #if VERBOSE >= 2
     printf("-------------------fdm 2 end-----------------------------\n");
     printMatrix(StrGuess);

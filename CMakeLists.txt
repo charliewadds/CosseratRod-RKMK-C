@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 set(CMAKE_C_STANDARD 11)
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=leak")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -arch arm64")
 project(CosseratRod_RKMK_C C)
 cmake_policy(SET CMP0079 NEW)
 

@@ -180,20 +180,20 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
      */
     if(fwd) {
         //opts[5] = {1e-3, 1e-9, 1e-5, 1e-5, -1e-9};
-        opts[0] = 1e-6; // scale factor for initial mu
-        opts[1] = 1e-15; // stopping thresholds for ||J^T e||_inf
+        opts[0] = 1e-3; // scale factor for initial mu
+        opts[1] = 1e-9; // stopping thresholds for ||J^T e||_inf
         opts[2] = EPSREL_LEVMAR; // stopping thresholds for ||Dp||_2
         opts[3] = tol; // stopping thresholds for ||e||_2
-        opts[4] = FWD_STEP_LEVMAR; // the step used in difference approximation to the Jacobian
+        opts[4] = sqrt(tol) * LEVMAR_STEP_MUL; // the step used in difference approximation to the Jacobian
 
     }else{
         //{1e-3, 1e-15, 1e-9, 1e-9, 1e-6};
 
-        opts[0] = 1e-6;
-        opts[1] = 1e-15;
+        opts[0] = 1e-3;
+        opts[1] = 1e-9;
         opts[2] = EPSREL_LEVMAR;
         opts[3] = tol;
-        opts[4] = INV_STEP_LEVMAR;
+        opts[4] = sqrt(tol) * LEVMAR_STEP_MUL;
     }
     assert(isnan(params->robot->objects[1]->object->joint->velocity)==0);
     if(fwd){
@@ -631,12 +631,12 @@ int find_roots_hybrid_fdf(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd
 
         matrix *jacobian = zeros(n, n);
         gsl_to_matrix(s->J, jacobian);
-        saveToCsv("jacobianDet.csv", Det(jacobian));
-        if(jacobian->numRows == 6) {
-            matrixToFile(jacobian, "jacobian6.csv");
-        }else {
-            matrixToFile(jacobian, "jacobian5.csv");
-        }
+        //saveToCsv("jacobianDet.csv", Det(jacobian));
+        //if(jacobian->numRows == 6) {
+        //    matrixToFile(jacobian, "jacobian6.csv");
+        //}else {
+        //    matrixToFile(jacobian, "jacobian5.csv");
+        //}
 
 #if VERBOSE >= 2
         if (status != GSL_SUCCESS && status != GSL_CONTINUE) {

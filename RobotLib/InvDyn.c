@@ -393,13 +393,11 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     //todo implement 3d zeros()
     //todo this might not need +2, I dont remember if numBodies includes base and EE
-    matrix **g_ref = malloc(sizeof(matrix) * (numBody +
-                                              2));           //[SE(3) X N+2]  Transformation to i_th C-BCF from/in base BCF for RRC
+    matrix **g_ref = malloc(sizeof(matrix) * (numBody + 2));           //[SE(3) X N+2]  Transformation to i_th C-BCF from/in base BCF for RRC
     for (int i = 0; i < numBody + 2; i++) {
         g_ref[i] = zeros(4, 4);
     }
-    matrix **g_act_wrt_prev = malloc(
-            sizeof(matrix) * (numBody + 2));  //[SE(3) X N+2]  Transformation to i-1_th C-BCF from/in i_th BCF for RAC
+    matrix **g_act_wrt_prev = malloc(sizeof(matrix) * (numBody + 2));  //[SE(3) X N+2]  Transformation to i-1_th C-BCF from/in i_th BCF for RAC
     for (int i = 0; i < numBody + 2; i++) {
         g_act_wrt_prev[i] = zeros(4, 4);
     }
@@ -441,8 +439,8 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     matrix *tempGuess = matrix_new(6, 1);
     copyMatrix(InitGuess, tempGuess);
-    matrix *tempT = matrix_new(1, 6);
-    matrixToFile(matrix_transpose(InitGuess, tempT), "idmSolveInit.csv");
+    //matrix *tempT = matrix_new(1, 6);
+    //matrixToFile(matrix_transpose(InitGuess, tempT), "idmSolveInit.csv");
 #if VERBOSE >= 1
 
     printf("____________InitGuess_______________________\n");
@@ -450,7 +448,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
 #endif
     assert(hasNan(tempGuess)==0);
-    int status = find_roots_hybrid(tempGuess, params, 0, TOLERANCE_INV);
+    int status = find_roots_hybrid_fdf(tempGuess, params, 0, TOLERANCE_INV);
 
     if (status != 0) {
 #if VERBOSE >= 1
@@ -476,7 +474,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     //printMatrix(Theta);
     copyMatrix(tempGuess, InitGuess);
     //matrix *tempT = matrix_new(1, 5);
-    matrixToFile(matrix_transpose(InitGuess, tempT), "idmSolve.csv");
+    //matrixToFile(matrix_transpose(InitGuess, tempT), "idmSolve.csv");
 
 #if VERBOSE >= 1
 

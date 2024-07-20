@@ -4,7 +4,7 @@
 #include "Matrices.h"
 #include <string.h>
 #include <gsl/gsl_linalg.h>
-
+#include <arm_neon.h>
 
 
 gsl_matrix *matrix_to_gsl(matrix *matrix, gsl_matrix *out){
@@ -85,7 +85,7 @@ void matrix_free(matrix *m) {
     free(m);
 }
 
-
+#ifndef NEON
 matrix *matrix_add(matrix *m1, matrix *m2, matrix *result){
     assert(m1->numRows == m2->numRows);
     assert(m1->numCols == m2->numCols);
@@ -117,7 +117,49 @@ matrix *matrix_add(matrix *m1, matrix *m2, matrix *result){
     return result;
 
 }
+#endif
+#ifdef NEON
 
+
+matrix *matrix_add(matrix *m1, matrix *m2, matrix *result) {
+    assert(m1->numRows == m2->numRows);
+    assert(m1->numCols == m2->numCols);
+    assert(result->numRows == m1->numRows);
+    assert(result->numCols == m1->numCols);
+
+    matrix *temp;
+    if (m1 == result || m2 == result) {
+        temp = matrix_new(result->numRows, result->numCols);
+        copyMatrix(m1, temp);
+    } else {
+        temp = result;
+    }
+
+    int num_elements = m1->numRows * m1->numCols;
+    int i = 0;
+
+    // Use NEON intrinsics for SIMD processing
+    for (; i <= num_elements - 2; i += 2) {
+        float64x2_t m1_vec = vld1q_f64(&m1->data[i]);
+        float64x2_t m2_vec = vld1q_f64(&m2->data[i]);
+        float64x2_t result_vec = vaddq_f64(m1_vec, m2_vec);
+        vst1q_f64(&temp->data[i], result_vec);
+    }
+
+    // Process remaining elements
+    for (; i < num_elements; i++) {
+        temp->data[i] = m1->data[i] + m2->data[i];
+    }
+
+    if (m1 == result || m2 == result) {
+        copyMatrix(temp, result);
+        matrix_free(temp);
+    }
+
+    return result;
+}
+
+#endif
 matrix *matrix_add3(matrix *m1,matrix *m2, matrix *m3, matrix *result){
 
     assert(m1->numRows == m2->numRows);
