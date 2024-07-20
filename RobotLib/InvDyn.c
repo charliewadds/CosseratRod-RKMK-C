@@ -74,11 +74,11 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     //todo this is the same as in IDM_MB_RE, it might be faster to pass all these as arguments or maybe a struct or something
     matrix **g_ref =  malloc(sizeof(matrix) * (numBody+2));           //[SE(3) X N+2]  Transformation to i_th C-BCF from/in base BCF for RRC
-    for(int i = 0; i < numBody+2; i++){
+    for(int i = 0; i <= numBody+2; i++){
         g_ref[i] = zeros(4,4);
     }
     matrix **g_act_wrt_prev = malloc(sizeof(matrix) * (numBody+2));  //[SE(3) X N+2]  Transformation to i-1_th C-BCF from/in i_th BCF for RAC
-    for(int i = 0; i < numBody+2; i++){
+    for(int i = 0; i <= numBody+2; i++){
         g_act_wrt_prev[i] = zeros(4,4);
     }
 
@@ -128,22 +128,15 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
         actuateRigidJoint(g_ref[i-1], CoM2CoM, curr_joint->object->joint, getSection(eta, 0,eta->numRows-1,i-1,i-1, tempR6n1), getSection(d_eta, 0,d_eta->numRows-1,i-1,i-1, tempR6n2), kin);
-        //memcpy(g_ref[i], kin->g_cur, sizeof(matrix));
-        //g_ref[i] = kin->g_cur;
         copyMatrix(kin->g_cur, g_ref[i]);
-
-        //memcpy(g_act_wrt_prev[i], kin->g_act_wrt_prev, sizeof(matrix));
-        //g_act_wrt_prev[i] = kin->g_act_wrt_prev;
         copyMatrix(kin->g_act_wrt_prev, g_act_wrt_prev[i]);
-
-        //assert(hasNan(eta) == 0);
         setSection(eta, 0,eta->numRows-1,i,i, kin->eta);
-        //assert(hasNan(eta) == 0);
         setSection(d_eta, 0,d_eta->numRows-1,i,i, kin->d_eta);
 
 
-        matMult(matrix_transpose(adj(g_act_wrt_prev[i], temp6x6n1), temp6x6n2), F_temp, F_temp);//why is this not a pointer
-        //assert(hasNan(g_ref[i])==0);
+        matMult(matrix_transpose(adj(g_act_wrt_prev[i], temp6x6n1), temp6x6n2), F_temp, F_temp);
+
+
         if(curr_body->type == 1) {//flexible body
             if(dyn->eta != NULL){
                 matrix_free(dyn->eta);
@@ -156,7 +149,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
             dyn->f = zeros(6, curr_body->object->flex->N);
 
-            if(i == BC_Start ) {
+            if(i == robot->BC_Start ) {
                 //ROBOT{2*i-1}.Stiff * (InitGuess - ROBOT{2*i-1}.F_0);
                 setSection(F, 0, 5, i, i, matMult(curr_body->object->flex->stiff,
                                                   matrix_sub(InitGuess, curr_body->object->flex->F_0, tempR6n1), tempR6n1));
@@ -246,34 +239,39 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
     matrix *bodyMass = matrix_new(6,6);
-    for(int i = BC_End+1; i >= numBody ; i--){
 
-        curr_body = robot->objects[2 * i ];
-        if(curr_body->type == 1){//flex
-            //bodyMass = curr_body->object->flex->mass;
-            copyMatrix(curr_body->object->flex->mass, bodyMass);
+    if(BC_End != numBody) {
+        for (int i = BC_End + 1; i >= numBody; i--) {
 
-        }else if(curr_body->type == 0){//rigid
-            //bodyMass = curr_body->object->rigid->mass;
-            copyMatrix(curr_body->object->rigid->mass, bodyMass);
-        }
+            curr_body = robot->objects[2 * i];
+            if (curr_body->type == 1) {//flex
+                //bodyMass = curr_body->object->flex->mass;
+                copyMatrix(curr_body->object->flex->mass, bodyMass);
 
-        //got distracted halfway through this so it could be wrong (it was)
-        setSection(F,0,F->numRows-1,i-1,i-1,
-                   matrix_sub(
-                           matrix_add(
-                                   matMult(
-                                           matrix_transpose(adj(g_act_wrt_prev[i+1], temp6x6n1), temp6x6n1),
-                                           getSection(F,0,F->numRows-1,i,i, tempR6n1)
-                                           , tempR6n1),
-                                   matMult(bodyMass, getSection(d_eta,0,d_eta->numRows-1,i,i, tempR6n2), tempR6n2), tempR6n2),
-                           matMult(matMult(matrix_transpose(adj_R6(getSection(eta,0,eta->numRows-1,i,i, tempR6n3), temp6x6n2), temp6x6n2), bodyMass, temp6x6n2), getSection(eta,0,eta->numRows-1,i,i, tempR6n3), tempR6n3),
-                           tempR6n1));
+            } else if (curr_body->type == 0) {//rigid
+                //bodyMass = curr_body->object->rigid->mass;
+                copyMatrix(curr_body->object->rigid->mass, bodyMass);
+            }
 
-        //F(:,i-1) = transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i) + ROBOT{2*i-1}.Mass*d_eta(:,i) - transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i);
+            //got distracted halfway through this so it could be wrong (it was)
+            setSection(F, 0, F->numRows - 1, i - 1, i - 1,
+                       matrix_sub(
+                               matrix_add(
+                                       matMult(
+                                               matrix_transpose(adj(g_act_wrt_prev[i + 1], temp6x6n1), temp6x6n1),
+                                               getSection(F, 0, F->numRows - 1, i, i, tempR6n1), tempR6n1),
+                                       matMult(bodyMass, getSection(d_eta, 0, d_eta->numRows - 1, i, i, tempR6n2),
+                                               tempR6n2), tempR6n2),
+                               matMult(matMult(matrix_transpose(
+                                               adj_R6(getSection(eta, 0, eta->numRows - 1, i, i, tempR6n3), temp6x6n2),
+                                               temp6x6n2), bodyMass, temp6x6n2),
+                                       getSection(eta, 0, eta->numRows - 1, i, i, tempR6n3), tempR6n3),
+                               tempR6n1));
+
+            //F(:,i-1) = transpose(Ad(g_act_wrt_prev(:,:,i+1))) * F(:,i) + ROBOT{2*i-1}.Mass*d_eta(:,i) - transpose(adj(eta(:,i)))*ROBOT{2*i-1}.Mass*eta(:,i);
 
 
-        //transpose(Ad(g_act_wrt_prev(:,:,i+1)))
+            //transpose(Ad(g_act_wrt_prev(:,:,i+1)))
 //        adj(g_act_wrt_prev[i+1], temp6x6n1);
 //        matrix_transpose(temp6x6n1, temp6x6n1);
 //        //F(:,i)
@@ -308,7 +306,8 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 //        setSection(F,0,F->numRows-1,i-1,i-1, tempR6n1);
 
 
-        //printMatrix(F);
+            //printMatrix(F);
+        }
     }
 
 
@@ -451,7 +450,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
 #endif
     assert(hasNan(tempGuess)==0);
-    int status = find_roots_hybrid(tempGuess, params, 0, TOLERANCE_INV);
+    int status = find_roots_hybrid_nl(tempGuess, params, 0, TOLERANCE_INV);
 
     if (status != 0) {
 #if VERBOSE >= 1

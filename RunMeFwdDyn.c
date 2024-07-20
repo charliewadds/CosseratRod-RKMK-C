@@ -29,6 +29,7 @@ void saveTimeCSV(int step, double time, char *filename){
 
     fclose(f);
 }
+
 int main() {
 
     clock_t start, end;
@@ -37,10 +38,11 @@ int main() {
     start = clock();
     clock_t stepStart = 0;
 
-
-
+    matrix *tempBodiesx1 = matrix_new(5, 1);
+#ifdef SAMPLE2
     double dt = 0.025;
     int timeStep = 100;//why does this effect convergence at 80?????
+    int totTime = 100;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -50,32 +52,42 @@ int main() {
 
     }
 
-    matrix *shape = zeros(5, 1);
-    shape->data[(0 * shape->numCols) + 0] = 0.4;
-    shape->data[(1 * shape->numCols) + 0] = -0.5 * 0.4;
-    shape->data[(2 * shape->numCols) + 0] = 0.5 * 0.4;
-    shape->data[(3 * shape->numCols) + 0] = -0.7 * 0.4;
-    shape->data[(4 * shape->numCols) + 0] = 0.1 * -0.4;
 
     matrix *theta_ddot = zeros(5, 1);
     matrix *theta = zeros(5, 1);
     matrix *theta_dot = zeros(5, 1);
     matrix *tempTStep = matrix_new(1, timeStep);
 
-    matrix *F_ext = zeros(6, 1);
-    matrix *F_0 = zeros(6, 1);
-    F_0->data[(0 * F_0->numCols)] = 0;
-    F_0->data[(1 * F_0->numCols)] = 0;
-    F_0->data[(2 * F_0->numCols)] = 1;
-    F_0->data[(3 * F_0->numCols)] = 0;
-    F_0->data[(4 * F_0->numCols)] = 0;
-    F_0->data[(5 * F_0->numCols)] = 0;
+    matrix *InitGuess = zeros(5,1);
 
-    //matrix *temp1xRowsM1 = matrix_new(5, timeStep);
-    matrix *tempBodiesx1 = matrix_new(5, 1);
 
     Robot *robot = defPaperSample_2(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
 
+    //matrix *temp1xRowsM1 = matrix_new(5, timeStep);
+    matrix *C_des = matrix_new(robot->numBody,totTime);
+    matrixFromFile("../testData/C_DES_MATLAB/PaperSample2_mat.csv", C_des);
+
+#endif
+
+#ifdef SAMPLE1
+    double dt = 0.025;
+    int timeStep = 10;
+    int restTime = 5;
+    int totTime = 70;
+
+    matrix *theta = zeros(NUMBODIES, 1);
+    matrix *theta_dot = zeros(NUMBODIES, 1);
+    matrix *theta_ddot = zeros(NUMBODIES, 1);
+    matrix *InitGuess = zeros(NUMBODIES, 1);
+    InitGuess->data[0] = 6;
+    InitGuess->data[1] = -4;
+    InitGuess->data[2] = -6;
+
+
+    Robot *robot = defPaperSample_1(theta, theta_dot, theta_ddot);
+    matrix *C_des = matrix_new(robot->numBody,totTime);
+    matrixFromFile("../testData/C_DES_MATLAB/PaperSample1_mat.csv", C_des);
+#endif
 
     int BC_Start = robot->BC_Start;//todo, this should be automated
     //int BC_End = 4;
@@ -90,19 +102,25 @@ int main() {
 
     matrix *angles = zeros(((robot->numObjects-1)/2)-1,timeStep);
     FDM_MB_RE_OUT *fdm = malloc(sizeof(FDM_MB_RE_OUT));
-    matrix *tempLinkx1 = matrix_new(5,1);
-    matrix *InitGuess = zeros(5,1);
+    matrix *tempLinkx1 = matrix_new(robot->numBody,1);
 
 
-    matrix *C_des = matrix_new(5,timeStep);
-    matrixFromFile("Control_good.csv", C_des);
-    matrix *C_des_1 = zeros(5,1);
+    matrix *F_ext = zeros(6, 1);
+    matrix *F_0 = zeros(6, 1);
+    F_0->data[(0 * F_0->numCols)] = 0;
+    F_0->data[(1 * F_0->numCols)] = 0;
+    F_0->data[(2 * F_0->numCols)] = 1;
+    F_0->data[(3 * F_0->numCols)] = 0;
+    F_0->data[(4 * F_0->numCols)] = 0;
+    F_0->data[(5 * F_0->numCols)] = 0;
 
-    matrix *temp5x1 = zeros(5,1);
+
+    matrix *C_des_1 = zeros(C_des->numRows,1);
+
+    matrix *tempNumbodx1 = zeros(robot->numBody,1);
     matrix *temp5xn = zeros(5,timeStep);
     matrix *tempF = zeros(6,1);
-    matrix* negative = ones(1,5);
-    matrix_scalar_mul(negative, 0, negative);
+
 
     for(int i = 0; i < timeStep; i++){
         #if VERBOSE > 0
@@ -122,10 +140,10 @@ int main() {
 
         matrix *tempT6 = matrix_new(1, 6);
         matrix *tempf = matrix_new(7, 6);
-        matrix *tempT = matrix_new(1, 5);
+        matrix *tempT = matrix_new(1, robot->numBody);
         matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
         matrixToFile(matrix_transpose(fdm->JointAcc, tempT), "jointAcc.csv");
-        matrixToFile(matrix_transpose(theta, tempT), "theta.csv");
+        matrixToFile(matrix_transpose(theta_dot, tempT), "theta_dot.csv");
         matrixToFile(fdm->F, "F.csv");
 
 
@@ -149,11 +167,11 @@ int main() {
 
         copyMatrix(fdm->JointAcc, theta_ddot);
 
-        matrix_scalar_mul(theta_ddot, dt, temp5x1);
-        matrix_add(temp5x1, theta_dot, theta_dot);
+        matrix_scalar_mul(theta_ddot, dt, tempNumbodx1);
+        matrix_add(tempNumbodx1, theta_dot, theta_dot);
 
-        matrix_scalar_mul(theta_dot, dt, temp5x1);
-        matrix_add(temp5x1, theta, theta);
+        matrix_scalar_mul(theta_dot, dt, tempNumbodx1);
+        matrix_add(tempNumbodx1, theta, theta);
 
         int currJointIndex = 0;
         assert(hasNan(theta) == 0);
@@ -196,7 +214,6 @@ int main() {
     matrixToFile(angles, "RigidRandyAngles_fwd.csv");
     matrix_free(tempBodiesx1);
     matrix_free(tempLinkx1);
-    matrix_free(shape);
     matrix_free(C);
     matrix_free(T_H);
     matrix_free(Tdd_H);

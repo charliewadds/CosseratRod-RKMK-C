@@ -7,9 +7,16 @@
 //#endif
 
 
+
+
 #define GSL_ERROR_HANDLER 0
 #define VERBOSE 3
 
+#define SAMPLE2
+
+#define NUMBODIES 5
+
+#define HYBRID_DELTA 0
 
 #define SOLVER_SAVE 0
 #define SOLVER_ERRORS 1
@@ -19,17 +26,27 @@
 
 
 #define MAX_ITER_LEVMAR 200
-#define MAX_ITER_NEWTON 200
+#define MAX_ITER_NEWTON 15
 #define MAX_ITER_HYBRID 200
 
+
+#define EPSREL_LEVMAR 1e-12
 #define EPSREL_HYBRID 1e-12
 #define EPSABS_HYBRID 1e-5
 
-#define TOLERANCE_INV 1e-15
-#define TOLERANCE_FWD 1e-15
+#define TOLERANCE_INV 1e-9
+#define TOLERANCE_FWD 1e-5
 
 #define D_P_LEVMAR 1e-30
-#define STEP_LEVMAR 1e-3
+
+#define NUM1 1
+#define NUM2 1
+#define INV_STEP_LEVMAR (-sqrt(TOLERANCE_INV * NUM1))
+#define FWD_STEP_LEVMAR (-sqrt(TOLERANCE_FWD * NUM2))
+
+
+#define INV_HYBRID_STEP (sqrt(TOLERANCE_INV * NUM1))
+#define FWD_HYBRID_STEP sqrt(TOLERANCE_FWD * NUM2)
 
 #ifndef COSSERATROD_RKMK_C_ROBOTLIB_H
 #define COSSERATROD_RKMK_C_ROBOTLIB_H
@@ -372,8 +389,13 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
 IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *Init_Guess);
 FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *C_des, matrix *F_0, matrix *Theta_DDot_guess);
 int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *p, int fwd, double tol);
+int find_roots_hybrid_nl(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, double tol);
 // Define the structure for the parameters to pass to the function
-
+int Flex_MB_BCS_wrapper_df(const gsl_vector *x, void *params, gsl_matrix *J);
+int Flex_MB_BCS_wrapper_fdf(const gsl_vector *x, void *params, gsl_vector *f_value, gsl_matrix *J);
+int F_Flex_MB_BCS_wrapper_fdf(const gsl_vector *x, void *params, gsl_vector *f_value, gsl_matrix *J);
+int F_Flex_MB_BCS_wrapper_df(const gsl_vector *x, void *params, gsl_matrix *J);
+int find_roots_hybrid_fdf(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, double tol);
 /*
  * function Error = Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, THETA_DDOT, F_ext, c0, c1, c2)
  */

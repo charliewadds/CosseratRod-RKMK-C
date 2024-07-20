@@ -25,7 +25,7 @@ typedef struct matrix_double_s {
 
 
 } matrix;
-
+double gslDet(gsl_matrix *m);
 /*
  * find the exponential mapping of a matrix with pade approximant
  */

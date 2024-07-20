@@ -58,7 +58,15 @@ matrix *matrix_new(uint8_t num_rows, uint8_t num_cols) {
     assert(num_rows != 0);
     assert(num_cols != 0);
 
+    //check for malloc fail
+
     matrix *m = malloc(sizeof(matrix));
+
+    if(m == NULL){
+        printf("malloc failed");
+        assert(0);
+    }
+
     m->numRows = num_rows;
     m->numCols = num_cols;
     m->data = calloc((num_rows*num_cols), sizeof(double));
@@ -793,7 +801,8 @@ matrix *matrix_sub(matrix *m1, matrix *m2, matrix *result){
     }
     return result;
 }
-////this only works for column vectors right now
+
+
 //matrix *matrix_sub_broadcast(matrix *m1, matrix *vect){
 //    assert(m1->numRows == vect->numRows);
 //    matrix *result = matrix_new(m1->numRows, m1->numCols);
@@ -826,7 +835,22 @@ double Det(matrix *m) {
     return det;
 }
 
+double gslDet(gsl_matrix *m) {
+    gsl_permutation *p = gsl_permutation_alloc(m->size1);
+    //gsl_matrix_view m4 = gsl_matrix_vi
 
+    int signum;
+    gsl_linalg_LU_decomp(m, p, &signum);
+    //gsl_linalg_LU_decomp (a, p, &s);
+    double det = gsl_linalg_LU_det (m, signum);
+    gsl_permutation_free(p);
+
+    if(isnan(det)){
+        det = 0;
+    }
+
+    return det;
+}
 
 double matrixRatio(matrix *m1, matrix *m2){
     assert(m1->numRows == m2->numRows);

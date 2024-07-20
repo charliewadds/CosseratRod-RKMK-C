@@ -267,7 +267,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
     double linkMass = 0.01;
-    double linkLen = 0.1;
+    double linkLen = 0.2;
 
     matrix *temp3x3n1 = matrix_new(3,3);
 
@@ -362,7 +362,7 @@ Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
     Object *base = malloc(sizeof(struct object_s));
     base->type = 0;
     base->object = malloc(sizeof(union object_u));
-    base->object->rigid = newRigidBody("base", matrix_scalar_mul(eye(temp6x6n1), INFINITY, temp6x6n1), Z, Z);//todo dbl max to replace inf
+    base->object->rigid = newRigidBody("base", matrix_scalar_mul(eye(temp6x6n1), INFINITY, temp6x6n1), Z, Z);
 
     Object *Body_1 =  malloc(sizeof(struct object_s));
     Body_1->type = 1;
@@ -439,7 +439,7 @@ Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
     //Object *Joint_2 = malloc(sizeof(Object));
     robotList[3]->type = 2;
     robotList[3]->object = malloc(sizeof(union object_u));
-    robotList[3]->object->joint = newRigidJoint("Joint_2", r6_3, theta->data[(1 * theta->numCols) + 0], theta_dot->data[(1 * theta_dot->numCols) + 0], theta_ddot->data[(1 * theta_ddot->numCols) + 0], lims, pihalf, Body_1, Body_2);
+    robotList[3]->object->joint = newRigidJoint("Joint_2", r6_4, theta->data[(1 * theta->numCols) + 0], theta_dot->data[(1 * theta_dot->numCols) + 0], theta_ddot->data[(1 * theta_ddot->numCols) + 0], lims, 0, Body_1, Body_2);
 
     //Object *Joint_3= malloc(sizeof(Object));
     robotList[5]->type = 2;
@@ -464,6 +464,7 @@ Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
     robotList[4] = Body_2;
     //robotList[5] = Joint_3;
     robotList[6] = Body_3;
+    //robotList[7] = joint_EE
     robotList[8] = EE;
     newRobot->numObjects = 9;
     newRobot->numBody = 3;

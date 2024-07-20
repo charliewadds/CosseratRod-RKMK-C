@@ -143,10 +143,11 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
     //matrix *temp4x4n2 = matrix_new(4,4);
 
     matrix *temp6x6n1 = matrix_new(6,6);
+    matrix *tempR6n1 = matrix_new(6,1);
 
-
-    hat_R6(childCoM, temp4x4n1);
-    matrix_scalar_mul(temp4x4n1,-1, temp4x4n1);
+    matrix_scalar_mul(childCoM, -1, tempR6n1);
+    hat_R6(tempR6n1, temp4x4n1);
+    //matrix_scalar_mul(temp4x4n1,-1, temp4x4n1);
     expm_SE3(temp4x4n1, temp4x4n1);
 
     adj(temp4x4n1, temp6x6n1);
@@ -165,10 +166,11 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
     matMult(g_old, g_oldToCur, g_cur);
 
     matrix *g_cur_wrt_prev = matrix_new(4,4);
-            matrix_inverse(g_oldToCur, g_cur_wrt_prev);
+    matrix_inverse(g_oldToCur, g_cur_wrt_prev);
 
 
-    matrix *g_act_wrt_prev = matMult(expm_SE3(matrix_scalar_mul(matrix_scalar_mul(hat_R6(newTwist, temp4x4n1), -1, temp4x4n1), joint->position, temp4x4n1), temp4x4n1), g_cur_wrt_prev, temp4x4n1);
+    matrix *g_act_wrt_prev = matrix_new(4,4);
+    matMult(expm_SE3(matrix_scalar_mul(matrix_scalar_mul(hat_R6(newTwist, temp4x4n1), -1, temp4x4n1), joint->position, temp4x4n1), temp4x4n1), g_cur_wrt_prev, g_act_wrt_prev);
 
 
     matrix *temp6x1n1 = matrix_new(6,1);

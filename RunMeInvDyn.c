@@ -32,7 +32,7 @@ int main() {
     matrix *theta_dot = zeros(TEMP_NUMBODY , 1);
 
     double dt = 0.025;
-    int timeStep = 50;
+    int timeStep = 100;
     //double restTime = 0;
 
     matrix *t1 = matrix_new(1, timeStep);
@@ -79,7 +79,7 @@ int main() {
 
     Robot *robot = defPaperSample_2(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
 
-    int BC_Start = 2;//todo, this should be automated
+    int BC_Start = robot->BC_Start;//todo, this should be automated
     //int BC_End = 4;
 
     matrix *t = zeros(1, timeStep);

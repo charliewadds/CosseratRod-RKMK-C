@@ -7,7 +7,7 @@ cmake_policy(SET CMP0079 NEW)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 set(ENV{OPENBLAS_NUM_THREADS} 0)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
 link_directories("/opt/homebrew/lib")
 include_directories("/opt/homebrew/include")
 #find_package(GSL REQUIRED)
@@ -54,7 +54,7 @@ add_executable(FwdDyn RunMeFwdDyn.c)
 target_link_libraries(MatrixLib PRIVATE -lm -lgsl -lgslcblas)
 target_link_libraries(LieGroup PRIVATE MatrixLib gsl)
 
-target_link_libraries(RobotLib PRIVATE -lgsl levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)
+target_link_libraries(RobotLib PRIVATE -lgsl -lnlopt levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)
 
 install(TARGETS MatrixLib LieGroup RobotLib
         LIBRARY DESTINATION /Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/sharedLibs
