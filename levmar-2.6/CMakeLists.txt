@@ -3,19 +3,20 @@
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(LEVMAR)
-
+SET(OPENBLAS_NUM_THREADS 1)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 SET(HAVE_LAPACK 1 CACHE BOOL "Do we have LAPACK/BLAS?")
 # the directory where the lapack/blas/f2c libraries reside
-SET(LAPACKBLAS_DIR "/usr/lib" CACHE PATH "Path to lapack/blas libraries")
-SET(NEED_F2C 1 CACHE BOOL "Do we need either f2c or F77/I77?")
+SET(LAPACKBLAS_DIR "/usr/lib/x86_64-linux-gnu" CACHE PATH "Path to lapack/blas libraries")
+SET(NEED_F2C 0 CACHE BOOL "Do we need either f2c or F77/I77?")
 SET(HAVE_PLASMA 0 CACHE BOOL "Do we have PLASMA parallel linear algebra library?")
 IF(HAVE_PLASMA)
  SET(PLASMA_DIR "/usr/local/PLASMA" CACHE PATH "Path to PLASMA root")
 ENDIF(HAVE_PLASMA)
 SET(LINSOLVERS_RETAIN_MEMORY 1 CACHE BOOL "Should linear solvers retain working memory between calls? (non-reentrant!)")
 SET(LM_DBL_PREC 1 CACHE BOOL "Build double precision routines?")
-SET(LM_SNGL_PREC 1 CACHE BOOL "Build single precision routines?")
-OPTION(BUILD_DEMO "Build demo program?" TRUE)
+SET(LM_SNGL_PREC 0 CACHE BOOL "Build single precision routines?")
+OPTION(BUILD_DEMO "Build demo program?" FALSE)
 
 # actual names for the lapack/blas/f2c libraries
 SET(LAPACKBLAS_LIB_NAMES "lapack;blas" CACHE STRING "The name of the lapack & blas libraries")

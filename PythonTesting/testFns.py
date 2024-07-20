@@ -457,14 +457,35 @@ class testMatrix:
 
 
 
+def robotCompare(matlab_engine):
+    #get and print MATLAB robot
+
+    theta = np.zeros((5,1))
+    theta_dot = np.zeros((5,1))
+    #Theta_ddot = Shape .* sin(pi/(dt*TimeStep).*t1);
+    theta_ddot =  np.zeros((5,1))
+    matlab_robot = matlab_engine.defPaperSample_2(theta, theta_dot, theta_ddot)
+
+    print("MATLAB Robot")
+    print(matlab_robot)
+
+    theta_m = ctypes.POINTER(matrix)
+    theta_m = ctypes.pointer(makeMatrix(theta))
+
+    theta_dot_m = ctypes.POINTER(matrix)
+    theta_dot_m = ctypes.pointer(makeMatrix(theta_dot))
+
+    theta_ddot_m = ctypes.POINTER(matrix)
+    theta_ddot_m = ctypes.pointer(makeMatrix(theta_ddot))
+
+    #get and print C robot
+    c_robot = robotCall.call_defPaperSample2(theta_m, theta_dot_m, theta_ddot_m)
 
 
-#
-# testMatrix.test_matrix_mul(eng)
-#testMatrix.test_matrix_solve(eng)
-# testMatrix.test_matrix_add_sq(eng)
-# testMatrix.test_matrix_add3(eng)
-# testMatrix.test_matrix_sub(eng)
-testMatrix.test_matrix_mul(eng)
-testLieGroup.test_all(testLieGroup,eng);#todo I havent used python in a while, this is not the right way to do this
 
+    print("C Robot")
+    print(c_robot)
+
+
+
+robotCompare(eng)

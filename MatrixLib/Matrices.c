@@ -4,7 +4,7 @@
 #include "Matrices.h"
 #include <string.h>
 #include <gsl/gsl_linalg.h>
-
+#include <arm_neon.h>
 
 
 gsl_matrix *matrix_to_gsl(matrix *matrix, gsl_matrix *out){
@@ -45,6 +45,7 @@ matrix *expm(matrix *A, matrix *result){
 matrix *gsl_to_matrix(gsl_matrix *gsl_matrix, matrix *result){
     //matrix *m = matrix_new(gsl_matrix->size1, gsl_matrix->size2);
     //zeroMatrix(result);
+    assert(gsl_matrix->size1* gsl_matrix->size2 == result->numRows * result->numCols);
     for(int i = 0; i < result->numRows; i++){
         for(int j = 0; j < result->numCols; j++){
             result->data[(i * result->numCols) + j] = gsl_matrix_get(gsl_matrix, i, j);
@@ -57,7 +58,15 @@ matrix *matrix_new(uint8_t num_rows, uint8_t num_cols) {
     assert(num_rows != 0);
     assert(num_cols != 0);
 
+    //check for malloc fail
+
     matrix *m = malloc(sizeof(matrix));
+
+    if(m == NULL){
+        printf("malloc failed");
+        assert(0);
+    }
+
     m->numRows = num_rows;
     m->numCols = num_cols;
     m->data = calloc((num_rows*num_cols), sizeof(double));
@@ -76,7 +85,7 @@ void matrix_free(matrix *m) {
     free(m);
 }
 
-
+#ifndef NEON
 matrix *matrix_add(matrix *m1, matrix *m2, matrix *result){
     assert(m1->numRows == m2->numRows);
     assert(m1->numCols == m2->numCols);
@@ -108,13 +117,59 @@ matrix *matrix_add(matrix *m1, matrix *m2, matrix *result){
     return result;
 
 }
+#endif
+#ifdef NEON
 
+
+matrix *matrix_add(matrix *m1, matrix *m2, matrix *result) {
+    assert(m1->numRows == m2->numRows);
+    assert(m1->numCols == m2->numCols);
+    assert(result->numRows == m1->numRows);
+    assert(result->numCols == m1->numCols);
+
+    matrix *temp;
+    if (m1 == result || m2 == result) {
+        temp = matrix_new(result->numRows, result->numCols);
+        copyMatrix(m1, temp);
+    } else {
+        temp = result;
+    }
+
+    int num_elements = m1->numRows * m1->numCols;
+    int i = 0;
+
+    // Use NEON intrinsics for SIMD processing
+    for (; i <= num_elements - 2; i += 2) {
+        float64x2_t m1_vec = vld1q_f64(&m1->data[i]);
+        float64x2_t m2_vec = vld1q_f64(&m2->data[i]);
+        float64x2_t result_vec = vaddq_f64(m1_vec, m2_vec);
+        vst1q_f64(&temp->data[i], result_vec);
+    }
+
+    // Process remaining elements
+    for (; i < num_elements; i++) {
+        temp->data[i] = m1->data[i] + m2->data[i];
+    }
+
+    if (m1 == result || m2 == result) {
+        copyMatrix(temp, result);
+        matrix_free(temp);
+    }
+
+    return result;
+}
+
+#endif
 matrix *matrix_add3(matrix *m1,matrix *m2, matrix *m3, matrix *result){
 
     assert(m1->numRows == m2->numRows);
     assert(m1->numCols == m2->numCols);
     assert(m1->numRows == m3->numRows);
     assert(m1->numCols == m3->numCols);
+
+    assert(result->numRows == m1->numRows);
+    assert(result->numCols == m1->numCols);
+
 
     matrix *temp = matrix_new(m1->numRows, m1->numCols);
     matrix_add(m1, m2, temp);
@@ -129,7 +184,6 @@ matrix *matrix_scalar_mul(matrix *m, double scalar, matrix *result){
 
     assert(result->numRows == m->numRows);
     assert(result->numCols == m->numCols);
-
 
     matrix *temp;
     if(m == result){
@@ -201,6 +255,8 @@ matrix *matrix_solve(matrix *A, matrix *b, matrix *result){
 matrix *matrix_inverse(matrix *m, matrix *result){
     assert(m->square == 1);
 
+    assert(result->numRows == m->numRows);
+    assert(result->numCols == m->numCols);
 
     //assert(Det(m) != 0);
     gsl_matrix *gsl_m = gsl_matrix_alloc(m->numRows, m->numCols);
@@ -332,6 +388,10 @@ matrix *zeros(uint8_t num_rows, uint8_t num_cols){
 
 //todo I am sure there is some bitwise wizardry that can be done here
 matrix *zeroMatrix(matrix *m){
+
+    if(m == NULL){
+        return NULL;
+    }
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
             m->data[(i * m->numCols) + j] = 0;
@@ -429,7 +489,7 @@ matrix *matrix_sin(matrix *m){//todo update to use result matrix
     matrix *result = matrix_new(m->numRows, m->numCols);
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
-            result->data[(i * result->numCols) + j] =(double) sinl(m->data[(i * m->numCols) + j]);
+            result->data[(i * result->numCols) + j] = (double) sinl((double) m->data[(i * m->numCols) + j]);
         }
     }
     return result;
@@ -442,6 +502,8 @@ matrix *matMult(matrix *m1, matrix *m2, matrix *result) {
 
     // Ensure the result matrix has the correct dimensions
     assert((result->numRows == m1->numRows && result->numCols == m2->numCols) || (result->numRows == m1->numCols && result->numCols == m2->numRows));
+
+
 
 
     matrix *temp;
@@ -472,6 +534,17 @@ matrix *matMult(matrix *m1, matrix *m2, matrix *result) {
 
 
     return result;
+}
+
+
+int hasNan(matrix *m){
+
+   for(int i = 0; i < m->numRows * m->numCols; i++) {
+       if (isnan(m->data[i]))
+           return 1;
+   }
+    return 0;
+
 }
 
 
@@ -597,6 +670,31 @@ void printMatrix(matrix *m){
     }
 }
 
+
+matrix *matrixFromFile(char *filename, matrix *result){
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        perror("Could not open file");
+        return NULL;
+    }
+
+
+    char buffer[result->numCols * 24]; //double is 15-17 sig-figs so about 24 chars max per cell
+    int row = 0, col = 0;
+    while (fgets(buffer, sizeof(buffer), file)) {
+        col = 0;
+        char *value = strtok(buffer, ",");
+        while (value && col < result->numCols) {
+            result->data[row * result->numCols + col] = atof(value);
+            value = strtok(NULL, ",");
+            ++col;
+        }
+        ++row;
+    }
+
+    fclose(file);
+    return result;
+}
 void matrixToFile(matrix *m, char *filename){
     FILE *f = fopen(filename, "a");
     if (f == NULL)
@@ -745,7 +843,8 @@ matrix *matrix_sub(matrix *m1, matrix *m2, matrix *result){
     }
     return result;
 }
-////this only works for column vectors right now
+
+
 //matrix *matrix_sub_broadcast(matrix *m1, matrix *vect){
 //    assert(m1->numRows == vect->numRows);
 //    matrix *result = matrix_new(m1->numRows, m1->numCols);
@@ -778,7 +877,22 @@ double Det(matrix *m) {
     return det;
 }
 
+double gslDet(gsl_matrix *m) {
+    gsl_permutation *p = gsl_permutation_alloc(m->size1);
+    //gsl_matrix_view m4 = gsl_matrix_vi
 
+    int signum;
+    gsl_linalg_LU_decomp(m, p, &signum);
+    //gsl_linalg_LU_decomp (a, p, &s);
+    double det = gsl_linalg_LU_det (m, signum);
+    gsl_permutation_free(p);
+
+    if(isnan(det)){
+        det = 0;
+    }
+
+    return det;
+}
 
 double matrixRatio(matrix *m1, matrix *m2){
     assert(m1->numRows == m2->numRows);

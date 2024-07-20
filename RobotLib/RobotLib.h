@@ -6,9 +6,63 @@
 //#include "Matrices.h"
 //#endif
 
+
+
+
+#define GSL_ERROR_HANDLER 0
+#define VERBOSE 1
+
+#define SAMPLE2
+
+#define NUMBODIES 5
+
+#define HYBRID_DELTA 0
+
+#define SOLVER_SAVE 0
+#define SOLVER_ERRORS 0
+#define SOLVER_ERROR_TOP 1
+#define LOG_F_FLEX 0
+#define INV_SAVE 0
+
+
+#define MAX_ITER_LEVMAR 150
+#define MAX_ITER_NEWTON 15
+#define MAX_ITER_HYBRID 150
+
+
+
+#define EPSREL_LEVMAR 1e-12
+#define EPSREL_HYBRID 1e-12
+#define EPSABS_HYBRID 1e-5
+
+#define TOLERANCE_INV 1e-9
+#define TOLERANCE_FWD 1e-5
+
+#define D_P_LEVMAR 1e-30
+
+#define NUM1 1
+#define NUM2 1
+#define INV_STEP_LEVMAR sqrt(TOLERANCE_INV * NUM1)
+#define FWD_STEP_LEVMAR sqrt(TOLERANCE_FWD * NUM2)
+
+
+#define LEVMAR_STEP_MUL 1
+
+#define INV_HYBRID_STEP (sqrt(TOLERANCE_INV * NUM1))
+#define FWD_HYBRID_STEP sqrt(TOLERANCE_FWD * NUM2)
+
 #ifndef COSSERATROD_RKMK_C_ROBOTLIB_H
 #define COSSERATROD_RKMK_C_ROBOTLIB_H
+
+#include <assert.h>
 #include "LieGroup.h"
+#include "../levmar-2.6/levmar.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <gsl/gsl_blas.h>
+#include <gsl/gsl_errno.h>
 //#include "FDM.h"
 #include <gsl/gsl_deriv.h>
 typedef struct rigidBody_s{
@@ -122,6 +176,12 @@ typedef matrix* (*Interp_function)(matrix**, double);
 
 typedef matrix* (*ODE_type)(matrix*, matrix*);
 typedef matrix* (*step_RK_E_h_type)(matrix*, matrix**, float, float, ODE_type, matrix*, matrix*, matrix*);
+
+
+
+
+
+
 
 
 /*
@@ -240,6 +300,9 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *BODY
 typedef struct robot_s {
     char *name;
     int numObjects;
+    int numBody;
+    int BC_Start;
+    int BC_End;
     Object **objects;
 }Robot;
 
@@ -271,31 +334,80 @@ typedef struct IDM_MB_RE_OUT_t{
 
 }IDM_MB_RE_OUT;
 
-void robotToFile(Robot *robot, char *filename);
-void addRobotState(Robot *robot, char* filename, int num);
-matrix *find_roots_PSO(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
-matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM);
-//inline docs working?
-IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *Init_Guess);
 
-int find_roots_newton(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
-// Define the structure for the parameters to pass to the function
+
+/*
+ * F matrix is the actuation forces
+ * JointAcc matrix is the joint accelerations
+ * C matrix is the constraint
+ */
+typedef struct FDM_MB_RE_OUT_t{
+    matrix *F;
+    matrix *JointAcc;
+    matrix *C;
+}FDM_MB_RE_OUT;
+
+
+/*
+ * Robot        - The robot object
+ * Theta    - The joint angles
+ * Theta_dot - The joint velocities
+ * Theta_DDot - The joint accelerations
+ * F_ext    - The external forces
+ * c0 - The FDM coefficient at the current time step
+ * c1 - The FDM coefficient at the previous time step
+ * c2
+ * dt
+ * C_des
+ * F_0
+ * inv
+ *
+ */
 typedef struct {
 
     Robot *robot;
     matrix *Theta;
     matrix *Theta_dot;
-    matrix *Theta_DDot;
+    matrix *Theta_ddot;
     matrix *F_ext;
     double c0;
     double c1;
     double c2;
+    double dt;
+    matrix *C_des;
+    matrix *F_0;
+    int inv;
+
 } Flex_MB_BCS_params;
+rigidKin *rigidKinAlloc();
+flexDyn *flexDynAlloc();
+
+void robotToFile(Robot *robot, char *filename);
+void addRobotState(Robot *robot, char* filename, int num);
+matrix *find_roots_PSO(matrix *InitGuess, Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double c0, double c1, double c2);
+matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM);
+int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, double tol);
+int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, double tol);
+//inline docs working?
+IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *Init_Guess);
+FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *C_des, matrix *F_0, matrix *Theta_DDot_guess);
+int find_roots_newton(matrix *InitGuess, Flex_MB_BCS_params *p, int fwd, double tol);
+int find_roots_hybrid_nl(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, double tol);
+// Define the structure for the parameters to pass to the function
+int Flex_MB_BCS_wrapper_df(const gsl_vector *x, void *params, gsl_matrix *J);
+int Flex_MB_BCS_wrapper_fdf(const gsl_vector *x, void *params, gsl_vector *f_value, gsl_matrix *J);
+int F_Flex_MB_BCS_wrapper_fdf(const gsl_vector *x, void *params, gsl_vector *f_value, gsl_matrix *J);
+int F_Flex_MB_BCS_wrapper_df(const gsl_vector *x, void *params, gsl_matrix *J);
+int find_roots_hybrid_fdf(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, double tol);
 /*
  * function Error = Flex_MB_BCS(InitGuess, ROBOT, THETA, THETA_DOT, THETA_DDOT, F_ext, c0, c1, c2)
  */
-matrix *Flex_MB_BCS(matrix *InitGuess, Robot *robot, matrix F_ext, double c0, double c1, double c2);
-
+matrix *Flex_MB_BCS(matrix *InitGuess,Flex_MB_BCS_params *params);
+int F_Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f);
+void freeRigidKin(rigidKin *kin);
+void freeFlexDyn(flexDyn *dyn);
+int F_Flex_MB_BCS(matrix *InitGuess, matrix *result, Flex_MB_BCS_params *params);
 matrix *fsolve_idm_mb_re(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
-
+Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot);
+Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot);
 #endif //COSSERATROD_RKMK_C_MATHLIB_H

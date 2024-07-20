@@ -18,7 +18,7 @@ import numpy as np
 def compare_csv(file1, file2):
     m1 = np.loadtxt(file1, dtype=np.double, delimiter=",")
     m2 = scipy.io.loadmat(file2)
-
+    #np.setprecision(30)
     err = np.zeros(m1.shape)
     absErr = np.zeros(m1.shape)
 
@@ -26,12 +26,12 @@ def compare_csv(file1, file2):
     for i in range(m1.shape[0]):
         for j in range(m1.shape[1]):
             err[i, j] = m1[i, j] - m2['C_des'][i, j]
-            absErr[i, j] = abs(err[i, j])
+            absErr[i, j] = err[i, j]
             if(absErr[i, j] > maxAbsErr):
                 maxAbsErr = absErr[i, j]
 
     print("Max abs error: ", maxAbsErr)
-    print("Mean abs error: ", np.mean(absErr))
+    print("Mean abs error: ", np.mean(np.abs(absErr)))
 
     np.savetxt("./err.csv", err, delimiter=",", fmt='%.15f')
     np.savetxt("./absErr.csv", absErr, delimiter=",", fmt='%.15f')

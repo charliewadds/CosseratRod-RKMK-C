@@ -4,6 +4,7 @@
 #ifndef _MATRICES_H_
 #define _MATRICES_H_
 
+//#define NEON
 #include <stdlib.h>
 #include <stdint.h>
 #include <gsl/gsl_matrix.h>
@@ -25,7 +26,7 @@ typedef struct matrix_double_s {
 
 
 } matrix;
-
+double gslDet(gsl_matrix *m);
 /*
  * find the exponential mapping of a matrix with pade approximant
  */
@@ -34,11 +35,14 @@ matrix *expm(matrix *A, matrix *result);
 char* matrixToJson(matrix *m, char *version);
 
 void matrixToFile(matrix *m, char *filename);
+matrix *matrixFromFile(char *filename, matrix *result);
 
 gsl_matrix *matrix_to_gsl(matrix *matrix, gsl_matrix *out);
 gsl_matrix *copy_matrix_to_gsl(matrix *matrix, gsl_matrix *out);
 matrix *gsl_to_matrix(gsl_matrix *gsl_matrix, matrix *result);
 
+
+int hasNan(matrix *m);
 matrix *matrix_solve(matrix *A, matrix *b, matrix *result);
 // Constructor-like 
 // Allocates memory for a new matrix

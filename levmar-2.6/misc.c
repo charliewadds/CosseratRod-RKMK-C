@@ -37,6 +37,7 @@
 
 #ifdef LM_SNGL_PREC
 /* single precision (float) definitions */
+
 #define LM_REAL float
 #define LM_PREFIX s
 
