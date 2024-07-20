@@ -235,11 +235,13 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     robotList[12] = EE;
 
 
+
     newRobot->objects = robotList;
     newRobot->numBody = 5;
     newRobot->BC_Start = 2;
     newRobot->BC_End = 4;
     newRobot->numObjects = 13;
+
 
     matrix_free(linkTwist);
     matrix_free(linkCoM);

@@ -453,13 +453,17 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
         }
     }
 
+    matrix *posOut = matrix_new(3,iii);
+    getSection(POS, 0, 2, 0, iii-1, posOut);
+    matrix_free(POS);
+
     //free(currObj);
     matrix_free(g);
     //matrix_free(POS);
     matrix_free(temp6n1);
     matrix_free(temp4x4n1);
 
-    return POS;
+    return posOut;
 
 }
 
