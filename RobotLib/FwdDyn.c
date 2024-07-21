@@ -88,7 +88,7 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
     copyMatrix(F_0, tempGuess);
     //assert(isnan(robot->objects[1]->object->joint->velocity)==0);
     params->inv = 0;
-    int status = find_roots_hybrid(tempGuess, params, 0, TOLERANCE_INV);
+    int status = find_roots_hybrid_fdf(tempGuess, params, 0, TOLERANCE_INV);
     //assert(isnan(robot->objects[1]->object->joint->velocity)==0);
     if (status != 0) {
 #if VERBOSE >= 2
@@ -503,7 +503,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 #endif
     assert(isnan(robot->objects[1]->object->joint->velocity)==0);
     copyMatrix(Theta_DDot_guess, tempGuess);
-    int status = find_roots_hybrid(tempGuess, params, 1, TOLERANCE_FWD);
+    int status = find_roots_hybrid_fdf(tempGuess, params, 1, TOLERANCE_FWD);
 
 
     #if VERBOSE >= 2

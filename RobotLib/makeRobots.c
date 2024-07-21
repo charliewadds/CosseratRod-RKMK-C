@@ -316,7 +316,7 @@ Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
     double G = E/(2*(1+0.3));
     double I = M_PI/4*pow(r,4);
     double A = M_PI*pow(r,2);
-    int N = 21;
+    int N = 10;
 
 
     //diag(2I,I,I)
@@ -388,7 +388,7 @@ Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
     Object *EE =      malloc(sizeof(struct object_s));
     EE->type = 0;
     EE->object = malloc(sizeof(union object_u));
-    EE->object->rigid = newRigidBody("EE", zeros(6,6),  Z, Z);
+    EE->object->rigid = newRigidBody("EE", ones(6,6),  Z, Z);
 
     matrix *r6_2 = zeros(6,1);
     r6_2->data[(2 * r6_2->numCols) + 0] = 1;

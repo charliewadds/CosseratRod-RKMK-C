@@ -35,7 +35,7 @@ int main() {
 
     double dt = 0.025;
     int timeStep = 10;
-    int restTime = 50;
+    int restTime = 100;
     int totalTime = restTime + timeStep*2;
 
     matrix *shape = zeros(NUMBODIES, 1);

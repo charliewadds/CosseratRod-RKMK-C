@@ -401,7 +401,7 @@ rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double v
 
 matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
-    matrix *POS = zeros(3,200);//todo this is a hack, I need to make this dynamic
+    matrix *POS = zeros(3,500);//todo this is a hack, I need to make this dynamic
     matrix *g = matrix_new(4,4);
     eye(g);
 
@@ -868,7 +868,6 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
                 ds,
                 f_sh
         );
-
         //[f_s,eta_s] = Coss_ODE(eta(:,i), f(:,i), eta_h(:,i), f_h(:,i), f_sh,BODY.Stiff,BODY.Damp,BODY.Mass,c0,BODY.F_0,F_dist(:,i));
 
         COSS_ODE(getSection(result->eta,0,5,i,i, tempR6n1), getSection(result->f,0,5,i,i, tempR6n2),
@@ -876,22 +875,30 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
                         f_sh, body->stiff, body->damping, body->mass, c0, body->F_0,
                         getSection(F_dist, 0,5,i,i, tempR6n5), ode);
 
+
+
+        //Euler integration todo add option for Rk2 and maybe RK4 (adaptive?)
+
         setSection(result->f,0,5,i+1,i+1,
                    (matrix_add(getSection(result->f,0,5,i,i, tempR6n1), matrix_scalar_mul(ode->f_s,ds, tempR6n2), tempR6n1)));
-        //assert(hasNan(g[i+1])==0);
+
 
         setSection(result->eta,0,5,i+1,i+1,
                    (matrix_add(getSection(result->eta,0,5,i,i, tempR6n1), matrix_scalar_mul(ode->eta_s,ds, tempR6n2), tempR6n1))
         );
 
+
+
+
+
+        //Lie-Euler geometric integration
         getSection(result->f,0,5,i,i, tempR6n1);
-
         hat_R6(tempR6n1, temp4x4n1);
-
         matrix_scalar_mul(temp4x4n1, ds, temp4x4n1);
-
         expm(temp4x4n1, temp4x4n1);
         matMult(g[i], temp4x4n1,g[i+1]);
+
+
     }
 
 
