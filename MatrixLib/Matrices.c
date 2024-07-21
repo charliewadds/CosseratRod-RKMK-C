@@ -65,6 +65,7 @@ matrix *matrix_new(uint8_t num_rows, uint8_t num_cols) {
     if(m == NULL){
         printf("malloc failed");
         assert(0);
+        return NULL;
     }
 
     m->numRows = num_rows;
@@ -416,8 +417,7 @@ void setSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, u
     assert(startCol <= endCol);
     assert(endRow <= m->numRows);
     assert(endCol <= m->numCols);
-    //assert(section->numRows -1 == (endRow - startRow));
-    //assert(section->numCols -1 == (endCol - startCol));
+
 
     for(int i = startRow; i <= endRow; i++){
         for(int j = startCol; j <= endCol; j++){

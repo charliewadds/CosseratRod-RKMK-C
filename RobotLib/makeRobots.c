@@ -7,7 +7,7 @@
 
 Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     assert(theta->numCols == 1);//todo add asserts like this to all functions with matrix args
-    double linkMass = 12.5;
+    double linkMass = 50;
     double linkLen = 0.5;
 
     matrix *temp3x3n1 = matrix_new(3,3);
@@ -49,13 +49,13 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     F_0->data[(2 * F_0->numCols) + 0] = 1;
 
     double rho = 75e1;
-    double mu = 5e4;
+    double mu = 1e4;
     double r = 0.1;
-    double E = 1e9;
+    double E = 1.8e8;
     double G = E/(2*(1+0.3));
     double I = M_PI/4*pow(r,4);
     double A = M_PI*pow(r,2);
-    int N = 21;
+    int N = 50;
 
     //diag(2I,I,I)
     matrix *J = zeros(3,3);
@@ -436,7 +436,7 @@ Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
     robotList[1]->type = 2;
     robotList[1]->object = malloc(sizeof(union object_u));
 
-    robotList[1]->object->joint = newRigidJoint("Joint_1", r6_5, theta->data[(0 * theta->numCols) + 0], theta_dot->data[(0 * theta_dot->numCols) + 0], theta_ddot->data[(0 * theta_ddot->numCols) + 0], lims, 0, base, Body_1);
+    robotList[1]->object->joint = newRigidJoint("Joint_1", r6_4, theta->data[(0 * theta->numCols) + 0], theta_dot->data[(0 * theta_dot->numCols) + 0], theta_ddot->data[(0 * theta_ddot->numCols) + 0], lims, 0, base, Body_1);
 
     //Object *Joint_2 = malloc(sizeof(Object));
     robotList[3]->type = 2;
@@ -454,7 +454,7 @@ Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
     //Object *joint_EE = malloc(sizeof(struct object_s));
     robotList[7]->type = 2;
     robotList[7]->object = malloc(sizeof(union object_u));
-    robotList[7]->object->joint =  newRigidJoint("joint_EE", r6_2, 0, 0, 0, zero, 0, Body_3, EE);
+    robotList[7]->object->joint =  newRigidJoint("joint_EE", zeros(6,1), 0, 0, 0, zero, 0, Body_3, EE);
 
     Robot *newRobot = malloc(sizeof(Robot));
     newRobot->name = "RigidRandy_1";

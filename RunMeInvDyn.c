@@ -20,7 +20,7 @@
 
 
 
-#define TEMP_NUMBODY 5
+
 int main() {
 
     clock_t start, end;
@@ -28,43 +28,84 @@ int main() {
 
     start = clock();
 
-    matrix *theta = zeros(TEMP_NUMBODY , 1);
-    matrix *theta_dot = zeros(TEMP_NUMBODY , 1);
+    matrix *theta = zeros(NUMBODIES , 1);
+    matrix *theta_dot = zeros(NUMBODIES , 1);
+    matrix *tempBodiesx1 = matrix_new(NUMBODIES, 1);
+#ifdef SAMPLE1
+
+    double dt = 0.025;
+    int timeStep = 10;
+    int restTime = 50;
+    int totalTime = restTime + timeStep*2;
+
+    matrix *shape = zeros(NUMBODIES, 1);
+    shape->data[0] = 6;
+    shape->data[1] = -4;
+    shape->data[2] = -6;
+
+    matrix *theta_ddot = zeros(NUMBODIES, totalTime);
+
+    for(int i = 0; i < NUMBODIES; i++){
+        for(int j = 0; j < timeStep; j++){
+            theta_ddot->data[(i * theta_ddot->numCols) + j] = shape->data[i];
+        }
+        for(int j = timeStep; j < timeStep*2; j++){
+            theta_ddot->data[(i * theta_ddot->numCols) + j] = shape->data[i] * -1;
+        }
 
 
+    }
+
+
+
+
+    Robot *robot = defPaperSample_1(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
+
+
+
+#endif
 #ifdef SAMPLE2
     double dt = 0.025;
     int timeStep = 100;
-    //double restTime = 0;
+    int restTime = 0;
+    int totalTime = restTime + timeStep;
 
-    matrix *t1 = matrix_new(1, timeStep);
+    matrix *t1 = matrix_new(1, totalTime);
     t1->data[(0 * t1->numCols) + 0] = dt;
-    for (int i = 1; i < timeStep; i++) {
+    for (int i = 1; i < totalTime; i++) {
         t1->data[(0 * t1->numCols) + i] = t1->data[(0 * t1->numCols) + (i-1)] + dt;
 
     }
 
-    matrix *shape = zeros(TEMP_NUMBODY, 1);
+    matrix *shape = zeros(NUMBODIES, 1);
     shape->data[(0 * shape->numCols) + 0] = 0.4;
     shape->data[(1 * shape->numCols) + 0] = -0.5 * 0.4;
     shape->data[(2 * shape->numCols) + 0] = 0.5 * 0.4;
     shape->data[(3 * shape->numCols) + 0] = -0.7 * 0.4;
     shape->data[(4 * shape->numCols) + 0] = 0.1 * -0.4;
 
-    matrix *theta_ddot = zeros(TEMP_NUMBODY, timeStep);
+    matrix *theta_ddot_app = zeros(NUMBODIES, timeStep);
+
+
+
 
     matrix *tempTStep = matrix_new(1, timeStep);
-
-#endif
-    for(int i = 0; i < TEMP_NUMBODY; i++){
+    for(int i = 0; i < NUMBODIES; i++){
 
         zeroMatrix(tempTStep);
         matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, M_PI/(dt*timeStep), tempTStep)),shape->data[(i * shape->numCols)], tempTStep);
         //memcpy(theta_ddot->data[i],tempTStep->data[0],  sizeof * theta_ddot->data[i] * timeStep);
-        setSection(theta_ddot, i, i, 0, timeStep-1, tempTStep);
+        setSection(theta_ddot_app, i, i, 0, timeStep-1, tempTStep);
 
     }
 
+    matrix *theta_ddot = zeros(NUMBODIES, totalTime);
+    setSection(theta_ddot, 0, theta_ddot->numRows-1, 0, timeStep-1, theta_ddot_app);
+
+     Robot *robot = defPaperSample_2(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
+
+
+#endif
     matrix *F_ext = zeros(6, 1);
     matrix *F_0 = zeros(6, 1);
     F_0->data[(0 * F_0->numCols)] = 0;
@@ -78,59 +119,51 @@ int main() {
     //matrixToFile(theta_ddot, "theta_ddot_in.csv");
 
     //matrix *temp1xRowsM1 = matrix_new(5, timeStep);
-    matrix *tempBodiesx1 = matrix_new(TEMP_NUMBODY, 1);
 
-    Robot *robot = defPaperSample_2(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
 
-    int BC_Start = robot->BC_Start;//todo, this should be automated
-    //int BC_End = 4;
 
-    matrix *t = zeros(1, timeStep);
+
+    matrix *t = zeros(1, totalTime);
     for(int i = 0; i < timeStep; i++){
         t->data[(0 * t->numCols) + i] = i*dt;
     }
-    matrix *C = zeros(robot->numBody, timeStep);
-    matrix *T_H = zeros(robot->numBody, timeStep);
-    matrix *Td_H = zeros(robot->numBody, timeStep);
+    matrix *C = zeros(robot->numBody, totalTime);
+    matrix *T_H = zeros(robot->numBody, totalTime);
+    matrix *Td_H = zeros(robot->numBody, totalTime);
 
     //matrix *EE_POS = zeros(3, timeStep);
 
-    matrix *angles = zeros(((robot->numObjects-1)/2)-1,timeStep);
+    matrix *angles = zeros(((robot->numObjects-1)/2)-1,totalTime);
     IDM_MB_RE_OUT *idm = malloc(sizeof(IDM_MB_RE_OUT));
     matrix *tempLinkx1 = matrix_new(robot->numBody,1);
-    for(int i = 0; i < timeStep; i++){
+    for(int i = 0; i < totalTime; i++){
 
         printf("Time Step: %d\n", i);
         matrix *f = matrix_new(6,1);
         getSection(robot->objects[(2*robot->BC_Start)]->object->flex->f_prev, 0, robot->objects[(2*robot->BC_Start)]->object->flex->f_prev->numRows - 1, 0, 0, f);//todo
 
         idm = IDM_MB_RE(robot, theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, i, i, tempLinkx1), F_ext, dt, F_0);
-
-        //matrix *tempT = matrix_new(1, 5);
-        //matrixToFile(matrix_transpose(idm->C, tempT), "c_inv_idm.csv");
-        //matrix *tempf = matrix_new(7, 6);
-
-
-        //printf("%f", robot->objects[11]->object->joint->limits[0]);
         setSection(C, 0, C->numRows-1, i, i, idm->C);
-
-
-        //flexBody *flex = robot->objects[2*BC_Start ]->object->flex;
-        //flexBody *flexNew = robot->objects[2*BC_Start]->object->flex;
-
-        //prevGuess is always 1, todo add other cases
         getSection(f, 0, 5, 0, 0, F_0);
+
+
         //robot = idm->robot_new;
 
+        //setSection(T_H, 0, T_H->numRows-1, i, i, theta);
+        //setSection(Td_H, 0, Td_H->numRows-1, i, i, theta_dot);
 
-        setSection(T_H, 0, T_H->numRows-1, i, i, theta);
-        setSection(Td_H, 0, Td_H->numRows-1, i, i, theta_dot);
 
-
+        //USING EULER INTEGRATION
         theta = matrix_add(theta, matrix_scalar_mul(getSection(theta_dot, 0, theta_dot->numRows-1, 0, 0, tempLinkx1), dt, tempLinkx1), theta);
         theta_dot = matrix_add(theta_dot, matrix_scalar_mul(getSection(theta_ddot, 0, theta_ddot->numRows-1, i, i, tempLinkx1), dt, tempLinkx1), theta_dot);//todo this feels wrong
+
+
+        //USING RK2 INTEGRATION
+
+
+
         int currJointIndex = 0;
-        for(int j = 1; j < 11; j+= 2 ) {//todo j should start at firstjoint an
+        for(int j = 1; j < robot->numObjects; j+= 2 ) {
             if (robot->objects[j]->type == 2) {
                 robot->objects[j]->object->joint->position = theta->data[(currJointIndex * theta->numCols)];
                 robot->objects[j]->object->joint->velocity = theta_dot->data[(currJointIndex * theta_dot->numCols)];
@@ -149,7 +182,7 @@ int main() {
             }
         }
 
-        matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot.csv");
+        matrixToFile(plotRobotConfig(robot, theta, 1), "RigidRandyPlot.csv");
     }
     printf("DONE");
 //    matrixToFile(angles, "RigidRandyAngles.csv");

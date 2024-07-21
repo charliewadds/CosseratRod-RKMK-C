@@ -82,9 +82,9 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         g_act_wrt_prev[i] = zeros(4,4);
     }
 
-    matrix *eta = zeros(6,7);      //todo magic number         //[se(3) X N+2]  Twists for each BCF + Base + EE in BCF
-    matrix *d_eta = zeros(6,7);        //todo magic number     //[se(3) X N+2]  Twist Rate for each BCF + Base + EE Frame in BCF
-    matrix *F = zeros(6,6);   //todo magic number              //[se(3) X N+1]  Wrench for each Joint + EE in BCF
+    matrix *eta = zeros(6,robot->numBody+2);      //todo magic number         //[se(3) X N+2]  Twists for each BCF + Base + EE in BCF
+    matrix *d_eta = zeros(6,robot->numBody+2);        //todo magic number     //[se(3) X N+2]  Twist Rate for each BCF + Base + EE Frame in BCF
+    matrix *F = zeros(6,robot->numBody+1);   //todo magic number              //[se(3) X N+1]  Wrench for each Joint + EE in BCF
 
     // Set Initial Conditions
 
@@ -120,12 +120,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         curr_joint = robot->objects[2 * (i - 1)+1];
         curr_body = robot->objects[2 * i ];
 
-
         CoM2CoM = getCoM2CoM(curr_joint->object->joint, CoM2CoM);
-
-        //todo double check matrix sizes
-
-
 
         actuateRigidJoint(g_ref[i-1], CoM2CoM, curr_joint->object->joint, getSection(eta, 0,eta->numRows-1,i-1,i-1, tempR6n1), getSection(d_eta, 0,d_eta->numRows-1,i-1,i-1, tempR6n2), kin);
         copyMatrix(kin->g_cur, g_ref[i]);
@@ -327,6 +322,8 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
         matrix_free(g_ref[i]);
         matrix_free(g_act_wrt_prev[i]);
     }
+    free(g_ref);
+    free(g_act_wrt_prev);
     matrix_free(F_dist);
     freeFlexDyn(dyn);
     freeRigidKin(kin);
@@ -393,11 +390,11 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     //todo implement 3d zeros()
     //todo this might not need +2, I dont remember if numBodies includes base and EE
-    matrix **g_ref = malloc(sizeof(matrix) * (numBody + 2));           //[SE(3) X N+2]  Transformation to i_th C-BCF from/in base BCF for RRC
+    matrix **g_ref = malloc(sizeof(matrix *) * (numBody + 2));           //[SE(3) X N+2]  Transformation to i_th C-BCF from/in base BCF for RRC
     for (int i = 0; i < numBody + 2; i++) {
         g_ref[i] = zeros(4, 4);
     }
-    matrix **g_act_wrt_prev = malloc(sizeof(matrix) * (numBody + 2));  //[SE(3) X N+2]  Transformation to i-1_th C-BCF from/in i_th BCF for RAC
+    matrix **g_act_wrt_prev = malloc(sizeof(matrix *) * (numBody + 2));  //[SE(3) X N+2]  Transformation to i-1_th C-BCF from/in i_th BCF for RAC
     for (int i = 0; i < numBody + 2; i++) {
         g_act_wrt_prev[i] = zeros(4, 4);
     }
@@ -507,11 +504,11 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         etaPPrev[i] = zeros(6, 21);
     }
 
-    matrix **fPrev = malloc(sizeof(matrix) * (numBody + 2));
+    matrix **fPrev = malloc(sizeof(matrix *) * (numBody + 2));
     for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
         fPrev[i] = zeros(6, 21);
     }
-    matrix **fPPrev = malloc(sizeof(matrix) * (numBody + 2));
+    matrix **fPPrev = malloc(sizeof(matrix *) * (numBody + 2));
     for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
         fPPrev[i] = zeros(6, 21);
     }

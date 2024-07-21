@@ -135,7 +135,7 @@ int main() {
         setSection(C_des_1, 0, C_des_1->numRows-1, 0, 0, getSection(C_des, 0, C_des->numRows-1, i, i, tempLinkx1));
 
 
-        fdm = FDM_MB_RE(robot, theta, theta_dot, theta_ddot, F_ext, dt, C_des_1 ,F_0, InitGuess);//todo do I need JointAcc in funciton?
+        fdm = FDM_MB_RE(robot, theta, theta_dot, theta_ddot, F_ext, dt, C_des_1 ,F_0, InitGuess);//todo run in parallel with 1/2 dt for RK2 or RK4 (or initguess for next ts)
 
 
         matrix *tempT6 = matrix_new(1, 6);
@@ -163,7 +163,7 @@ int main() {
 #endif
         getSection(robot->objects[2*BC_Start]->object->flex->f_prev, 0, robot->objects[2*BC_Start]->object->flex->f_prev->numRows-1, 0,0, tempF);
         copyMatrix(tempF, F_0);
-        //TODO this diverges after the second step
+
 
         copyMatrix(fdm->JointAcc, theta_ddot);
 
