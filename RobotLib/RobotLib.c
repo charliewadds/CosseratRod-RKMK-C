@@ -534,10 +534,6 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
     matrix_add(matrix_scalar_mul(eta, c0, eta_t), eta_h, eta_t);   // Local Time Discretization for history in Local Coordinates
 
 
-    //holy shit, this is ugly, hope it works, update, it doesn't
-
-
-
 
     matrix_scalar_mul(C, c0, result->temp6x6n2);
     matrix_add(result->temp6x6n2, K, result->temp6x6n1);

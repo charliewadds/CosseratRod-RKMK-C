@@ -448,7 +448,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
 #endif
     assert(hasNan(tempGuess)==0);
-    int status = find_roots_hybrid_fdf(tempGuess, params, 0, TOLERANCE_INV);
+    int status = find_roots_hybrid(tempGuess, params, 0, TOLERANCE_INV);
 
     if (status != 0) {
 #if VERBOSE >= 1

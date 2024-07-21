@@ -100,7 +100,7 @@ int main() {
     matrix *T_H = zeros(5, timeStep);//todo 5 should be num bodies
     matrix *Tdd_H = zeros(5, timeStep);//todo 5 should be num bodies
 
-    matrix *angles = zeros(((robot->numObjects-1)/2)-1,timeStep);
+    matrix *angles = zeros(((robot->numObjects-1)/2)-1,totTime);
     FDM_MB_RE_OUT *fdm = malloc(sizeof(FDM_MB_RE_OUT));
     matrix *tempLinkx1 = matrix_new(robot->numBody,1);
 
@@ -118,11 +118,11 @@ int main() {
     matrix *C_des_1 = zeros(C_des->numRows,1);
 
     matrix *tempNumbodx1 = zeros(robot->numBody,1);
-    matrix *temp5xn = zeros(5,timeStep);
+    matrix *temp5xn = zeros(5,totTime);
     matrix *tempF = zeros(6,1);
 
 
-    for(int i = 0; i < timeStep; i++){
+    for(int i = 0; i < totTime; i++){
         #if VERBOSE > 0
         printf("\nTime Step: %d\n", i);
 
