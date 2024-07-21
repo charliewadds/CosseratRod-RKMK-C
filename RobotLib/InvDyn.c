@@ -496,21 +496,21 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     matrix **etaPrev = malloc(sizeof(matrix) * (numBody + 2));
     for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
-        etaPrev[i] = zeros(6, 21);
+        etaPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
     }
 
     matrix **etaPPrev = malloc(sizeof(matrix) * (numBody + 2));
     for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
-        etaPPrev[i] = zeros(6, 21);
+        etaPPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
     }
 
     matrix **fPrev = malloc(sizeof(matrix *) * (numBody + 2));
     for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
-        fPrev[i] = zeros(6, 21);
+        fPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
     }
     matrix **fPPrev = malloc(sizeof(matrix *) * (numBody + 2));
     for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
-        fPPrev[i] = zeros(6, 21);
+        fPPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
     }
 
 

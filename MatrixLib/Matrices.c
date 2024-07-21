@@ -54,7 +54,7 @@ matrix *gsl_to_matrix(gsl_matrix *gsl_matrix, matrix *result){
     return result;
 }
 //make sure this is freed!!!
-matrix *matrix_new(uint8_t num_rows, uint8_t num_cols) {
+matrix *matrix_new(int num_rows, int num_cols) {
     assert(num_rows != 0);
     assert(num_cols != 0);
 
@@ -358,7 +358,7 @@ matrix *eye(matrix *result){
 //
 //}
 
-matrix *matrix_rand(uint8_t num_rows, uint8_t num_cols){
+matrix *matrix_rand(int num_rows, int num_cols){
     matrix *m = matrix_new(num_rows, num_cols);
     for(int i = 0; i < num_rows; i++){
         for(int j = 0; j < num_cols; j++){
@@ -377,7 +377,7 @@ double matrix_sumSelf(matrix *m){
     }
     return result;
 }
-matrix *zeros(uint8_t num_rows, uint8_t num_cols){
+matrix *zeros(int num_rows, int num_cols){
     matrix *m = matrix_new(num_rows, num_cols);
     for(int i = 0; i < num_rows; i++){
         for(int j = 0; j < num_cols; j++){
@@ -401,7 +401,7 @@ matrix *zeroMatrix(matrix *m){
     return m;
 }
 
-matrix *ones(uint8_t num_rows, uint8_t num_cols){
+matrix *ones(int num_rows, int num_cols){
     matrix *m = matrix_new(num_rows, num_cols);
     for(int i = 0; i < num_rows; i++){
         for(int j = 0; j < num_cols; j++){
@@ -412,7 +412,7 @@ matrix *ones(uint8_t num_rows, uint8_t num_cols){
 }
 
 
-void setSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, uint8_t endCol, matrix *section){
+void setSection(matrix *m, int startRow, int endRow, int startCol, int endCol, matrix *section){
     assert(startRow <= endRow);
     assert(startCol <= endCol);
     assert(endRow <= m->numRows);
@@ -440,7 +440,7 @@ void copyMatrix(matrix *m, matrix *result){
         }
     }
 }
-void getSetSection(matrix *get, matrix *set, uint8_t getStartRow, uint8_t getEndRow, uint8_t getStartCol, uint8_t getEndCol, uint8_t setStartRow, uint8_t setEndRow, uint8_t setStartCol, uint8_t setEndCol) {
+void getSetSection(matrix *get, matrix *set, int getStartRow, int getEndRow, int getStartCol, int getEndCol, int setStartRow, int setEndRow, int setStartCol, int setEndCol) {
     // Check if input parameters are within bounds
     assert(getStartRow <= getEndRow && getStartCol <= getEndCol);
     assert(getEndRow < get->numRows && getEndCol < get->numCols);
@@ -448,13 +448,13 @@ void getSetSection(matrix *get, matrix *set, uint8_t getStartRow, uint8_t getEnd
     assert(setEndRow < set->numRows && setEndCol < set->numCols);
 
 
-    for (uint8_t i = 0; i <= getEndRow - getStartRow; i++) {
-        for (uint8_t j = 0; j <= getEndCol - getStartCol; j++) {
+    for (int i = 0; i <= getEndRow - getStartRow; i++) {
+        for (int j = 0; j <= getEndCol - getStartCol; j++) {
             // Calculate indices for the source and destination matrices
-            uint8_t src_i = getStartRow + i;
-            uint8_t src_j = getStartCol + j;
-            uint8_t dest_i = setStartRow + i;
-            uint8_t dest_j = setStartCol + j;
+            int src_i = getStartRow + i;
+            int src_j = getStartCol + j;
+            int dest_i = setStartRow + i;
+            int dest_j = setStartCol + j;
 
             // Copy data from the source to the destination matrix
             set->data[(dest_i * set->numCols) + dest_j] = get->data[(src_i * get->numCols) + src_j];
@@ -462,7 +462,7 @@ void getSetSection(matrix *get, matrix *set, uint8_t getStartRow, uint8_t getEnd
     }
 }
 
-matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, uint8_t endCol, matrix *result){
+matrix *getSection(matrix *m, int startRow, int endRow, int startCol, int endCol, matrix *result){
 
     assert(startRow <= endRow);
     assert(startCol <= endCol);

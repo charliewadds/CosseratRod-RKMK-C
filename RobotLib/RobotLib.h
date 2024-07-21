@@ -25,9 +25,9 @@
 #define INV_SAVE 0
 
 
-#define MAX_ITER_LEVMAR 150
+#define MAX_ITER_LEVMAR 15
 #define MAX_ITER_NEWTON 15
-#define MAX_ITER_HYBRID 150
+#define MAX_ITER_HYBRID 15
 
 
 
@@ -98,7 +98,7 @@ union body_u {
     flexBody *flex;
 };
 typedef struct body_s {
-    uint8_t type;//0 for rigidBody, 1 for flexBody
+    int type;//0 for rigidBody, 1 for flexBody
     union body_u *body;
 }Body;
 typedef struct rigidJoint_s{
@@ -158,7 +158,7 @@ union object_u {
 };
 
 typedef struct object_s {
-    uint8_t type;//0 for rigidBody, 1 for flexBody, 2 for rigidJoint
+    int type;//0 for rigidBody, 1 for flexBody, 2 for rigidJoint
     union object_u *object;
 }Object;
 

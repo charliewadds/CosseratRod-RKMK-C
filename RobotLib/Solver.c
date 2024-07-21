@@ -199,7 +199,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
     if(fwd){
         int iters = 0;
         while(iters < MAX_ITER_LEVMAR) {
-            dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, 5, 5, MAX_ITER_LEVMAR - iters, opts, info, NULL, NULL, params);
+            dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, params->robot->numBody, params->robot->numBody, MAX_ITER_LEVMAR - iters, opts, info, NULL, NULL, params);
             iters += info[5]+1;
             if(info[6] == 6){
                 break;

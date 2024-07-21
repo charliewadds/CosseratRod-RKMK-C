@@ -18,10 +18,10 @@
 //max number of rows or columns is 255
 typedef struct matrix_double_s {
     //there is probably some memory trickery that can be done here to make this more efficient
-    uint8_t numRows;
-    uint8_t numCols;
+    int numRows;
+    int numCols;
     double *data;
-    uint8_t square;
+    int square;
 
 
 
@@ -47,11 +47,11 @@ matrix *matrix_solve(matrix *A, matrix *b, matrix *result);
 // Constructor-like 
 // Allocates memory for a new matrix
 // All elements in the matrix are 0.0
-matrix *matrix_new(uint8_t num_rows, uint8_t num_cols);
+matrix *matrix_new(int num_rows, int num_cols);
 void copyMatrix(matrix *m, matrix *result);
 double matrix_sumSelf(matrix *m);
 void printGSLMatrix(gsl_matrix *m);
-matrix *matrix_rand(uint8_t num_rows, uint8_t num_cols);
+matrix *matrix_rand(int num_rows, int num_cols);
 //return list of the number of rows and columns
 int *matrix_shape(matrix *m);
 
@@ -90,7 +90,7 @@ matrix *matrix_scalar_mul_chain(matrix *m, double scalar);
 // convert a matrix to an identity matrix
 matrix *eye(matrix *result);
 
-matrix *diag(matrix *A, uint8_t n);
+matrix *diag(matrix *A, int n);
 
 //multiply two matrices to create a new matrix
 matrix *matMult(matrix *m1, matrix *m2, matrix *result);
@@ -107,11 +107,11 @@ matrix *matDiv(matrix *m1, matrix *m2);
 
 matrix *elemDiv(matrix *m1, double scalar, matrix *result);
 
-matrix *zeros(uint8_t num_rows, uint8_t num_cols);
+matrix *zeros(int num_rows, int num_cols);
 
 matrix *zeroMatrix(matrix *m);
 
-matrix *ones(uint8_t num_rows, uint8_t num_cols);
+matrix *ones(int num_rows, int num_cols);
 
 double matrixRatio(matrix *m1, matrix *m2);
 
@@ -120,11 +120,11 @@ void printMatrix(matrix *m);
 double norm(matrix *m);
 
 //set a section of a matrix to another matrix. m is the matrix to be added to and section is the matrix to be added
-void setSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, uint8_t endCol, matrix *section);
+void setSection(matrix *m, int startRow, int endRow, int startCol, int endCol, matrix *section);
 
-matrix *getSection(matrix *m, uint8_t startRow, uint8_t endRow, uint8_t startCol, uint8_t endCol, matrix *result);
+matrix *getSection(matrix *m, int startRow, int endRow, int startCol, int endCol, matrix *result);
 
-void getSetSection(matrix *get, matrix *set, uint8_t getStartRow, uint8_t getEndRow, uint8_t getStartCol, uint8_t getEndCol, uint8_t setStartRow, uint8_t setEndRow, uint8_t setStartCol, uint8_t setEndCol);
+void getSetSection(matrix *get, matrix *set, int getStartRow, int getEndRow, int getStartCol, int getEndCol, int setStartRow, int setEndRow, int setStartCol, int setEndCol);
 //determinant of a matrix
 double Det(matrix *m);
 

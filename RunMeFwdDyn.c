@@ -92,13 +92,13 @@ int main() {
     int BC_Start = robot->BC_Start;//todo, this should be automated
     //int BC_End = 4;
 
-    matrix *t = zeros(1, timeStep);
+    matrix *t = zeros(1, totTime);
     for(int i = 0; i < timeStep; i++){
         t->data[(0 * t->numCols) + i] = i*dt;
     }
-    matrix *C = zeros(5, timeStep);//todo 5 should be num bodies
-    matrix *T_H = zeros(5, timeStep);//todo 5 should be num bodies
-    matrix *Tdd_H = zeros(5, timeStep);//todo 5 should be num bodies
+    matrix *C = zeros(5, totTime);//todo 5 should be num bodies
+    matrix *T_H = zeros(5, totTime);//todo 5 should be num bodies
+    matrix *Tdd_H = zeros(5, totTime);//todo 5 should be num bodies
 
     matrix *angles = zeros(((robot->numObjects-1)/2)-1,totTime);
     FDM_MB_RE_OUT *fdm = malloc(sizeof(FDM_MB_RE_OUT));

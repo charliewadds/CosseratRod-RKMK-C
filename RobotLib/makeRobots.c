@@ -7,7 +7,7 @@
 
 Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     assert(theta->numCols == 1);//todo add asserts like this to all functions with matrix args
-    double linkMass = 50;
+    double linkMass = 12.5;
     double linkLen = 0.5;
 
     matrix *temp3x3n1 = matrix_new(3,3);
@@ -49,13 +49,13 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     F_0->data[(2 * F_0->numCols) + 0] = 1;
 
     double rho = 75e1;
-    double mu = 1e4;
+    double mu = 5e4;
     double r = 0.1;
-    double E = 1.8e8;
+    double E = 1e9;
     double G = E/(2*(1+0.3));
     double I = M_PI/4*pow(r,4);
     double A = M_PI*pow(r,2);
-    int N = 50;
+    int N = 21;
 
     //diag(2I,I,I)
     matrix *J = zeros(3,3);

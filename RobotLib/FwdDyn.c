@@ -436,13 +436,13 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     //todo implement 3d zeros()
     //todo this might not need +2, I dont remember if numBodies includes base and EE
     matrix **g_ref = malloc(sizeof(matrix) * (numBody + 2));           //[SE(3) X N+2]  Transformation to i_th C-BCF from/in base BCF for RRC
-    for (int i = 0; i < numBody + 2; i++) {
-        g_ref[i] = zeros(4, 4);
-    }
     matrix **g_act_wrt_prev = malloc(sizeof(matrix) * (numBody + 2));  //[SE(3) X N+2]  Transformation to i-1_th C-BCF from/in i_th BCF for RAC
     for (int i = 0; i < numBody + 2; i++) {
+        g_ref[i] = zeros(4, 4);
         g_act_wrt_prev[i] = zeros(4, 4);
     }
+
+
 
     matrix *eta = zeros(6, numBody + 2);               //[se(3) X N+2]  Twists for each BCF + Base + EE in BCF
     matrix *d_eta = zeros(6, numBody + 2);             //[se(3) X N+2]  Twist Rate for each BCF + Base + EE Frame in BCF
@@ -562,21 +562,21 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     matrix **etaPrev = malloc(sizeof(matrix) * (numBody + 2));
     for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
-        etaPrev[i] = zeros(6, 21);
+        etaPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
     }
 
     matrix **etaPPrev = malloc(sizeof(matrix) * (numBody + 2));
-    for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
-        etaPPrev[i] = zeros(6, 21);
+    for (int i = 0; i < numBody + 2; i++) {
+        etaPPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
     }
 
     matrix **fPrev = malloc(sizeof(matrix) * (numBody + 2));
-    for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
-        fPrev[i] = zeros(6, 21);
+    for (int i = 0; i < numBody + 2; i++) {
+        fPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
     }
     matrix **fPPrev = malloc(sizeof(matrix) * (numBody + 2));
-    for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
-        fPPrev[i] = zeros(6, 21);
+    for (int i = 0; i < numBody + 2; i++) {
+        fPPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
     }
 
 
