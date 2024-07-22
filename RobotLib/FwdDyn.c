@@ -45,12 +45,12 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
     copyMatrix(params->F_0, F_0);
 
 
-    int Inv = params->inv;
+
 
 
 
     int BC_Start = robot->BC_Start;
-    int BC_End = robot->BC_End;
+
     int numBody = (robot->numObjects-3)/2;
 
 

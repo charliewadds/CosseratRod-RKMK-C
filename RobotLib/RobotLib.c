@@ -859,9 +859,13 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
     //assert(hasNan(result->f) == 0);
     for(int i = 0; i < body->N-1; i++) {
 
+
+
         matrix_scalar_mul(matrix_sub(getSection(body->f_prev, 0,5,i+1,i+1, tempR6n1), getSection(body->f_prev, 0,5,i,i, tempR6n2),tempR6n1),c1, tempR6n1);
         matrix_scalar_mul(matrix_sub(getSection(body->f_pprev, 0,5,i+1,i+1, tempR6n2), getSection(body->f_pprev, 0,5,i,i, tempR6n3), tempR6n2),c2, tempR6n2);
         matrix_add(tempR6n1,tempR6n2,tempR6n1);
+
+
 
         elemDiv(
             tempR6n1,
@@ -880,14 +884,12 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
         //Euler integration todo add option for Rk2 and maybe RK4 (adaptive?)
 
         setSection(result->f,0,5,i+1,i+1,
-                   (matrix_add(getSection(result->f,0,5,i,i, tempR6n1), matrix_scalar_mul(ode->f_s,ds, tempR6n2), tempR6n1)));
+                   (matrix_add(getSection(result->f,0,5,i,i, tempR6n1), matrix_scalar_mul(ode->f_s,ds/2, tempR6n2), tempR6n1)));
 
 
         setSection(result->eta,0,5,i+1,i+1,
-                   (matrix_add(getSection(result->eta,0,5,i,i, tempR6n1), matrix_scalar_mul(ode->eta_s,ds, tempR6n2), tempR6n1))
+                   (matrix_add(getSection(result->eta,0,5,i,i, tempR6n1), matrix_scalar_mul(ode->eta_s,ds/2, tempR6n2), tempR6n1))
         );
-
-
 
 
 

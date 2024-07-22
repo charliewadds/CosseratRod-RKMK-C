@@ -10,11 +10,11 @@
 
 
 #define GSL_ERROR_HANDLER 0
-#define VERBOSE 1
+#define VERBOSE 0
 
-#define SAMPLE1
+#define SAMPLE2
 
-#define NUMBODIES 3
+#define NUMBODIES 5
 
 #define HYBRID_DELTA 0
 
@@ -410,4 +410,5 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix *result, Flex_MB_BCS_params *params)
 matrix *fsolve_idm_mb_re(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
 Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot);
 Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot);
+Robot *defConfrenceRobot(matrix *theta, matrix *theta_dot, matrix *theta_ddot);
 #endif //COSSERATROD_RKMK_C_MATHLIB_H
