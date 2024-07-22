@@ -12,9 +12,9 @@
 #define GSL_ERROR_HANDLER 0
 #define VERBOSE 1
 
-#define SAMPLE1
+#define SAMPLE2
 
-#define NUMBODIES 3
+#define NUMBODIES 5
 
 #define HYBRID_DELTA 0
 

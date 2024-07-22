@@ -53,12 +53,12 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
     double c0 = params->c0;
     double c1 = params->c1;
     double c2 = params->c2;
-    double dt = params->dt;
-    matrix *theta = params->Theta;
-    matrix *theta_dot = params->Theta_dot;
-    matrix *theta_ddot = params->Theta_ddot;
-    matrix *C_des = params->C_des;
-    matrix *F_0 = params->F_0;
+    //  double dt = params->dt;
+//    matrix *theta = params->Theta;
+//    matrix *theta_dot = params->Theta_dot;
+//    matrix *theta_ddot = params->Theta_ddot;
+//    matrix *C_des = params->C_des;
+//    matrix *F_0 = params->F_0;
     int Inv = params->inv;
 
 
@@ -495,23 +495,16 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
 
     matrix **etaPrev = malloc(sizeof(matrix) * (numBody + 2));
-    for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
-        etaPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
-    }
-
     matrix **etaPPrev = malloc(sizeof(matrix) * (numBody + 2));
-    for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
-        etaPPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
-    }
-
     matrix **fPrev = malloc(sizeof(matrix *) * (numBody + 2));
-    for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
-        fPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
-    }
     matrix **fPPrev = malloc(sizeof(matrix *) * (numBody + 2));
     for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
+        etaPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
+        etaPPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
+        fPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
         fPPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
     }
+
 
 
     matrix *tempR6n1 = matrix_new(6, 1);
@@ -737,6 +730,8 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         matrix_free(g_act_wrt_prev[i]);
     }
 
+    free(g_ref);
+    free(g_act_wrt_prev);
     freeRigidKin(kin);
     //matrix_free(Ct);
     matrix_free(tempR6n1);
