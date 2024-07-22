@@ -5,7 +5,7 @@
 #define _MATRICES_H_
 
 
-#define NEON
+#undef NEON
 #define USEBLAS
 #include <stdlib.h>
 #include <stdint.h>

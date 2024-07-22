@@ -5,7 +5,7 @@
 #include <string.h>
 #include <gsl/gsl_linalg.h>
 #include <arm_neon.h>
-#include <simd/simd.h>
+//#include <simd/simd.h>
 
 
 
@@ -91,7 +91,7 @@ void matrix_free(matrix *m) {
 }
 
 
-#ifndef NEON
+
 matrix *matrix_add(matrix *m1, matrix *m2, matrix *result){
     assert(m1->numRows == m2->numRows);
     assert(m1->numCols == m2->numCols);
@@ -123,7 +123,7 @@ matrix *matrix_add(matrix *m1, matrix *m2, matrix *result){
     return result;
 
 }
-#endif
+
 
 
 #ifdef NEON
