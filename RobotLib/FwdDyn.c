@@ -88,7 +88,7 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
     copyMatrix(F_0, tempGuess);
     //assert(isnan(robot->objects[1]->object->joint->velocity)==0);
     params->inv = 0;
-    int status = find_roots_hybrid_fdf(tempGuess, params, 0, TOLERANCE_INV);
+    int status = find_roots_hybrid(tempGuess, params, 0, TOLERANCE_INV);
     //assert(isnan(robot->objects[1]->object->joint->velocity)==0);
     if (status != 0) {
 #if VERBOSE >= 2
@@ -114,15 +114,15 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
                 #endif
                 //return GSL_EFAILED;
 
-            }else{
-                printf("\tNewton\n");
-            }
-        }else{
-            printf("\tLevmar\n");
-        }
-    }else{
-        printf("\tHybrid\n");
-    }
+            }//else{
+//                printf("\tNewton\n");
+//            }
+        }//else{
+//            printf("\tLevmar\n");
+//        }
+    }//else{
+//        printf("\tHybrid\n");
+//    }
     params->inv = 1;
 #if VERBOSE >= 2
 
@@ -132,8 +132,8 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
     copyMatrix(tempGuess, str_guess);
     copyMatrix(theta_ddot_old, params->Theta_ddot);
 
-    matrix *tempT = matrix_new(1, 6);
-    matrixToFile(matrix_transpose(str_guess, tempT), "Flex.csv");
+    //matrix *tempT = matrix_new(1, 6);
+    //matrixToFile(matrix_transpose(str_guess, tempT), "Flex.csv");
     //printf("FUFLEX_MB_BCS SOLVER END\n");
     //printMatrix(str_guess);
     //printf("\n");
@@ -494,8 +494,8 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     matrix *JointAcc = matrix_new(Theta_DDot_guess->numRows, 1);
     matrix *tempGuess = matrix_new(Theta_DDot_guess->numRows, 1);
-    matrix *tempT = matrix_new(1, Theta_DDot_guess->numRows);
-    matrixToFile(matrix_transpose(Theta_DDot_guess, tempT), "fdmFirstSolveInit.csv");
+    //matrix *tempT = matrix_new(1, Theta_DDot_guess->numRows);
+    //matrixToFile(matrix_transpose(Theta_DDot_guess, tempT), "fdmFirstSolveInit.csv");
     assert(isnan(robot->objects[1]->object->joint->velocity)==0);
 #if VERBOSE >= 2
     printf("____________theta ddot guess_______________________\n");
@@ -503,7 +503,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 #endif
     assert(isnan(robot->objects[1]->object->joint->velocity)==0);
     copyMatrix(Theta_DDot_guess, tempGuess);
-    int status = find_roots_hybrid_fdf(tempGuess, params, 1, TOLERANCE_FWD);
+    int status = find_roots_hybrid(tempGuess, params, 1, TOLERANCE_FWD);
 
 
     #if VERBOSE >= 2
@@ -528,15 +528,15 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
                 assert(1 == 0);
 #endif
 
-            }else{
-                printf("Newton\n");
-            }
-        }else{
-            printf("Levmar\n");
-        }
-    }else{
-        printf("Hybrid\n");
-    }
+            }//else{
+                //printf("Newton\n");
+            //}
+        }//else{
+         //   printf("Levmar\n");
+       // }
+    }//else{
+     //   printf("Hybrid\n");
+    //}
     copyMatrix(tempGuess, JointAcc);
     //matrixToFile(matrix_transpose(JointAcc, tempT), "fdmFirstSolve.csv");
 
@@ -657,15 +657,15 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 #if SOLVER_ERRORS == 1 || SOLVER_ERROR_TOP == 1
                 assert(1 == 0);
 #endif
-            }else{
-                printf("Newton\n");
-            }
-        }else{
-            printf("Levmar\n");
-        }
-    }else{
-        printf("Hybrid\n");
-    }
+            }//else{
+//                printf("Newton\n");
+//            }
+        }//else{
+//            printf("Levmar\n");
+//        }
+    }//else{
+//        printf("Hybrid\n");
+//    }
     copyMatrix( Theta_ddot_old, params->Theta_ddot);
 
     //matrixToFile(StrGuess, "fdmSecondSolve.csv");
