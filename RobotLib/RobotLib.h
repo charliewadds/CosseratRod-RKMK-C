@@ -6,8 +6,9 @@
 //#include "Matrices.h"
 //#endif
 
+#define PLOT_OUT 0
 
-
+//#define NLOPT
 
 #define GSL_ERROR_HANDLER 0
 #define VERBOSE 0
@@ -16,7 +17,7 @@
 
 #define NUMBODIES 5
 
-#define HYBRID_DELTA 0
+#define HYBRID_DELTA 1
 
 #define SOLVER_SAVE 0
 #define SOLVER_ERRORS 0
@@ -29,7 +30,7 @@
 #define MAX_ITER_NEWTON 15
 #define MAX_ITER_HYBRID 15
 
-
+#define PRINT_NUM_ITERS 0
 
 #define EPSREL_LEVMAR 1e-12
 #define EPSREL_HYBRID 1e-12
@@ -48,7 +49,7 @@
 
 #define LEVMAR_STEP_MUL 1
 
-#define INV_HYBRID_STEP (sqrt(TOLERANCE_INV * NUM1))
+#define INV_HYBRID_STEP sqrt(TOLERANCE_INV * NUM1)
 #define FWD_HYBRID_STEP sqrt(TOLERANCE_FWD * NUM2)
 
 #ifndef COSSERATROD_RKMK_C_ROBOTLIB_H
@@ -147,6 +148,15 @@ typedef struct flexDyn_s{
     matrix *eta;
     matrix *d_eta_end;
 
+    matrix *tempR6n1;
+    matrix *tempR6n2;
+    matrix *tempR6n3;
+    matrix *tempR6n4;
+    matrix *tempR6n5;
+
+    matrix *temp4x4n1;
+
+
 }flexDyn;
 
 union object_u {
@@ -237,6 +247,9 @@ typedef struct COSS_ODE_OUT_s{
     matrix *tempR6n1;
     matrix *tempR6n2;
     matrix *tempR6n3;
+
+    matrix *f_t;
+    matrix *eta_t;
 
 }COSS_ODE_OUT;
 
@@ -348,6 +361,29 @@ typedef struct FDM_MB_RE_OUT_t{
 }FDM_MB_RE_OUT;
 
 
+//this stores all the required temprary variables for the forward and inverse BCS
+typedef struct allocTemp_BCS_s{
+    matrix *tempR6n1;
+    matrix *tempR6n2;
+    matrix *tempR6n3;
+    matrix *tempR6n4;
+    matrix *tempR6t;
+
+    matrix *temp4x4n1;
+
+    matrix *tempC6n1;
+    matrix *temp6x6n1;
+    matrix *temp6x6n2;
+    matrix *temp1;
+
+    flexDyn *tempFlexDyn;
+    rigidKin *tempRigidKin;
+}BCS_temp;
+
+BCS_temp *allocTemp_BCS();
+void freeTemp_BCS(BCS_temp *temp);
+
+
 /*
  * Robot        - The robot object
  * Theta    - The joint angles
@@ -377,6 +413,7 @@ typedef struct {
     matrix *C_des;
     matrix *F_0;
     int inv;
+    BCS_temp *temp;
 
 } Flex_MB_BCS_params;
 rigidKin *rigidKinAlloc();

@@ -10,9 +10,9 @@
 
 #include "RobotLib.h"
 #include <stdio.h>
-#include <math.h>
+
 //#include <float.h>
-#include <string.h>
+
 #include "Matrices.h"
 #include <assert.h>
 
@@ -138,13 +138,13 @@ int main() {
         fdm = FDM_MB_RE(robot, theta, theta_dot, theta_ddot, F_ext, dt, C_des_1 ,F_0, InitGuess);//todo run in parallel with 1/2 dt for RK2 or RK4 (or initguess for next ts)
 
 
-        matrix *tempT6 = matrix_new(1, 6);
-        matrix *tempf = matrix_new(7, 6);
-        matrix *tempT = matrix_new(1, robot->numBody);
-        matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
-        matrixToFile(matrix_transpose(fdm->JointAcc, tempT), "jointAcc.csv");
-        matrixToFile(matrix_transpose(theta, tempT), "theta.csv");
-        matrixToFile(fdm->F, "F.csv");
+//        matrix *tempT6 = matrix_new(1, 6);
+//        matrix *tempf = matrix_new(7, 6);
+//        matrix *tempT = matrix_new(1, robot->numBody);
+//        matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
+//        matrixToFile(matrix_transpose(fdm->JointAcc, tempT), "jointAcc.csv");
+//        matrixToFile(matrix_transpose(theta, tempT), "theta.csv");
+//        matrixToFile(fdm->F, "F.csv");
 
 
 
@@ -205,13 +205,17 @@ int main() {
 #if VERBOSE > 0
         printf("step took: %f Seconds\n", ((double) (clock() - stepStart)) / CLOCKS_PER_SEC);
 #endif
+#if PLOT_OUT == 1
         matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot_fwd.csv");
+#endif
         //saveTimeCSV(i, ((double) (clock() - stepStart)) / CLOCKS_PER_SEC, "time.csv");
     }
     printf("DONE");
 //    matrixToFile(angles, "RigidRandyAngles.csv");
 //    robotToFile(robot, "testRobotOut.json");
+#if PLOT_OUT == 1
     matrixToFile(angles, "RigidRandyAngles_fwd.csv");
+#endif
     matrix_free(tempBodiesx1);
     matrix_free(tempLinkx1);
     matrix_free(C);

@@ -138,12 +138,12 @@ int main() {
     matrix *tempLinkx1 = matrix_new(robot->numBody,1);
     for(int i = 0; i < totalTime; i++){
 
-        printf("Time Step: %d\n", i);
+        //printf("Time Step: %d\n", i);
         matrix *f = matrix_new(6,1);
         getSection(robot->objects[(2*robot->BC_Start)]->object->flex->f_prev, 0, robot->objects[(2*robot->BC_Start)]->object->flex->f_prev->numRows - 1, 0, 0, f);//todo
 
         idm = IDM_MB_RE(robot, theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, i, i, tempLinkx1), F_ext, dt, F_0);
-        setSection(C, 0, C->numRows-1, i, i, idm->C);
+        setSection(C, 0, C->numRows-1, i, i, idm->C);//todo, get rid of these and pass directly back in?
         getSection(f, 0, 5, 0, 0, F_0);
 
 
@@ -172,17 +172,9 @@ int main() {
             }
         }
 
-        int curr = 0;
-        for(int j = 0; j < robot->numObjects; j++){
-            if(robot->objects[j]->type == 2){
-
-                //printf("Joint %d: %f\n", j, robot->objects[j]->object->joint->position);
-                angles->data[(curr * angles->numCols) + (i)] = robot->objects[j]->object->joint->position;
-                curr ++;
-            }
-        }
-
+#if PLOT_OUT == 1
         matrixToFile(plotRobotConfig(robot, theta, 1), "RigidRandyPlot.csv");
+#endif
     }
     printf("DONE");
 //    matrixToFile(angles, "RigidRandyAngles.csv");

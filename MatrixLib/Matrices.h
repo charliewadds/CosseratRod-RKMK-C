@@ -4,7 +4,9 @@
 #ifndef _MATRICES_H_
 #define _MATRICES_H_
 
-//#define NEON
+
+#define NEON
+#define USEBLAS
 #include <stdlib.h>
 #include <stdint.h>
 #include <gsl/gsl_matrix.h>
@@ -128,6 +130,15 @@ void getSetSection(matrix *get, matrix *set, int getStartRow, int getEndRow, int
 //determinant of a matrix
 double Det(matrix *m);
 
+matrix *matMult_3x3_3x1(matrix *m1, matrix *m2, matrix *result);
+
+matrix *matMult_4x4_4x4(matrix *m1, matrix *m2, matrix *result);
+
+matrix *matMult_3x3_3x3(matrix *m1, matrix *m2, matrix *result);
+
+matrix *matMult_6x6_6x1(matrix *m1, matrix *m2, matrix *result);
+
+matrix *matrix_transpose_6x6(matrix *m, matrix *result);
 //find the domonant eigenvector of a matrix with power iteration todo is this always the dominant eigenvector?
 matrix *eigenvector(matrix *m, int iterations);
 //find the eigenvalues of the domonant eigenvector of a matrix with the raleigh quotient

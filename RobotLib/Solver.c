@@ -1,27 +1,26 @@
 #include "RobotLib.h"
-#include <nlopt.h>
 
+#ifdef NLOPT
+#include <nlopt.h>
+#endif
 // Define the function whose roots we want to find
 int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
-    Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
-
 
     // Extracting the elements of x
-    double x_arr[6];
-    for (int i = 0; i <= x->size-1; i++) {
-        x_arr[i] = gsl_vector_get(x, i);
-    }
+    //double *x_arr = x->data;
+
+
 
     // Convert x to matrix format
-    matrix *x_matrix = zeros(x->size, 1);
-    memcpy(x_matrix->data, x_arr, x_matrix->numRows * x_matrix->numCols * sizeof(double));
+    matrix *x_matrix = zeros((int)x->size, 1);
+    memcpy(x_matrix->data, x->data, x_matrix->numRows * x_matrix->numCols * sizeof(double));
     // Call Flex_MB_BCS function
     matrix *result;
 
     //assert(hasNan(x_matrix) == 0);
     result = Flex_MB_BCS(x_matrix, params);
     // Fill f with the residuals
-    for (int i = 0; i <= f->size-1; i++) {
+    for (int i = 0; i <= (int)f->size-1; i++) {
         //printf("result: %f\n", result->data[i][0]);
         gsl_vector_set(f, i, result->data[(i * result->numCols)] );
     }
@@ -40,7 +39,7 @@ double Flex_MB_BCS_wrapper_nl(unsigned int n, const double *x, double *grad, voi
     Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
 
     // Convert x to matrix format
-    matrix *x_matrix = zeros(n, 1);
+    matrix *x_matrix = zeros((int)n, 1);
     for (unsigned int i = 0; i < n; i++) {
         x_matrix->data[i] = x[i];
     }
@@ -71,7 +70,6 @@ double Flex_MB_BCS_wrapper_nl(unsigned int n, const double *x, double *grad, voi
 
 
 void Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params) {
-    Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
 
     matrix *initGuess = matrix_new(n, 1);
     for (int i = 0; i < n; i++) {
@@ -97,20 +95,14 @@ int F_Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
 
 
     // Extracting the elements of x
-    int code = -1;
-    double x_arr[x->size];
-    for (int i = 0; i < x->size; i++) {
-        x_arr[i] = gsl_vector_get(x, i);
-    }
+    int code;
+
 
     // Convert x to matrix format
-    matrix *x_matrix = zeros(x->size, 1);
-    for (int i = 0; i < x_matrix->numRows; i++) {
-        x_matrix->data[i * x_matrix->numCols] = x_arr[i];
-    }
-
+    matrix *x_matrix = zeros((int)x->size, 1);
+    memcpy(x_matrix->data, x->data, x_matrix->numRows * x_matrix->numCols * sizeof(double));
     // Call Flex_MB_BCS function
-    matrix *result = zeros(f->size, 1);
+    matrix *result = zeros((int)f->size, 1);
     //assert(hasNan(x_matrix) == 0);
     code = F_Flex_MB_BCS(x_matrix, result, params);
     // Fill f with the residuals
@@ -130,7 +122,7 @@ int F_Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
 }
 
 void F_Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params) {
-    Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
+
 
     matrix *initGuess = matrix_new(n, 1);
     for (int i = 0; i < n; i++) {
@@ -189,7 +181,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
     }else{
         //{1e-3, 1e-15, 1e-9, 1e-9, 1e-6};
 
-        opts[0] = 1e-3;
+        opts[0] = 1e-6;
         opts[1] = 1e-9;
         opts[2] = EPSREL_LEVMAR;
         opts[3] = tol;
@@ -200,7 +192,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
         int iters = 0;
         while(iters < MAX_ITER_LEVMAR) {
             dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, params->robot->numBody, params->robot->numBody, MAX_ITER_LEVMAR - iters, opts, info, NULL, NULL, params);
-            iters += info[5]+1;
+            iters += (int)info[5]+1;
             if(info[6] == 6){
                 break;
             }
@@ -245,6 +237,9 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
 
     }
 
+#if PRINT_NUM_ITERS == 1
+    printf("levmar took %d iterations\n", (int) info[5]);
+#endif
 #if SOLVER_SAVE
     if(fwd){
         solverSave("levmar", "levmarSaveFwd.csv", (int)info[6], (int)info[5], (double) info[1], fwd);
@@ -306,7 +301,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
     for (int i = 0; i < InitGuess->numRows; i++) {
         InitGuess->data[i * InitGuess->numCols] = p[i];
     }
-    return info[6];
+    return (int)info[6];
 }
 
 
@@ -462,9 +457,19 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, do
         }
 #endif
 
+#if PRINT_NUM_ITERS == 1
+        printf("hybrid took %zu iterations\n", iter);
+#endif
+
+        //if there is an error in the iteration, return the error
+        if(status != GSL_SUCCESS && status != GSL_CONTINUE){
+            return status;
+        }
+
 
         status = gsl_multiroot_test_residual(s->f, tol);
 
+#if HYBRID_DELTA == 1
         if(status == GSL_CONTINUE){
             //status = gsl_multiroot_test_delta(s->dx, s->x, EPSABS_HYBRID, EPSREL_HYBRID);
             double result;
@@ -474,6 +479,7 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, do
                 //printf("rel ok, hybrid");
             }
         }
+#endif
 
 //        if(status == GSL_CONTINUE){
 //            if(fwd) {
@@ -541,6 +547,7 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, do
 }
 
 
+#ifdef NLOPT
 int find_roots_hybrid_nl(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, double tol) {
     assert(hasNan(InitGuess) == 0);
 
@@ -578,6 +585,7 @@ int find_roots_hybrid_nl(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
     }
     return status == NLOPT_SUCCESS ? 0 : -1; // Return 0 on success, -1 on failure
 }
+#endif
 //add a single value to a csv file
 void saveToCsv(char *filename, double val) {
     FILE *f = fopen(filename, "a");
@@ -629,7 +637,7 @@ int find_roots_hybrid_fdf(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd
         iter++;
         status = gsl_multiroot_fdfsolver_iterate(s);
 
-        matrix *jacobian = zeros(n, n);
+        matrix *jacobian = zeros((int)n, (int)n);
         gsl_to_matrix(s->J, jacobian);
         //saveToCsv("jacobianDet.csv", Det(jacobian));
         //if(jacobian->numRows == 6) {

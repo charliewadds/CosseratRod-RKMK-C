@@ -63,9 +63,7 @@ matrix *hat_R6(matrix *z, matrix *result){
 
     setSection(tempResult, 0, 2, 0, 2, hat_R3(getSection(z, 3, 5, 0, 0, temp3x1), temp));
     setSection(tempResult, 0, 2, 3, 3, getSection(z, 0, 2, 0, 0, temp3x1));
-    //getSetSection(z, result,0,2,0,0,0,2,3,5);
-    //setSection(result, 3, 3, 0, 3, zeros(1,4));//todo convert to zeroSection using memset
-    //T->data[3][3] = 1;//todo this is not in matlab, dont I need it?
+
 
     matrix_free(temp);
     matrix_free(temp3x1);
@@ -169,7 +167,7 @@ matrix *adj(matrix *T, matrix *result) {
 
     // Compute hat_R3(p) * r and set it in the result matrix
     hat_R3(p, temp);
-    matMult(temp, r, temp);
+    matMult_3x3_3x3(temp, r, temp);
     setSection(tempRes, 0, 2, 3, 5, temp);
 
     // Set the bottom-right 3x3 block of the result matrix to r
@@ -193,6 +191,7 @@ matrix *adj(matrix *T, matrix *result) {
 matrix *adj_chain(matrix *T) {
     assert(T->numRows == 4);
     assert(T->numCols == 4);
+
 
     matrix *result = matrix_new(6,6);
 
@@ -236,7 +235,7 @@ matrix *adj_R6(matrix *z, matrix *result){
     matrix *gw = matrix_new(3,1);
     getSection(z, 3, 5, 0, 0, gw);
 
-    //matrix *r = zeros(6,6);
+    //TODO do this in memory, should be faster
     matrix *temp = matrix_new(3,3);
     setSection(tempOut, 0, 2, 0, 2, hat_R3(gw, temp));
     setSection(tempOut, 0, 2, 3, 5, hat_R3(gu, temp));
@@ -365,7 +364,7 @@ matrix *expm_SE3(matrix *G, matrix *result) {
     expm_SO3(Gw, temp3x3);
     setSection(temp, 0, 2, 0, 2, temp3x3);
 
-    matMult(A, Gu, temp3x1);
+    matMult_3x3_3x1(A, Gu, temp3x1);
     setSection(temp, 0, 2, 3, 3, temp3x1);
 
     temp->data[(3 * temp->numCols) + 3] = 1;
