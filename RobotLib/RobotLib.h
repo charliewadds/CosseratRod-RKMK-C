@@ -12,9 +12,9 @@
 #define GSL_ERROR_HANDLER 0
 #define VERBOSE 1
 
-#define SAMPLE1
+#define SAMPLE2
 
-#define NUMBODIES 3
+#define NUMBODIES 5
 
 #define HYBRID_DELTA 0
 
@@ -25,9 +25,9 @@
 #define INV_SAVE 0
 
 
-#define MAX_ITER_LEVMAR 15
+#define MAX_ITER_LEVMAR 20
 #define MAX_ITER_NEWTON 15
-#define MAX_ITER_HYBRID 15
+#define MAX_ITER_HYBRID 20
 
 
 
