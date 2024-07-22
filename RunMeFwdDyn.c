@@ -41,7 +41,7 @@ int main() {
     matrix *tempBodiesx1 = matrix_new(5, 1);
 #ifdef SAMPLE2
     double dt = 0.025;
-    int timeStep = 100;//why does this effect convergence at 80?????
+    int timeStep = 100;
     int totTime = 100;
     //double restTime = 0;
 
