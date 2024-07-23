@@ -175,7 +175,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
         opts[0] = 1e-3; // scale factor for initial mu
         opts[1] = 1e-9; // stopping thresholds for ||J^T e||_inf
         opts[2] = EPSREL_LEVMAR; // stopping thresholds for ||Dp||_2
-        opts[3] = tol; // stopping thresholds for ||e||_2
+        opts[3] = pow(tol,2); // stopping thresholds for ||e||_2
         opts[4] = sqrt(tol) * LEVMAR_STEP_MUL; // the step used in difference approximation to the Jacobian
 
     }else{
@@ -184,7 +184,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
         opts[0] = 1e-6;
         opts[1] = 1e-9;
         opts[2] = EPSREL_LEVMAR;
-        opts[3] = tol;
+        opts[3] = pow(tol,2);
         opts[4] = sqrt(tol) * LEVMAR_STEP_MUL;
     }
     assert(isnan(params->robot->objects[1]->object->joint->velocity)==0);
