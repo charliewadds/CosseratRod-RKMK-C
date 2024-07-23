@@ -140,9 +140,9 @@ int main() {
 
 //        matrix *tempT6 = matrix_new(1, 6);
 //        matrix *tempf = matrix_new(7, 6);
-//        matrix *tempT = matrix_new(1, robot->numBody);
+        matrix *tempT = matrix_new(1, robot->numBody);
 //        matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
-//        matrixToFile(matrix_transpose(fdm->JointAcc, tempT), "jointAcc.csv");
+        matrixToFile(matrix_transpose(fdm->JointAcc, tempT), "jointAcc.csv");
 //        matrixToFile(matrix_transpose(theta, tempT), "theta.csv");
 //        matrixToFile(fdm->F, "F.csv");
 
