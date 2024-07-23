@@ -10,7 +10,7 @@
 
 
 #define GSL_ERROR_HANDLER 0
-#define VERBOSE 0
+#define VERBOSE 1
 
 #define SAMPLE2
 
@@ -25,9 +25,11 @@
 #define INV_SAVE 0
 
 
-#define MAX_ITER_LEVMAR 150
+#define USELEVMAR 0
+
+#define MAX_ITER_LEVMAR 15
 #define MAX_ITER_NEWTON 150
-#define MAX_ITER_HYBRID 150
+#define MAX_ITER_HYBRID 15
 
 
 
@@ -36,7 +38,7 @@
 #define EPSABS_HYBRID 1e-5
 
 #define TOLERANCE_INV 1e-9
-#define TOLERANCE_FWD 1e-5
+#define TOLERANCE_FWD 1e-6
 
 #define D_P_LEVMAR 1e-30
 

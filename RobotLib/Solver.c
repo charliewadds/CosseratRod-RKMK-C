@@ -181,7 +181,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
     if(fwd) {
         //opts[5] = {1e-3, 1e-9, 1e-5, 1e-5, -1e-9};
         opts[0] = 1e-3; // scale factor for initial mu
-        opts[1] = 1e-9; // stopping thresholds for ||J^T e||_inf
+        opts[1] = 1e-30; // stopping thresholds for ||J^T e||_inf
         opts[2] = EPSREL_LEVMAR; // stopping thresholds for ||Dp||_2
         opts[3] = pow(tol,2); // stopping thresholds for ||e||_2
         opts[4] = sqrt(tol) * LEVMAR_STEP_MUL; // the step used in difference approximation to the Jacobian
@@ -190,7 +190,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
         //{1e-3, 1e-15, 1e-9, 1e-9, 1e-6};
 
         opts[0] = 1e-3;
-        opts[1] = 1e-9;
+        opts[1] = 1e-30;
         opts[2] = EPSREL_LEVMAR;
         opts[3] = pow(tol,2);
         opts[4] = sqrt(tol) * LEVMAR_STEP_MUL;
@@ -198,14 +198,17 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
     assert(isnan(params->robot->objects[1]->object->joint->velocity)==0);
     if(fwd){
         int iters = 0;
+        int success = 0;
         while(iters < MAX_ITER_LEVMAR) {
             dlevmar_dif(F_Flex_MB_BCS_wrapper_levmar, p, NULL, params->robot->numBody, params->robot->numBody, MAX_ITER_LEVMAR - iters, opts, info, NULL, NULL, params);
-            iters += info[5]+1;
+            iters += (int)info[5]+1;
             if(info[6] == 6){
+                success = 1;
                 break;
             }
             if(info[6] == 2){
-                if(info[1] < sqrt(tol)){
+                if(pow(info[1],2) < sqrt(tol)){//this is the problem, it should be sum of the squares of the function values not the residual
+                    success = 1;
                     break;
                 }
 
@@ -213,6 +216,13 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
             if(info[6] == 3){
                 break;
             }
+        }
+        // set iters
+        info[5] = iters;
+        if(success == 0){
+            printf("epsrel ok, epsabs not ok");
+
+            info[6] = 3;
         }
     }else {
         int iters = 0;
@@ -225,7 +235,7 @@ int find_roots_levmarqrt(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd,
                 break;
             }
             if(info[6] == 2){
-                if(info[1] < sqrt(tol)){
+                if(pow(info[1],2) < sqrt(tol)){
                     success = 1;
                     break;
                 }
@@ -465,15 +475,16 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, do
 
         status = gsl_multiroot_test_residual(s->f, tol);
 
-        if(status == GSL_CONTINUE){
-            //status = gsl_multiroot_test_delta(s->dx, s->x, EPSABS_HYBRID, EPSREL_HYBRID);
-            double result;
-            gsl_blas_ddot(s->f, s->f, &result);
-            if(gsl_blas_dnrm2(s->dx) < EPSREL_HYBRID && result < sqrt(tol)){
-                status = GSL_SUCCESS;
-                //printf("rel ok, hybrid");
-            }
-        }
+//        if(status == GSL_CONTINUE){
+//            //status = gsl_multiroot_test_delta(s->dx, s->x, EPSABS_HYBRID, EPSREL_HYBRID);
+//            double result;
+//            gsl_blas_ddot(s->f, s->f, &result);
+//            if(gsl_blas_dnrm2(s->dx) < EPSREL_HYBRID && result < sqrt(tol)){
+//
+//                status = GSL_SUCCESS;
+//                //printf("rel ok, hybrid");
+//            }
+//        }
 
 //        if(status == GSL_CONTINUE){
 //            if(fwd) {
