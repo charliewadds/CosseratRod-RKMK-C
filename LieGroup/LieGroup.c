@@ -31,6 +31,7 @@ matrix *hat_R3(matrix *z, matrix *result){
     result->data[(0 * result->numCols) + 1] = z->data[(2 * z->numCols)] * -1;
     result->data[(0 * result->numCols) + 2] = z->data[(1 * z->numCols)];
 
+
     result->data[(1 *result->numCols)+0] = z->data[(2 * z->numCols)];
     result->data[(1 *result->numCols)+2] = z->data[(0 * z->numCols)] * -1;
 
@@ -237,9 +238,21 @@ matrix *adj_R6(matrix *z, matrix *result){
 
     //TODO do this in memory, should be faster
     matrix *temp = matrix_new(3,3);
-    setSection(tempOut, 0, 2, 0, 2, hat_R3(gw, temp));
-    setSection(tempOut, 0, 2, 3, 5, hat_R3(gu, temp));
-    setSection(tempOut, 3, 5, 3, 5, hat_R3(gw, temp));
+
+    hat_R3(gw, temp);
+    memcpy(tempOut->data, temp->data, 3*sizeof(double));
+    memcpy(&tempOut->data[6], &temp->data[3], 3*sizeof(double));
+    memcpy(&tempOut->data[12], &temp->data[6], 3*sizeof(double));
+
+    memcpy(&tempOut->data[21], temp->data, 3*sizeof(double));
+    memcpy(&tempOut->data[27], &temp->data[3], 3*sizeof(double));
+    memcpy(&tempOut->data[33], &temp->data[6], 3*sizeof(double));
+    //setSection(tempOut, 0, 2, 0, 2, hat_R3(gw, temp));
+    hat_R3(gu, temp);
+    memcpy(&tempOut->data[3], temp->data, 3*sizeof(double));
+    memcpy(&tempOut->data[9], &temp->data[3], 3*sizeof(double));
+    memcpy(&tempOut->data[15], &temp->data[6], 3*sizeof(double));
+
 
     matrix_free(gw);
     matrix_free(gu);

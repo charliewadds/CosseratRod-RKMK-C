@@ -56,14 +56,12 @@ int main() {
     matrix *theta_ddot = zeros(5, 1);
     matrix *theta = zeros(5, 1);
     matrix *theta_dot = zeros(5, 1);
-    matrix *tempTStep = matrix_new(1, timeStep);
 
     matrix *InitGuess = zeros(5,1);
 
 
     Robot *robot = defPaperSample_2(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
 
-    //matrix *temp1xRowsM1 = matrix_new(5, timeStep);
     matrix *C_des = matrix_new(robot->numBody,totTime);
     matrixFromFile("ControlSim2.csv", C_des);
 

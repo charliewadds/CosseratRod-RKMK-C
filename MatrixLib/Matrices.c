@@ -4,7 +4,10 @@
 #include "Matrices.h"
 #include <string.h>
 #include <gsl/gsl_linalg.h>
+
+#ifdef NEON
 #include <arm_neon.h>
+#endif
 //#include <simd/simd.h>
 
 
