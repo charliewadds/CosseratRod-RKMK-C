@@ -16,7 +16,7 @@
 
 #define NUMBODIES 5
 
-#define HYBRID_DELTA 0
+#define HYBRID_DELTA 1
 
 #define SOLVER_SAVE 0
 #define SOLVER_ERRORS 0
@@ -25,9 +25,9 @@
 #define INV_SAVE 0
 
 
-#define MAX_ITER_LEVMAR 15
-#define MAX_ITER_NEWTON 15
-#define MAX_ITER_HYBRID 15
+#define MAX_ITER_LEVMAR 150
+#define MAX_ITER_NEWTON 150
+#define MAX_ITER_HYBRID 150
 
 
 
