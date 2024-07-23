@@ -144,6 +144,7 @@ int main() {
         matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
         matrixToFile(matrix_transpose(fdm->JointAcc, tempT), "jointAcc.csv");
         matrixToFile(matrix_transpose(theta, tempT), "theta.csv");
+        matrixToFile(matrix_transpose(theta_dot, tempT), "theta_dot.csv");
         matrixToFile(fdm->F, "F.csv");
 
 

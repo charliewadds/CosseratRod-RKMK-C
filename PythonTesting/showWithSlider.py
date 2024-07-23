@@ -1,6 +1,9 @@
+import time
+
 import matplotlib as mpl
 import numpy as np
 from matplotlib import animation
+from matplotlib.widgets import Slider, Button
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import csv
@@ -56,9 +59,15 @@ with open('cmake-build-debug/RigidRandyPlot_fwd.csv', 'r') as file:
 #
 #
 
+
+
+ax2 = fig.add_axes([0.1, 0.85, 0.8, 0.1])
+axnext = fig.add_axes([0.85, 0.85, 1, 0.1])
+s = Slider(ax = ax2, label = 'value', valmin = 0, valmax = 100, valinit = 0)
 # Animation function
-def animate(i, data, data1):
+def animate(i):
     # Extract x, y, z for current animation step
+    i = int(s.val)
     start_index = 3 * i
     end_index = start_index + 3
     x = data[i*3]
@@ -83,7 +92,14 @@ def animate(i, data, data1):
 
 
 
-ani = animation.FuncAnimation(fig, animate, fargs=(data, data1), frames=len(data) // 3, interval=100)
+
+
+
+
+s.on_changed(animate)
+animate(0)
+
+
 
 
 
