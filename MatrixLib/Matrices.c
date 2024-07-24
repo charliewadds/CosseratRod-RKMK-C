@@ -73,6 +73,7 @@ matrix *matrix_new(int num_rows, int num_cols) {
     m->numRows = num_rows;
     m->numCols = num_cols;
     m->data = calloc((num_rows*num_cols), sizeof(double));
+    memset(m->data, 0, sizeof(double) * num_rows * num_cols);
     if(num_rows == num_cols) {
         m->square = 1;
     }
@@ -681,9 +682,9 @@ matrix *matrixFromFile(char *filename, matrix *result){
     }
 
 
-    char buffer[result->numCols * 24]; //double is 15-17 sig-figs so about 24 chars max per cell
+    char buffer[result->numCols * 50]; //double is 15-17 sig-figs so about 24 chars max per cell
     int row = 0, col = 0;
-    while (fgets(buffer, sizeof(buffer), file)) {
+    while (fgets(buffer, sizeof(buffer), file) && row < result->numRows) {
         col = 0;
         char *value = strtok(buffer, ",");
         while (value && col < result->numCols) {
