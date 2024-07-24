@@ -4,8 +4,10 @@
 #include "Matrices.h"
 #include <string.h>
 #include <gsl/gsl_linalg.h>
-#include <arm_neon.h>
 
+#ifdef NEON
+#include <arm_neon.h>
+#endif
 
 gsl_matrix *matrix_to_gsl(matrix *matrix, gsl_matrix *out){
     //gsl_matrix *m = gsl_matrix_alloc(matrix->numRows, matrix->numCols);

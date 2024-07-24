@@ -1,6 +1,9 @@
 #include "RobotLib.h"
+
+#ifdef NLOPT
 #include <nlopt.h>
 
+#endif
 // Define the function whose roots we want to find
 int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
     Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
@@ -35,6 +38,9 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
     return GSL_SUCCESS;//todo is this right?
 }
 
+
+#ifdef NLOPT
+
 // NLopt-compatible wrapper
 double Flex_MB_BCS_wrapper_nl(unsigned int n, const double *x, double *grad, void *params) {
     Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
@@ -68,7 +74,7 @@ double Flex_MB_BCS_wrapper_nl(unsigned int n, const double *x, double *grad, voi
     return f_value;
 }
 
-
+#endif
 
 void Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params) {
     Flex_MB_BCS_params *p = (Flex_MB_BCS_params *)params;
@@ -540,7 +546,7 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, do
     return status;
 }
 
-
+#ifdef NLOPT
 int find_roots_hybrid_nl(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, double tol) {
     assert(hasNan(InitGuess) == 0);
 
@@ -590,6 +596,8 @@ void saveToCsv(char *filename, double val) {
     fclose(f);
 
 }
+
+#endif
 int find_roots_hybrid_fdf(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, double tol) {
     const gsl_multiroot_fdfsolver_type *T;
     //gsl_multiroot_fsolver *s;

@@ -34,9 +34,9 @@ find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 
 # Create libraries
-add_library(MatrixLib SHARED ${MATRIX_LIB_SOURCES})
-add_library(LieGroup SHARED ${LIE_GROUP_SOURCES})
-add_library(RobotLib SHARED ${ROBOT_LIB_SOURCES})
+add_library(MatrixLib STATIC ${MATRIX_LIB_SOURCES})
+add_library(LieGroup STATIC ${LIE_GROUP_SOURCES})
+add_library(RobotLib STATIC ${ROBOT_LIB_SOURCES})
 
 
 
@@ -54,7 +54,7 @@ add_executable(FwdDyn RunMeFwdDyn.c)
 target_link_libraries(MatrixLib PRIVATE -lm -lgsl -lgslcblas)
 target_link_libraries(LieGroup PRIVATE MatrixLib gsl)
 
-target_link_libraries(RobotLib PRIVATE -lgsl -lnlopt levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)
+target_link_libraries(RobotLib PRIVATE -lgsl levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)#add -lnlopt to use nlopt solvers
 
 install(TARGETS MatrixLib LieGroup RobotLib
         LIBRARY DESTINATION /Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/sharedLibs

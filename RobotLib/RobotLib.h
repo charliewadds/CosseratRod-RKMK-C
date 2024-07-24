@@ -7,7 +7,7 @@
 //#endif
 
 
-
+#undef NLOPT
 
 #define GSL_ERROR_HANDLER 0
 #define VERBOSE 0
