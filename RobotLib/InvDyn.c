@@ -103,7 +103,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     //matrix *parentCoM ;
     //matrix *childCoM;
-    for(int i = 1; i <= BC_End; i++){
+    for(int i = 1; i < BC_End; i++){
 
         //printMatrix(&F_temp);
         //printf("\n\n");
@@ -372,8 +372,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     Flex_MB_BCS_params *params = malloc(sizeof(Flex_MB_BCS_params));
     params->robot = robot;
-    //params->F_ext = F_ext;
-    copyMatrix(F_ext, par)
+    params->F_ext = F_ext;
     params->c0 = c0;
     params->c1 = c1;
     params->c2 = c2;
@@ -611,19 +610,23 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     }
     setSection(F, 0, 5, F->numCols - 1, F->numCols - 1, F_ext);
     if (BC_Start < numBody) {
-        matrix *objMass = malloc(sizeof(matrix));
-        matrix *objCoM = malloc(sizeof(matrix));
+        matrix *objMass = matrix_new(6,6);
+        matrix *objCoM = matrix_new(6,1);
 
 
         for (int i = BC_Start; i >= 1; i--) {
             rigidJoint *joint = robot->objects[2 * (i - 1) + 1]->object->joint;
             Object *body = robot->objects[2 * i];
             if (body->type == 1) {
-                objMass = body->object->flex->mass;
-                objCoM = body->object->flex->CoM;
+                //objMass = body->object->flex->mass;
+                copyMatrix(body->object->flex->mass, objMass);
+                //objCoM = body->object->flex->CoM;
+                copyMatrix(body->object->flex->CoM, objCoM);
             } else if (body->type == 0) {
-                objMass = body->object->rigid->mass;
-                objCoM = body->object->rigid->CoM;
+                //objMass = body->object->rigid->mass;
+                copyMatrix(body->object->rigid->mass, objMass);
+                //objCoM = body->object->rigid->CoM;
+                copyMatrix(body->object->rigid->CoM, objCoM);
             }
             setSection(F, 0, 5, i - 1, i - 1,
                        matrix_add(
@@ -692,6 +695,11 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         matrix_free(fPrev[i]);
         matrix_free(fPPrev[i]);
     }
+
+    free(params);
+    matrix_free(params->F_0);
+    freeTemp_BCS(params->temp);
+
     free(etaPrev);
     free(etaPPrev);
     free(fPrev);
