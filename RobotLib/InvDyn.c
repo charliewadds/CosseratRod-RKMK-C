@@ -271,14 +271,14 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
 
     //assert(hasNan(out)==0);
-    for(int i = 0; i < (numBody+2); i++){
+    for(int i = 0; i <= (numBody+2); i++){
         matrix_free(g_ref[i]);
         matrix_free(g_act_wrt_prev[i]);
     }
     free(g_ref);
     free(g_act_wrt_prev);
     matrix_free(F_dist);
-
+    matrix_free(bodyMass);
     freeRigidKin(kin);
     matrix_free(F);
     matrix_free(d_eta);
@@ -422,6 +422,8 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     }
     //printMatrix(Theta);
     copyMatrix(tempGuess, InitGuess);
+
+    matrix_free(tempGuess);
     //matrix *tempT = matrix_new(1, 5);
     //matrixToFile(matrix_transpose(InitGuess, tempT), "idmSolve.csv");
 
@@ -434,15 +436,17 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     eye(g_ref[0]);
     eye(g_act_wrt_prev[0]);
 
-    setSection(eta, 0, 5, 0, 0, zeros(6, 1));
-    setSection(d_eta, 0, 5, 0, 0, zeros(6, 1));
+    matrix *zero61 = zeros(6, 1);
+    setSection(eta, 0, 5, 0, 0, zero61);
+    setSection(d_eta, 0, 5, 0, 0, zero61);
+    matrix_free(zero61);
 
     matrix *F_temp = zeros(6, 1);
-    Theta = zeros(numBody, 1);
-    setSection(Theta, 0, numBody - 1, 0, 0, Theta);
+    //Theta = zeros(numBody, 1);//todo is this needed?
+    //setSection(Theta, 0, numBody - 1, 0, 0, Theta);
 
     rigidKin *kin = rigidKinAlloc();
-    matrix *F_dist;
+    matrix *F_dist = zeros(6, robot->objects[BC_Start+2]->object->flex->N);
     flexDyn *dyn = flexDynAlloc();
 
 
@@ -536,8 +540,8 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
             matrix *temp1 = matrix_new(1,1);
             matMult(tempC6n1, joint->twistR6, temp1);
             setSection(C, 0,0,i-1,i-1,temp1);
-
-            F_dist = zeros(6, body->object->flex->N);
+            matrix_free(temp1);
+            zeroMatrix(F_dist);
             flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i, tempR6n1), body->object->flex,
                      getSection(eta, 0, 5, i, i, tempR6n2), c0, c1, c2, dyn);
 
@@ -580,8 +584,10 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
                 tempC6n1 = matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempC6n1);
                 matrix *temp1 = matrix_new(1,1);
                 matMult(tempC6n1, joint->twistR6, temp1);
-                //setSection(C, 0,0,i-1,i-1,temp1);
-                C->data[i-1] = temp1->data[0];
+
+                setSection(C, 0,0,i-1,i-1,temp1);
+                //C->data[i-1] = temp1->data[0];
+                matrix_free(temp1);
             }
 
             if (body->type == 1) {//flex
@@ -677,7 +683,10 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     //free(dyn);//todo write free_flexDyn to fully free
     //free(kin);//todo write free_rigidKin to fully free
 
+    freeFlexDyn(dyn);
+    freeRigidKin(kin);
     IDM_MB_RE_OUT *out = (IDM_MB_RE_OUT *) malloc(sizeof(IDM_MB_RE_OUT));
+
     out->C = Ct;
     out->F = F;
     out->v = eta;
@@ -696,9 +705,9 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         matrix_free(fPPrev[i]);
     }
 
-    free(params);
     matrix_free(params->F_0);
     freeTemp_BCS(params->temp);
+    free(params);
 
     free(etaPrev);
     free(etaPPrev);
@@ -706,9 +715,10 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     free(fPPrev);
     free(g_ref);
     free(g_act_wrt_prev);
-    freeRigidKin(kin);
-    //matrix_free(Ct);
-
+    //freeRigidKin(kin);
+    matrix_free(CoM2CoM);
+    matrix_free(C);
+    //matrix_free(F);
     matrix_free(tempR6n1);
     matrix_free(tempR6n2);
     matrix_free(tempR6n3);
@@ -717,9 +727,11 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     matrix_free(temp6x6n1);
     matrix_free(temp6x6n2);
     matrix_free(tempR6n1t);
+    matrix_free(tempC6n1);
+    matrix_free(F_temp);
 
     matrix_free(temp4x4n1);
-    //matrix_free(F_dist);
+    matrix_free(F_dist);
 
     matrix_free(d_eta);
     return out;

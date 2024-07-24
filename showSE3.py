@@ -29,7 +29,7 @@ with open('cmake-build-debug/RigidRandyPlot.csv', 'r') as file:
 
 # Read data from CSV
 data1 = []
-with open('cmake-build-debug/RigidRandyPlot_original.csv', 'r') as file:
+with open('cmake-build-debug/RigidRandyPlot.csv', 'r') as file:
     reader = csv.reader(file)
     #next(reader)  # Skip header
     for row in reader:

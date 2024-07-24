@@ -212,12 +212,14 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
 
     matrix_free(newTwist);
     matrix_free(g_cur);
+    matrix_free(g_act_wrt_prev);
     matrix_free(g_cur_wrt_prev);//todo this might already be freed
     matrix_free(temp6x6n1);
     matrix_free(temp6x6n2);
     matrix_free(temp4x4n1);
     matrix_free(d_eta);
 
+    matrix_free(tempR6n1);
     matrix_free(temp6x1n1);
     matrix_free(temp6x1n2);
     matrix_free(temp6x1n3);
@@ -849,17 +851,7 @@ void freeCOSS_ODE_OUT(COSS_ODE_OUT *out){
 }
 
 flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body, matrix *eta_base, double c0, double c1, double c2, flexDyn *result){
-//    printf("Eta_base");
-//    printMatrix(eta_base);
 
-    //matrix *eta = zeros(6, body->N);
-    //matrix *f = zeros(6, body->N);
-
-//    zeroMatrix(result->eta);
-//    zeroMatrix(result->f);
-    //result->eta = zeros(6, body->N);
-    //result->f = zeros(6, body->N);
-    //assert(hasNan(F_base) == 0);
     matrix **g = (matrix **)malloc(sizeof(matrix *) * body->N);
 
     matrix *temp6xNn1 = matrix_new(6, body->N);
@@ -969,6 +961,9 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
     matrix_free(f_h);
     matrix_free(eta_h);
     matrix_free(f_sh);
+
+    matrix_free(temp6xNn1);//todo these should be added to the result struct
+    matrix_free(temp6xNn2);
 
     //matrix_free(eta);
     return result;

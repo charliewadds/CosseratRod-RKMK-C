@@ -69,7 +69,7 @@ matrix *cross(matrix *m1, matrix *m2, matrix *result);
 // Transpose
 matrix *matrix_transpose(matrix *m, matrix *result);
 
-matrix *matrix_sin(matrix *m);
+matrix *matrix_sin(matrix *m, matrix *result);
 
 matrix *matrix_outerProduct(matrix *m1, matrix *m2);
 // Addition

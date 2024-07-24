@@ -538,8 +538,8 @@ matrix *getSection(matrix *m, int startRow, int endRow, int startCol, int endCol
     return result;
 }
 
-matrix *matrix_sin(matrix *m){
-    matrix *result = matrix_new(m->numRows, m->numCols);
+matrix *matrix_sin(matrix *m, matrix *result){
+    //matrix *result = matrix_new(m->numRows, m->numCols);
     for(int i = 0; i < m->numRows; i++){
         for(int j = 0; j < m->numCols; j++){
             result->data[(i * result->numCols) + j] =  sin(m->data[(i * m->numCols) + j]);

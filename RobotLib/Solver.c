@@ -83,6 +83,8 @@ void Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *params
     for (int i = 0; i < n; i++) {
         f[i] = result->data[i * result->numCols];
     }
+    matrix_free(initGuess);
+    matrix_free(result);
 
 }
 

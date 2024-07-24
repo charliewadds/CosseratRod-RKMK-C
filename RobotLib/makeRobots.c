@@ -257,6 +257,10 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
     matrix_free(r6_3);
     matrix_free(r6_4);
     matrix_free(r6_5);
+    matrix_free(M);
+    matrix_free(K);
+    matrix_free(C);
+    matrix_free(Mf);
 
     matrix_free(temp3x3n1);
     matrix_free(temp6x6n1);

@@ -6,7 +6,7 @@
 //#include "Matrices.h"
 //#endif
 
-#define PLOT_OUT 0
+#define PLOT_OUT 1
 
 //#define NLOPT
 

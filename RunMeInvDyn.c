@@ -93,11 +93,13 @@ int main() {
     for(int i = 0; i < NUMBODIES; i++){
 
         zeroMatrix(tempTStep);
-        matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, M_PI/(dt*timeStep), tempTStep)),shape->data[(i * shape->numCols)], tempTStep);
-        //memcpy(theta_ddot->data[i],tempTStep->data[0],  sizeof * theta_ddot->data[i] * timeStep);
+        matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, M_PI/(dt*timeStep), tempTStep), tempTStep),shape->data[(i * shape->numCols)], tempTStep);
+
         setSection(theta_ddot_app, i, i, 0, timeStep-1, tempTStep);
 
     }
+
+
 
     matrix *theta_ddot = zeros(NUMBODIES, totalTime);
     setSection(theta_ddot, 0, theta_ddot->numRows-1, 0, timeStep-1, theta_ddot_app);
@@ -123,10 +125,10 @@ int main() {
 
 
 
-    matrix *t = zeros(1, totalTime);
-    for(int i = 0; i < timeStep; i++){
-        t->data[(0 * t->numCols) + i] = i*dt;
-    }
+    // matrix *t = zeros(1, totalTime);
+    // for(int i = 0; i < timeStep; i++){
+    //     t->data[(0 * t->numCols) + i] = i*dt;
+    // }
     matrix *C = zeros(robot->numBody, totalTime);
     matrix *T_H = zeros(robot->numBody, totalTime);
     matrix *Td_H = zeros(robot->numBody, totalTime);
@@ -170,10 +172,13 @@ int main() {
                 robot->objects[j]->object->joint->acceleration = theta_ddot->data[(currJointIndex * theta_ddot->numCols) + i];
                 currJointIndex++;
             }
+            //matrix_free(f);
         }
 
 #if PLOT_OUT == 1
-        matrixToFile(plotRobotConfig(robot, theta, 1), "RigidRandyPlot.csv");
+        matrix *posOut = plotRobotConfig(robot, theta, 1);
+        matrixToFile(posOut, "RigidRandyPlot.csv");
+        matrix_free(posOut);
 #endif
     }
     printf("DONE");
@@ -187,6 +192,7 @@ int main() {
 #endif
     matrix_free(tempBodiesx1);
     matrix_free(tempLinkx1);
+    matrix_free(tempTStep);
     matrix_free(shape);
     matrix_free(C);
     matrix_free(T_H);
@@ -198,13 +204,15 @@ int main() {
     matrix_free(idm->v);
     free(idm);
 
+    matrix_free(t1);
     matrix_free(F_ext);
     matrix_free(F_0);
     robotFree(robot);
     matrix_free(theta);
     matrix_free(theta_dot);
     matrix_free(theta_ddot);
-
+    matrix_free(theta_ddot_app);
+    matrix_free(angles);
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     printf("Time: %f\n", cpu_time_used);
