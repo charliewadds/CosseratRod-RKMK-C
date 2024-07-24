@@ -4,10 +4,10 @@ set(CMAKE_C_STANDARD 11)
 project(CosseratRod_RKMK_C C)
 cmake_policy(SET CMP0079 NEW)
 set(DCMAKE_C_COMPILER=/usr/bin/gcc)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -march=native")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 set(ENV{OPENBLAS_NUM_THREADS} 4)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
 link_directories("/Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/gsl/build")
 include_directories("/Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/gsl/build")
 

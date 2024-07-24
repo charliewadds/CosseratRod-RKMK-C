@@ -163,7 +163,7 @@ int main() {
 
 
         int currJointIndex = 0;
-        for(int j = 1; j < robot->numObjects; j+= 2 ) {
+        for(int j = 1; j < robot->numObjects-2; j+= 2 ) {
             if (robot->objects[j]->type == 2) {
                 robot->objects[j]->object->joint->position = theta->data[(currJointIndex * theta->numCols)];
                 robot->objects[j]->object->joint->velocity = theta_dot->data[(currJointIndex * theta_dot->numCols)];

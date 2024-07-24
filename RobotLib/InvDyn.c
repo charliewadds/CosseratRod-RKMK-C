@@ -372,7 +372,8 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     Flex_MB_BCS_params *params = malloc(sizeof(Flex_MB_BCS_params));
     params->robot = robot;
-    params->F_ext = F_ext;
+    //params->F_ext = F_ext;
+    copyMatrix(F_ext, par)
     params->c0 = c0;
     params->c1 = c1;
     params->c2 = c2;
@@ -450,11 +451,14 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     matrix **etaPPrev = malloc(sizeof(matrix) * (numBody + 2));
     matrix **fPrev = malloc(sizeof(matrix *) * (numBody + 2));
     matrix **fPPrev = malloc(sizeof(matrix *) * (numBody + 2));
-    for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
-        etaPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
-        etaPPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
-        fPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
-        fPPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
+
+    int N = robot->objects[robot->BC_Start+2]->object->flex->N;
+    for (int i = 0; i < numBody + 2; i++) {//todo this assumes consistant discretization and allocates points for non-flexible bodies
+
+        etaPrev[i] = zeros(6, N);
+        etaPPrev[i] = zeros(6, N);
+        fPrev[i] = zeros(6, N);
+        fPPrev[i] = zeros(6, N);
     }
 
 
@@ -473,7 +477,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     matrix *temp6x6n1 = matrix_new(6, 6);
     matrix *temp6x6n2 = matrix_new(6, 6);
 
-    for (int i = 1; i < robot->numBody + 2; i++) {
+    for (int i = 1; i < robot->numBody + 1; i++) {
         //printMatrix(C);
         //printf("\n\n");
         rigidJoint *joint = robot->objects[2 * (i - 1) + 1]->object->joint;
@@ -577,8 +581,8 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
                 tempC6n1 = matrix_transpose(getSection(F, 0, 5, i, i, tempR6n1), tempC6n1);
                 matrix *temp1 = matrix_new(1,1);
                 matMult(tempC6n1, joint->twistR6, temp1);
-                setSection(C, 0,0,i-1,i-1,temp1);
-
+                //setSection(C, 0,0,i-1,i-1,temp1);
+                C->data[i-1] = temp1->data[0];
             }
 
             if (body->type == 1) {//flex
@@ -645,8 +649,8 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
                        ));
 
         }
-        //matrix_free(objMass);
-        //matrix_free(objCoM);
+        matrix_free(objMass);
+        matrix_free(objCoM);
     }
 
     matrix *Ct = matrix_new(C->numCols, C->numRows);
@@ -688,7 +692,6 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         matrix_free(fPrev[i]);
         matrix_free(fPPrev[i]);
     }
-
     free(etaPrev);
     free(etaPPrev);
     free(fPrev);
@@ -708,7 +711,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     matrix_free(tempR6n1t);
 
     matrix_free(temp4x4n1);
-    matrix_free(F_dist);
+    //matrix_free(F_dist);
 
     matrix_free(d_eta);
     return out;
