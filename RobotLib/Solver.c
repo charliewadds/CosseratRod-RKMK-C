@@ -25,6 +25,9 @@ int Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
         gsl_vector_set(f, i, result->data[(i * result->numCols)] );
     }
     if(hasNan(x_matrix) == 1){
+        // Free memory
+        matrix_free(x_matrix);
+        matrix_free(result);
         return GSL_EINVAL;
     }
     // Free memory
@@ -113,6 +116,8 @@ int F_Flex_MB_BCS_wrapper(const gsl_vector *x, void *params, gsl_vector *f) {
         gsl_vector_set(f, i, result->data[(i * result->numCols)] );
     }
     if(hasNan(x_matrix) == 1){
+        matrix_free(x_matrix);
+        matrix_free(result);
         return GSL_EINVAL;
     }
     // Free memory
@@ -138,6 +143,9 @@ void F_Flex_MB_BCS_wrapper_levmar(double *x, double *f, int m, int n, void *para
     for (int i = 0; i < n; i++) {
         f[i] = result->data[i * result->numCols];
     }
+
+    matrix_free(initGuess);
+    matrix_free(result);
 
 }
 
@@ -465,6 +473,7 @@ int find_roots_hybrid(matrix *InitGuess, Flex_MB_BCS_params *params, int fwd, do
 
         //if there is an error in the iteration, return the error
         if(status != GSL_SUCCESS && status != GSL_CONTINUE){
+            gsl_multiroot_fsolver_free(s);
             return status;
         }
 

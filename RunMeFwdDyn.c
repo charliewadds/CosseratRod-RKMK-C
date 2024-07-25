@@ -45,12 +45,12 @@ int main() {
     int totTime = 100;
     //double restTime = 0;
 
-    matrix *t1 = matrix_new(1, timeStep);
-    t1->data[(0 * t1->numCols) + 0] = dt;
-    for (int i = 0; i < timeStep; i++) {
-        t1->data[(0 * t1->numCols) + i] = t1->data[(0 * t1->numCols) + (i-1)] + dt;
-
-    }
+    // matrix *t1 = matrix_new(1, timeStep);
+    // t1->data[(0 * t1->numCols) + 0] = dt;
+    // for (int i = 0; i < timeStep; i++) {
+    //     t1->data[(0 * t1->numCols) + i] = t1->data[(0 * t1->numCols) + (i-1)] + dt;
+    //
+    // }
 
 
     matrix *theta_ddot = zeros(5, 1);
@@ -116,10 +116,10 @@ int main() {
     matrix *C_des_1 = zeros(C_des->numRows,1);
 
     matrix *tempNumbodx1 = zeros(robot->numBody,1);
-    matrix *temp5xn = zeros(5,totTime);
+    //matrix *temp5xn = zeros(5,totTime);
     matrix *tempF = zeros(6,1);
 
-
+    matrix *tempT = matrix_new(1, robot->numBody);
     for(int i = 0; i < totTime; i++){
         #if VERBOSE > 0
         printf("\nTime Step: %d\n", i);
@@ -138,7 +138,7 @@ int main() {
 
 //        matrix *tempT6 = matrix_new(1, 6);
 //        matrix *tempf = matrix_new(7, 6);
-        matrix *tempT = matrix_new(1, robot->numBody);
+
 //        matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
         matrixToFile(matrix_transpose(fdm->JointAcc, tempT), "jointAcc.csv");
 //        matrixToFile(matrix_transpose(theta, tempT), "theta.csv");
@@ -178,7 +178,7 @@ int main() {
         assert(isnan(robot->objects[1]->object->joint->velocity)==0);
 
         int num = 0;
-        for(int j = 0; j < (robot->numObjects/2); j++){
+        for(int j = 0; j < (robot->numObjects/2)-1; j++){
             if(robot->objects[(2*j)+1]->type == 2){
                 robot->objects[(2*j)+1]->object->joint->position = theta->data[num];
                 robot->objects[(2*j)+1]->object->joint->velocity = theta_dot->data[num];
@@ -186,17 +186,7 @@ int main() {
                 num++;
             }
         }
-        int curr = 0;
-        for(int j = 0; j < robot->numObjects; j++){
-            if(robot->objects[j]->type == 2){
-                curr ++;
-                #if VERBOSE > 0
-                printf("Joint %d: %f\n", j, robot->objects[j]->object->joint->position);
-                #endif
-                angles->data[(curr * angles->numCols) + i] = robot->objects[j]->object->joint->position;
 
-            }
-        }
 
         assert(isnan(robot->objects[1]->object->joint->velocity)==0);
 
@@ -204,7 +194,9 @@ int main() {
         printf("step took: %f Seconds\n", ((double) (clock() - stepStart)) / CLOCKS_PER_SEC);
 #endif
 #if PLOT_OUT == 1
-        matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot_fwd.csv");
+        matrix *posOut = plotRobotConfig(robot, theta, 1);
+        matrixToFile(posOut, "RigidRandyPlot_fwd.csv");
+        matrix_free(posOut);
 #endif
         //saveTimeCSV(i, ((double) (clock() - stepStart)) / CLOCKS_PER_SEC, "time.csv");
     }
@@ -226,12 +218,16 @@ int main() {
     matrix_free(fdm->JointAcc);
     free(fdm);
 
+    matrix_free(tempT);
     matrix_free(F_ext);
     matrix_free(F_0);
     robotFree(robot);
     matrix_free(theta);
     matrix_free(theta_dot);
     matrix_free(theta_ddot);
+    matrix_free(C_des);
+    matrix_free(angles);
+    matrix_free(InitGuess);
 
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;

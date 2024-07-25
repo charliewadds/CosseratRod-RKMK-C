@@ -103,7 +103,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
 
     //matrix *parentCoM ;
     //matrix *childCoM;
-    for(int i = 1; i < BC_End; i++){
+    for(int i = 1; i <= BC_End; i++){
 
         //printMatrix(&F_temp);
         //printf("\n\n");

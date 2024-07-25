@@ -60,7 +60,7 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
     matrix *accel_old = zeros(theta_ddot->numRows,1);
     matrix *vel_old = zeros(theta_dot->numRows,1);
     int num = 0;
-    for(int i = 0; i < (robot->numObjects/2); i++){
+    for(int i = 0; i < (robot->numObjects/2)-1; i++){
         if(robot->objects[(2*i)+1]->type == 2){
             accel_old->data[num] = robot->objects[(2*i)+1]->object->joint->acceleration;
             robot->objects[(2*i)+1]->object->joint->acceleration = InitGuess->data[num];
@@ -389,8 +389,10 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
 
 
 
+
+
     num = 0;
-    for(int i = 0; i < (robot->numObjects/2); i++){
+    for(int i = 0; i < (robot->numObjects/2)-1; i++){
         if(robot->objects[(i*2)+1]->type == 2){
 
             robot->objects[(2*i)+1]->object->joint->acceleration = accel_old->data[num];
@@ -429,6 +431,20 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix* result, Flex_MB_BCS_params *params)
     matrix_free(C);
     matrix_free(F_temp);
     matrix_free(CoM2CoM);
+    matrix_free(F_ext);
+    matrix_free(F_0);
+    matrix_free(str_guess);
+    matrix_free(accel_old);
+    matrix_free(vel_old);
+    matrix_free(tempGuess);
+
+    matrix_free(theta);
+    matrix_free(theta_dot);
+    matrix_free(theta_ddot);
+    matrix_free(theta_ddot_old);
+    matrix_free(C_des);
+    matrix_free(F_dist);
+
 
 
 
@@ -577,11 +593,11 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     setSection(d_eta, 0, 5, 0, 0, zeros(6, 1));
 
     matrix *F_temp = zeros(6, 1);
-    Theta = zeros(numBody, 1);
-    setSection(Theta, 0, numBody - 1, 0, 0, Theta);
+    //Theta = zeros(numBody, 1);
+    //setSection(Theta, 0, numBody - 1, 0, 0, Theta);
 
     rigidKin *kin = rigidKinAlloc();
-    matrix *F_dist;
+    matrix *F_dist = zeros(6, 21);//todo magic number
     flexDyn *dyn = flexDynAlloc();
 
 
@@ -589,11 +605,13 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     matrix **etaPPrev = malloc(sizeof(matrix) * (numBody + 2));
     matrix **fPrev = malloc(sizeof(matrix) * (numBody + 2));
     matrix **fPPrev = malloc(sizeof(matrix) * (numBody + 2));
-    for (int i = 0; i < numBody + 2; i++) {//todo this could be numFlex I think
-        etaPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
-        etaPPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
-        fPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
-        fPPrev[i] = zeros(6, robot->objects[2 * i]->object->flex->N);
+    int N = robot->objects[robot->BC_Start+2]->object->flex->N;
+    for (int i = 0; i < numBody + 2; i++) {//todo this assumes consistant discretization and allocates points for non-flexible bodies
+
+        etaPrev[i] = zeros(6, N);
+        etaPPrev[i] = zeros(6, N);
+        fPrev[i] = zeros(6, N);
+        fPPrev[i] = zeros(6, N);
     }
 
 
@@ -614,7 +632,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     matrix *accel_old = zeros(Theta_DDot->numRows,1);
     matrix *vel_old = zeros(Theta_DDot->numRows,1);
     int num = 0;
-    for(int i = 0; i < (robot->numObjects/2); i++){
+    for(int i = 0; i < (robot->numObjects/2)-1; i++){
         if(robot->objects[(2*i)+1]->type == 2){
             accel_old->data[num] = robot->objects[(2*i)+1]->object->joint->acceleration;
             robot->objects[(2*i)+1]->object->joint->acceleration = JointAcc->data[num];
@@ -739,7 +757,10 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
             matMult(tempR6n1t, joint->twistR6, temp1);
             setSection(C, 0, 0, i-1, i-1, temp1);
 
-            F_dist = zeros(6, body->object->flex->N);
+            if(F_dist != NULL){
+
+            }
+            zeroMatrix(F_dist);
 
 
             flex_dyn(g_ref[i], F_dist, getSection(F, 0, 5, i, i, tempR6n1), body->object->flex,
@@ -903,7 +924,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     }
 
     num = 0;
-    for(int i = 0; i < (robot->numObjects/2); i++){
+    for(int i = 0; i < (robot->numObjects/2) -1; i++){
         if(robot->objects[(i*2)+1]->type == 2){
 
 
@@ -918,6 +939,8 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
 
     //free(dyn);//todo write free_flexDyn to fully free
     //free(kin);//todo write free_rigidKin to fully free
+
+    freeFlexDyn(dyn);
 
     FDM_MB_RE_OUT *out = (FDM_MB_RE_OUT *) malloc(sizeof(FDM_MB_RE_OUT));
     out->C = matrix_new(Ct->numRows, Ct->numCols);
@@ -949,6 +972,20 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     free(fPrev);
     free(fPPrev);
 
+    matrix_free(JointAcc);
+    matrix_free(tempGuess);
+    matrix_free(accel_old);
+    matrix_free(vel_old);
+    matrix_free(Theta_ddot_old);
+    matrix_free(Ct);
+
+
+    matrix_free(eta);
+    matrix_free(d_eta);
+    matrix_free(F);
+    matrix_free(C);
+    matrix_free(F_temp);
+
 
     freeTemp_BCS(temp);
     free(g_ref);
@@ -958,15 +995,15 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     matrix_free(tempR6n2);
     matrix_free(tempR6n3);
     matrix_free(tempR6n4);
-
+    matrix_free(temp1);
     matrix_free(temp6x6n1);
     matrix_free(temp6x6n2);
     matrix_free(tempR6n1t);
 
+    matrix_free(CoM2CoM);
     matrix_free(temp4x4n1);
     matrix_free(F_dist);
 
-    matrix_free(d_eta);
     return out;
 
 }

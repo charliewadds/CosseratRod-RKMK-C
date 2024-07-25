@@ -278,7 +278,8 @@ rigidBody *rigidBody_alloc(){
 rigidBody *newRigidBody(char *name, matrix *mass, matrix *Transform, matrix *CoM) {
     rigidBody *body = rigidBody_alloc();
     //todo should I memcpy mass and CoM since they are not going to change?
-    body->name = name;
+    //body->name = name;
+    strcpy(body->name, name);
     //memcpy(body->mass, mass, sizeof(matrix));
     copyMatrix(mass, body->mass);
     //memcpy(body->Transform, Transform, sizeof(matrix));
@@ -306,7 +307,8 @@ flexBody *flexBody_alloc(int N){
 }
 flexBody *newFlexBody(char *name, matrix *mass, matrix *stiff, matrix *damping, matrix *F_0, int N, double L){
     flexBody *body = flexBody_alloc(N);
-    body->name = name;
+    //body->name = name;
+    strcpy(body->name, name);
     copyMatrix(mass, body->mass);
     copyMatrix(stiff, body->stiff);
     copyMatrix(damping, body->damping);
@@ -327,10 +329,13 @@ void freeRigidBody(rigidBody *body){
     //free(body->mass);
     matrix_free(body->Transform);
     matrix_free(body->CoM);
-    //free(body->name);//todo do I need to free this?
+
+
+    free(body->name);
     free(body);
 }
 void freeFlexBody(flexBody *body){
+    free(body->name);
     matrix_free(body->mass);
     matrix_free(body->transform);
     matrix_free(body->stiff);
@@ -344,10 +349,10 @@ void freeFlexBody(flexBody *body){
     free(body);
 }
 void freeJoint(rigidJoint *joint){
-    //free(joint->name);
+    free(joint->name);
     matrix_free(joint->twistR6);
     free(joint->limits);
-    //free(joint->parent);
+    //free(joint->child);
     //free(joint->)
     free(joint);
 }
@@ -370,6 +375,7 @@ void robotFree(Robot *robot){
             free(robot->objects[i]);
         }
 
+
     }
     free(robot);
 
@@ -388,7 +394,8 @@ rigidJoint *rigidJoint_alloc(){
 rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double velocity, double acceleration, double *limits,
                           double homepos, Object *parent, Object *child) {
     rigidJoint *joint = rigidJoint_alloc();
-    joint->name = name;
+    //joint->name = name;
+    strcpy(joint->name, name);
     //joint->twistR6 = twistR6;
 
     copyMatrix(twistR6, joint->twistR6);
@@ -958,6 +965,7 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
         matrix_free(g[i]);
     }
 
+    free(g);
     matrix_free(f_h);
     matrix_free(eta_h);
     matrix_free(f_sh);
