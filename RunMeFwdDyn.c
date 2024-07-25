@@ -195,16 +195,15 @@ int main() {
 #endif
 #if PLOT_OUT == 1
         matrix *posOut = plotRobotConfig(robot, theta, 1);
-        matrixToFile(posOut, "RigidRandyPlot_fwd.csv");
+        matrixToFile(posOut, "ForwardDynPlot.csv");
         matrix_free(posOut);
 #endif
         //saveTimeCSV(i, ((double) (clock() - stepStart)) / CLOCKS_PER_SEC, "time.csv");
     }
     printf("DONE");
-//    matrixToFile(angles, "RigidRandyAngles.csv");
-//    robotToFile(robot, "testRobotOut.json");
+
 #if PLOT_OUT == 1
-    matrixToFile(angles, "RigidRandyAngles_fwd.csv");
+    matrixToFile(angles, "ForwardDynAngles.csv");
 #endif
     matrix_free(tempBodiesx1);
     matrix_free(tempLinkx1);

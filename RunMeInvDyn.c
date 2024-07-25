@@ -177,13 +177,12 @@ int main() {
 
 #if PLOT_OUT == 1
         matrix *posOut = plotRobotConfig(robot, theta, 1);
-        matrixToFile(posOut, "RigidRandyPlot.csv");
+        matrixToFile(posOut, "InverseDynPlot.csv");
         matrix_free(posOut);
 #endif
     }
     printf("DONE");
-//    matrixToFile(angles, "RigidRandyAngles.csv");
-//    robotToFile(robot, "testRobotOut.json");
+
     matrixToFile(C, "ControlSim2.csv");
 #if INV_SAVE == 1
     matrixToFile(angles, "RigidRandyAngles.csv");

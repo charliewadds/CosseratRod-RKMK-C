@@ -552,12 +552,8 @@ matrix *matrix_sin(matrix *m, matrix *result){
 matrix *matMult(matrix *m1, matrix *m2, matrix *result) {
     // Ensure the matrices have compatible dimensions for multiplication
     assert(m1->numCols == m2->numRows);
-
     // Ensure the result matrix has the correct dimensions
     assert((result->numRows == m1->numRows && result->numCols == m2->numCols) || (result->numRows == m1->numCols && result->numCols == m2->numRows));
-
-
-
 
     matrix *temp;
 
