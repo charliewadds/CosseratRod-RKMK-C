@@ -4,15 +4,19 @@ set(CMAKE_C_STANDARD 11)
 project(CosseratRod_RKMK_C C)
 cmake_policy(SET CMP0079 NEW)
 set(DCMAKE_C_COMPILER=/usr/bin/gcc)
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mavx")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mavx")
 set(ENV{OPENBLAS_NUM_THREADS} 4)
 
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
 link_directories("/Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/gsl/build")
 include_directories("/Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/gsl/build")
 
 link_directories("/Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/levmar-2.6/build")
 include_directories("/Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/levmar-2.6")
+
+link_directories("/Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/gsl/customBlas/armpl_24.04_flang-new_clang_18/lib")
+include_directories("/Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/gls/customBlas/armpl_24.04_flang-new_clang_18/include")
+
 #find_package(GSL REQUIRED)
 # Include directories
 include_directories(LieGroup)
@@ -54,7 +58,7 @@ add_executable(FwdDyn RunMeFwdDyn.c)
 # Link libraries to the executable
 # Link GSL libraries with MatrixLib
 #target_link_libraries(levmar PRIVATE levmar-2.6/build/liblevmar.a)
-target_link_libraries(MatrixLib PRIVATE -lm -lgsl  -lgslcblas)
+target_link_libraries(MatrixLib PRIVATE -lm -lgsl -lgslcblas)
 target_link_libraries(LieGroup PRIVATE MatrixLib)
 
 target_link_libraries(RobotLib PRIVATE -lgsl levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)
