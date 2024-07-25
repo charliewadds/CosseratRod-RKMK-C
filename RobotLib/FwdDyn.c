@@ -589,8 +589,10 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     eye(g_ref[0]);
     eye(g_act_wrt_prev[0]);
 
-    setSection(eta, 0, 5, 0, 0, zeros(6, 1));
-    setSection(d_eta, 0, 5, 0, 0, zeros(6, 1));
+    matrix *zero61 = zeros(6, 1);
+    setSection(eta, 0, 5, 0, 0, zero61);
+    setSection(d_eta, 0, 5, 0, 0, zero61);
+    matrix_free(zero61);
 
     matrix *F_temp = zeros(6, 1);
     //Theta = zeros(numBody, 1);
@@ -967,11 +969,13 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
         matrix_free(fPPrev[i]);
 
     }
+
     free(etaPrev);
     free(etaPPrev);
     free(fPrev);
     free(fPPrev);
 
+    matrix_free(StrGuess);
     matrix_free(JointAcc);
     matrix_free(tempGuess);
     matrix_free(accel_old);
