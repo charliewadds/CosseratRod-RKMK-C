@@ -85,9 +85,7 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
 
 }
 
-
-rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint, matrix *eta_old, matrix *d_eta_old, rigidKin *result) {
-    /*
+/*
      - g_cur:          Transformation from Base Frame to i_th Body CoM BCF in RRC (SE3)
      - g_act_wrt_prev: Transformation from i_th Body CoM BCF to i-1_th Body CoM BCF in RAC (SE3
      - eta:            Twist for Body velocity of i_th CoM expressed in i_th CoM BCF (column vector in R6)
@@ -102,6 +100,8 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
      - RAC:            Robot Actuated Configuration
      - BCF:            Body Coordinate Frame
      */
+rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint, matrix *eta_old, matrix *d_eta_old, rigidKin *result) {
+
 
 
     assert(d_eta_old->numCols == 1);
@@ -877,14 +877,6 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
         //zeroMatrix(g[i]);
     }
 
-//    matrix *tempR6n1 = matrix_new(6,1);
-//    matrix *tempR6n2 = matrix_new(6,1);
-//    matrix *tempR6n3 = matrix_new(6,1);
-//    matrix *tempR6n4 = matrix_new(6,1);
-//    matrix *tempR6n5 = matrix_new(6,1);
-
-//    matrix *temp4x4n1 = matrix_new(4,4);
-    //assert(hasNan(result->f) == 0);
     setSection(result->f, 0, 5, 0, 0, matrix_add(matrix_solve(body->stiff,F_base, result->tempR6n1), body->F_0, result->tempR6n1));
     //assert(hasNan(result->f) == 0);
 

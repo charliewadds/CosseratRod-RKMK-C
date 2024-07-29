@@ -31,17 +31,15 @@ int main() {
     matrix *theta = zeros(NUMBODIES , 1);
     matrix *theta_dot = zeros(NUMBODIES , 1);
     matrix *tempBodiesx1 = matrix_new(NUMBODIES, 1);
-#ifdef SAMPLE1
 
     double dt = 0.025;
-    int timeStep = 10;
+    int timeStep = 50;
     int restTime = 100;
     int totalTime = restTime + timeStep*2;
 
     matrix *shape = zeros(NUMBODIES, 1);
-    shape->data[0] = 6;
-    shape->data[1] = -4;
-    shape->data[2] = -6;
+    shape->data[0] = 0.2;
+    shape->data[1] = -0.2;
 
     matrix *theta_ddot = zeros(NUMBODIES, totalTime);
 
@@ -59,55 +57,12 @@ int main() {
 
 
 
-    Robot *robot = defPaperSample_1(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
-
-
-
-#endif
-#ifdef SAMPLE2
-    double dt = 0.025;
-    int timeStep = 100;
-    int restTime = 0;
-    int totalTime = restTime + timeStep;
-
-    matrix *t1 = matrix_new(1, totalTime);
-    t1->data[(0 * t1->numCols) + 0] = dt;
-    for (int i = 1; i < totalTime; i++) {
-        t1->data[(0 * t1->numCols) + i] = t1->data[(0 * t1->numCols) + (i-1)] + dt;
-
-    }
-
-    matrix *shape = zeros(NUMBODIES, 1);
-    shape->data[(0 * shape->numCols) + 0] = 0.4;
-    shape->data[(1 * shape->numCols) + 0] = -0.5 * 0.4;
-    shape->data[(2 * shape->numCols) + 0] = 0.5 * 0.4;
-    shape->data[(3 * shape->numCols) + 0] = -0.7 * 0.4;
-    shape->data[(4 * shape->numCols) + 0] = 0.1 * -0.4;
-
-    matrix *theta_ddot_app = zeros(NUMBODIES, timeStep);
+    Robot *robot = defIcraRobot(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
 
 
 
 
-    matrix *tempTStep = matrix_new(1, timeStep);
-    for(int i = 0; i < NUMBODIES; i++){
 
-        zeroMatrix(tempTStep);
-        matrix_scalar_mul(matrix_sin(matrix_scalar_mul(t1, M_PI/(dt*timeStep), tempTStep), tempTStep),shape->data[(i * shape->numCols)], tempTStep);
-
-        setSection(theta_ddot_app, i, i, 0, timeStep-1, tempTStep);
-
-    }
-
-
-
-    matrix *theta_ddot = zeros(NUMBODIES, totalTime);
-    setSection(theta_ddot, 0, theta_ddot->numRows-1, 0, timeStep-1, theta_ddot_app);
-
-     Robot *robot = defPaperSample_2(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
-
-
-#endif
     matrix *F_ext = zeros(6, 1);
     matrix *F_0 = zeros(6, 1);
     F_0->data[(0 * F_0->numCols)] = 0;
@@ -137,12 +92,12 @@ int main() {
 
     matrix *angles = zeros(((robot->numObjects-1)/2)-1,totalTime);
     IDM_MB_RE_OUT *idm = malloc(sizeof(IDM_MB_RE_OUT));
-    matrix *tempLinkx1 = matrix_new(robot->numBody,1);
+    matrix *tempLinkx1 = matrix_new(2,1);
     for(int i = 0; i < totalTime; i++){
 
-        //printf("Time Step: %d\n", i);
+        printf("Time Step: %d\n", i);
         matrix *f = matrix_new(6,1);
-        getSection(robot->objects[(2*robot->BC_Start)]->object->flex->f_prev, 0, robot->objects[(2*robot->BC_Start)]->object->flex->f_prev->numRows - 1, 0, 0, f);//todo
+        getSection(robot->objects[(robot->BC_Start+1)]->object->flex->f_prev, 0, robot->objects[(robot->BC_Start+1)]->object->flex->f_prev->numRows - 1, 0, 0, f);//todo
 
         idm = IDM_MB_RE(robot, theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, i, i, tempLinkx1), F_ext, dt, F_0);
         setSection(C, 0, C->numRows-1, i, i, idm->C);//todo, get rid of these and pass directly back in?
@@ -177,7 +132,7 @@ int main() {
 
 #if PLOT_OUT == 1
         matrix *posOut = plotRobotConfig(robot, theta, 1);
-        matrixToFile(posOut, "InverseDynPlot.csv");
+        matrixToFile(posOut, "icraPlot.csv");
         matrix_free(posOut);
 #endif
     }
@@ -210,7 +165,7 @@ int main() {
     matrix_free(theta);
     matrix_free(theta_dot);
     matrix_free(theta_ddot);
-   // matrix_free(theta_ddot_app);
+    //matrix_free(theta_ddot_app);
     matrix_free(angles);
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;

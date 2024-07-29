@@ -446,7 +446,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     //setSection(Theta, 0, numBody - 1, 0, 0, Theta);
 
     rigidKin *kin = rigidKinAlloc();
-    matrix *F_dist = zeros(6, robot->objects[BC_Start+2]->object->flex->N);
+    matrix *F_dist = zeros(6, robot->objects[BC_Start+1]->object->flex->N);
     flexDyn *dyn = flexDynAlloc();
 
 
@@ -455,7 +455,7 @@ IDM_MB_RE_OUT *IDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     matrix **fPrev = malloc(sizeof(matrix *) * (numBody + 2));
     matrix **fPPrev = malloc(sizeof(matrix *) * (numBody + 2));
 
-    int N = robot->objects[robot->BC_Start+2]->object->flex->N;
+    int N = robot->objects[robot->BC_Start+1]->object->flex->N;
     for (int i = 0; i < numBody + 2; i++) {//todo this assumes consistant discretization and allocates points for non-flexible bodies
 
         etaPrev[i] = zeros(6, N);

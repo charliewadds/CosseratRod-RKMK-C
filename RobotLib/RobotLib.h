@@ -13,9 +13,9 @@
 #define GSL_ERROR_HANDLER 0
 #define VERBOSE 0
 
-#define SAMPLE2
+#define SAMPLE1
 
-#define NUMBODIES 5
+#define NUMBODIES 2
 
 #define HYBRID_DELTA 1
 
@@ -26,9 +26,9 @@
 #define INV_SAVE 0
 
 
-#define MAX_ITER_LEVMAR 15
+#define MAX_ITER_LEVMAR 150
 #define MAX_ITER_NEWTON 15
-#define MAX_ITER_HYBRID 15
+#define MAX_ITER_HYBRID 150
 
 #define PRINT_NUM_ITERS 0
 
@@ -102,6 +102,7 @@ typedef struct body_s {
     int type;//0 for rigidBody, 1 for flexBody
     union body_u *body;
 }Body;
+
 typedef struct rigidJoint_s{
     char *name;
     matrix *twistR6;//twist axis to define the joint column vector R6
@@ -160,8 +161,6 @@ typedef struct flexDyn_s{
 }flexDyn;
 
 union object_u {
-    char *name;//todo can you have this in a union?
-
     rigidBody *rigid;
     flexBody *flex;
     rigidJoint *joint;
@@ -416,6 +415,7 @@ typedef struct {
     BCS_temp *temp;
 
 } Flex_MB_BCS_params;
+
 rigidKin *rigidKinAlloc();
 flexDyn *flexDynAlloc();
 
@@ -447,4 +447,5 @@ int F_Flex_MB_BCS(matrix *InitGuess, matrix *result, Flex_MB_BCS_params *params)
 matrix *fsolve_idm_mb_re(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix *Theta_DDot, matrix *F_ext, double dt, matrix *x);
 Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot);
 Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot);
+Robot *defIcraRobot(matrix *theta, matrix *theta_dot, matrix *theta_ddot);
 #endif //COSSERATROD_RKMK_C_MATHLIB_H

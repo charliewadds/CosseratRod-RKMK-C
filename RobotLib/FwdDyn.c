@@ -699,7 +699,7 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
     printf("_______________________________________________________\n");
 #endif
 
-    for(int i = 1; i <= numBody+1; i++) {
+    for(int i = 1; i < numBody+1; i++) {
         //printMatrix(C);
         //printf("\n\n");
         rigidJoint *joint = robot->objects[2 * (i - 1) + 1]->object->joint;
@@ -781,15 +781,14 @@ FDM_MB_RE_OUT *FDM_MB_RE(Robot *robot, matrix *Theta, matrix *Theta_dot, matrix 
                        getSection(dyn->eta, 0, 5, dyn->eta->numCols - 1, dyn->eta->numCols - 1, tempR6n1));
 
 
+
             //update history terms AFTER calculations
             copyMatrix(body->object->flex->f_prev, fPPrev[i]);
             //fPPrev[i] = body->object->flex->f_prev;
             copyMatrix(dyn->f, fPrev[i]);
             //fPrev[i] = dyn->f;
-
             copyMatrix(body->object->flex->eta_prev, etaPPrev[i]);//double che
             //etaPPrev[i] = *body->object->flex->eta_prev;//double check this
-
             copyMatrix(dyn->eta, etaPrev[i]);
             //etaPrev[i] = *dyn->eta;
 
