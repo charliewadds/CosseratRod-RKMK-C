@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
 set(CMAKE_C_STANDARD 11)
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -arch arm64")
 project(CosseratRod_RKMK_C C)
 cmake_policy(SET CMP0079 NEW)
 
@@ -34,9 +33,9 @@ find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 
 # Create libraries
-add_library(MatrixLib SHARED ${MATRIX_LIB_SOURCES})
-add_library(LieGroup SHARED ${LIE_GROUP_SOURCES})
-add_library(RobotLib SHARED ${ROBOT_LIB_SOURCES})
+add_library(MatrixLib STATIC ${MATRIX_LIB_SOURCES})
+add_library(LieGroup STATIC ${LIE_GROUP_SOURCES})
+add_library(RobotLib STATIC ${ROBOT_LIB_SOURCES})
 
 
 
@@ -48,13 +47,14 @@ message(STATUS "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
 add_executable(InvDyn RunMeInvDyn.c)
 
 add_executable(FwdDyn RunMeFwdDyn.c)
+add_executable(IcraRobot icraRobotRun.c)
 # Link libraries to the executable
 # Link GSL libraries with MatrixLib
 #target_link_libraries(levmar PRIVATE levmar-2.6/build/liblevmar.a)
 target_link_libraries(MatrixLib PRIVATE -lm -lgsl -lgslcblas)
 target_link_libraries(LieGroup PRIVATE MatrixLib gsl)
 
-target_link_libraries(RobotLib PRIVATE -lgsl -lnlopt levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)
+target_link_libraries(RobotLib PRIVATE -lgsl levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)#add -lnlopt to use nlopt solvers
 
 install(TARGETS MatrixLib LieGroup RobotLib
         LIBRARY DESTINATION /Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/sharedLibs
@@ -64,3 +64,4 @@ install(TARGETS MatrixLib LieGroup RobotLib
 
 target_link_libraries(InvDyn -lm -lgsl MatrixLib LieGroup RobotLib)
 target_link_libraries(FwdDyn -lm -lgsl MatrixLib LieGroup RobotLib)
+target_link_libraries(IcraRobot -lm -lgsl MatrixLib LieGroup RobotLib)

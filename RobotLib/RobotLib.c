@@ -18,6 +18,7 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     }else{
         printf("Invalid Body Type (Flex_MB_BCS)\n");
         assert(0);
+        exit(-1);
         ///return zeros(6,1);
     }
 
@@ -29,6 +30,7 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     }else{
         printf("Invalid Body Type (Flex_MB_BCS)\n");
         assert(0);
+        exit(-1);
         //return zeros(6,1);
     }
     assert(parentCoM->numCols == 1);
@@ -54,13 +56,13 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     hat_R6(tempR6n2, temp4x4n2);
     expm_SE3(temp4x4n2, temp4x4n3);
 
-    matMult(
+    matMult_4x4_4x4(
             temp4x4n1,
             temp4x4n3,
             temp4x4n3);
 
     zeroMatrix(CoM2CoM);
-    matMult(temp4x4n3,expm_SE3(hat_R6(childCoM, temp4x4n4), temp4x4n4 ), CoM2CoM);
+    matMult_4x4_4x4(temp4x4n3,expm_SE3(hat_R6(childCoM, temp4x4n4), temp4x4n4 ), CoM2CoM);
     //free(parentCoM);
 //    matMult(matMult(
 //                              //curr_obj
@@ -83,9 +85,7 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
 
 }
 
-
-rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint, matrix *eta_old, matrix *d_eta_old, rigidKin *result) {
-    /*
+/*
      - g_cur:          Transformation from Base Frame to i_th Body CoM BCF in RRC (SE3)
      - g_act_wrt_prev: Transformation from i_th Body CoM BCF to i-1_th Body CoM BCF in RAC (SE3
      - eta:            Twist for Body velocity of i_th CoM expressed in i_th CoM BCF (column vector in R6)
@@ -100,6 +100,8 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
      - RAC:            Robot Actuated Configuration
      - BCF:            Body Coordinate Frame
      */
+rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint, matrix *eta_old, matrix *d_eta_old, rigidKin *result) {
+
 
 
     assert(d_eta_old->numCols == 1);
@@ -156,21 +158,21 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
     //matrix *temp6x6n3 = matrix_new(6,6);
 
     matrix *newTwist = matrix_new(6,1);
-    matMult(temp6x6n1, joint->twistR6, newTwist);//redefine joint to now be about child CoM
+    matMult_6x6_6x1(temp6x6n1, joint->twistR6, newTwist);//redefine joint to now be about child CoM
 
 
     //temp4x4 and 6x6 are available
 
 
     matrix *g_cur = matrix_new(4,4);
-    matMult(g_old, g_oldToCur, g_cur);
+    matMult_4x4_4x4(g_old, g_oldToCur, g_cur);
 
     matrix *g_cur_wrt_prev = matrix_new(4,4);
     matrix_inverse(g_oldToCur, g_cur_wrt_prev);
 
 
     matrix *g_act_wrt_prev = matrix_new(4,4);
-    matMult(expm_SE3(matrix_scalar_mul(matrix_scalar_mul(hat_R6(newTwist, temp4x4n1), -1, temp4x4n1), joint->position, temp4x4n1), temp4x4n1), g_cur_wrt_prev, g_act_wrt_prev);
+    matMult_4x4_4x4(expm_SE3(matrix_scalar_mul(matrix_scalar_mul(hat_R6(newTwist, temp4x4n1), -1, temp4x4n1), joint->position, temp4x4n1), temp4x4n1), g_cur_wrt_prev, g_act_wrt_prev);
 
 
     matrix *temp6x1n1 = matrix_new(6,1);
@@ -210,16 +212,58 @@ rigidKin *actuateRigidJoint(matrix *g_old, matrix *g_oldToCur, rigidJoint *joint
 
     matrix_free(newTwist);
     matrix_free(g_cur);
+    matrix_free(g_act_wrt_prev);
     matrix_free(g_cur_wrt_prev);//todo this might already be freed
     matrix_free(temp6x6n1);
     matrix_free(temp6x6n2);
     matrix_free(temp4x4n1);
     matrix_free(d_eta);
 
+    matrix_free(tempR6n1);
     matrix_free(temp6x1n1);
     matrix_free(temp6x1n2);
     matrix_free(temp6x1n3);
     return result;
+}
+
+
+BCS_temp *allocTemp_BCS(){
+    BCS_temp *temp = (BCS_temp *) malloc(sizeof(BCS_temp));
+
+    temp->tempR6n1 = matrix_new(6,1);
+    temp->tempR6n2 = matrix_new(6,1);
+    temp->tempR6n3 = matrix_new(6,1);
+    temp->tempR6n4 = matrix_new(6,1);
+    temp->tempR6t = matrix_new(1,6);
+    temp->temp4x4n1 = matrix_new(4,4);
+    temp->tempC6n1 = matrix_new(1,6);
+    temp->temp6x6n1 = matrix_new(6,6);
+    temp->temp6x6n2 = matrix_new(6,6);
+    temp->temp1 = matrix_new(1,1);
+
+    temp->tempFlexDyn = flexDynAlloc();
+    temp->tempRigidKin = rigidKinAlloc();
+
+
+
+    return temp;
+}
+void freeTemp_BCS(BCS_temp *temp){
+    matrix_free(temp->tempR6n1);
+    matrix_free(temp->tempR6n2);
+    matrix_free(temp->tempR6n3);
+    matrix_free(temp->tempR6n4);
+    matrix_free(temp->tempR6t);
+    matrix_free(temp->temp4x4n1);
+    matrix_free(temp->tempC6n1);
+    matrix_free(temp->temp6x6n1);
+    matrix_free(temp->temp6x6n2);
+    matrix_free(temp->temp1);
+
+    freeRigidKin(temp->tempRigidKin);
+    freeFlexDyn(temp->tempFlexDyn);
+    free(temp);
+
 }
 
 rigidBody *rigidBody_alloc(){
@@ -234,7 +278,8 @@ rigidBody *rigidBody_alloc(){
 rigidBody *newRigidBody(char *name, matrix *mass, matrix *Transform, matrix *CoM) {
     rigidBody *body = rigidBody_alloc();
     //todo should I memcpy mass and CoM since they are not going to change?
-    body->name = name;
+    //body->name = name;
+    strcpy(body->name, name);
     //memcpy(body->mass, mass, sizeof(matrix));
     copyMatrix(mass, body->mass);
     //memcpy(body->Transform, Transform, sizeof(matrix));
@@ -262,7 +307,8 @@ flexBody *flexBody_alloc(int N){
 }
 flexBody *newFlexBody(char *name, matrix *mass, matrix *stiff, matrix *damping, matrix *F_0, int N, double L){
     flexBody *body = flexBody_alloc(N);
-    body->name = name;
+    //body->name = name;
+    strcpy(body->name, name);
     copyMatrix(mass, body->mass);
     copyMatrix(stiff, body->stiff);
     copyMatrix(damping, body->damping);
@@ -283,10 +329,13 @@ void freeRigidBody(rigidBody *body){
     //free(body->mass);
     matrix_free(body->Transform);
     matrix_free(body->CoM);
-    //free(body->name);//todo do I need to free this?
+
+
+    free(body->name);
     free(body);
 }
 void freeFlexBody(flexBody *body){
+    free(body->name);
     matrix_free(body->mass);
     matrix_free(body->transform);
     matrix_free(body->stiff);
@@ -300,10 +349,10 @@ void freeFlexBody(flexBody *body){
     free(body);
 }
 void freeJoint(rigidJoint *joint){
-    //free(joint->name);
+    free(joint->name);
     matrix_free(joint->twistR6);
     free(joint->limits);
-    //free(joint->parent);
+    //free(joint->child);
     //free(joint->)
     free(joint);
 }
@@ -326,6 +375,7 @@ void robotFree(Robot *robot){
             free(robot->objects[i]);
         }
 
+
     }
     free(robot);
 
@@ -344,7 +394,8 @@ rigidJoint *rigidJoint_alloc(){
 rigidJoint *newRigidJoint(char *name, matrix *twistR6, double position, double velocity, double acceleration, double *limits,
                           double homepos, Object *parent, Object *child) {
     rigidJoint *joint = rigidJoint_alloc();
-    joint->name = name;
+    //joint->name = name;
+    strcpy(joint->name, name);
     //joint->twistR6 = twistR6;
 
     copyMatrix(twistR6, joint->twistR6);
@@ -441,7 +492,7 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
             double ds = currObj->joint->child->body->flex->L / currObj->joint->child->body->flex->N;
 
             for(int j = 0; j < (currObj->joint->child->body->flex->N * numStep); j++){
-                int index = ceil((j+1)/numStep)-1;
+                int index = (int)ceil((j+1)/numStep)-1;
 
                 temp6n1 = getSection(currObj->joint->child->body->flex->f_prev, 0, 5, index, index, temp6n1);
                 expm_SE3(hat_R6(matrix_scalar_mul(temp6n1, ds/numStep, temp6n1), temp4x4n1), temp4x4n1);
@@ -521,30 +572,19 @@ matrix *plotRobotConfig(Robot *robot, matrix *theta, double numStep) {
 
  */
 COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matrix *f_sh, matrix *K, matrix *C, matrix *M, double c0, matrix *f_0, matrix *Fd_ext, COSS_ODE_OUT *result) {
-//    if(isnan(eta->data[0][0])){
-//        printf("eta is nan\n");
-//        assert(0);
-//    }
 
-
-    matrix *f_t = matrix_new(6,1);
-    matrix_add(matrix_scalar_mul(f, c0, f_t), f_h, f_t);     // Local Time Discretization for history in Local Coordinates
-
-    matrix *eta_t = matrix_new(6,1);
-    matrix_add(matrix_scalar_mul(eta, c0, eta_t), eta_h, eta_t);   // Local Time Discretization for history in Local Coordinates
+    matrix_add(matrix_scalar_mul(f, c0, result->f_t), f_h, result->f_t);     // Local Time Discretization for history in Local Coordinates
+    matrix_add(matrix_scalar_mul(eta, c0, result->eta_t), eta_h, result->eta_t);   // Local Time Discretization for history in Local Coordinates
 
 
 
     matrix_scalar_mul(C, c0, result->temp6x6n2);
     matrix_add(result->temp6x6n2, K, result->temp6x6n1);
-    //66n2 available
-    //temp6x6n1 = (K + C*c0)
-
-    matMult(M, eta_t, result->tempR6n1);
-    //tempR6n1 = M*eta_t
 
 
-    matrix_transpose(adj_R6(eta, result->temp6x6n2), result->temp6x6n2);
+    matMult(M, result->eta_t, result->tempR6n1);
+
+    matrix_transpose_6x6(adj_R6(eta, result->temp6x6n2), result->temp6x6n2);
     //temp6x6n2 = (adj(eta)')
     matMult(M, eta, result->tempR6n3);
     //tempR6n3 = M*eta
@@ -564,7 +604,7 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
     //---------second half of bracket----------------------
     //(adj(f)')*(K*(f - f_0) + C*f_t) + Fd_ext)
 
-    matrix_transpose(adj_R6(f, result->temp6x6n2), result->temp6x6n2);
+    matrix_transpose_6x6(adj_R6(f, result->temp6x6n2), result->temp6x6n2);
     //temp6x6n2 = (adj(f)')
     matrix_sub(f, f_0, result->tempR6n3);
     //tempR6n3 = f - f_0
@@ -572,7 +612,7 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
     matMult(K, result->tempR6n3, result->tempR6n3);
     //tempR6n3 = K*(f - f_0)
 
-    matMult(C, f_t, result->tempR6n2);
+    matMult(C, result->f_t, result->tempR6n2);
     //tempR6n2 = C*f_t
 
     matrix_add(result->tempR6n3, result->tempR6n2, result->tempR6n2);
@@ -590,18 +630,8 @@ COSS_ODE_OUT *COSS_ODE(matrix *eta, matrix *f, matrix *eta_h, matrix *f_h, matri
     matrix_solve(result->temp6x6n1, result->tempR6n1, result->f_s);
 
 
-    matrix_add(f_t, matMult(adj_R6(eta, result->temp6x6n1), f, result->tempR6n1), result->eta_s);
-//    if(isnan(result->eta_s->data[1][0]) || isnan(result->eta_s->data[0][0])){
-//        printf("eta is nan\n");
-//        assert(0);
-//    }
+    matrix_add(result->f_t, matMult(adj_R6(eta, result->temp6x6n1), f, result->tempR6n1), result->eta_s);
 
-    matrix_free(eta_t);
-
-    matrix_free(f_t);
-    //printMatrix(adj_R6(f));
-//    printMatrix(result->f_s);
-//    printMatrix(result->eta_s);
     return result;
 }
 
@@ -767,6 +797,14 @@ flexDyn *flexDynAlloc(){
     dyn->eta = NULL;
     dyn->f = NULL;
 
+    dyn->tempR6n1 = matrix_new(6,1);
+    dyn->tempR6n2 = matrix_new(6,1);
+    dyn->tempR6n3 = matrix_new(6,1);
+    dyn->tempR6n4 = matrix_new(6,1);
+    dyn->tempR6n5 = matrix_new(6,1);
+    dyn->temp4x4n1 = matrix_new(4,4);
+
+
     return dyn;
 }
 
@@ -775,6 +813,13 @@ void freeFlexDyn(flexDyn *dyn){
     matrix_free(dyn->eta);
     matrix_free(dyn->g_end);
     matrix_free(dyn->d_eta_end);
+
+    matrix_free(dyn->tempR6n1);
+    matrix_free(dyn->tempR6n2);
+    matrix_free(dyn->tempR6n3);
+    matrix_free(dyn->tempR6n4);
+    matrix_free(dyn->tempR6n5);
+    matrix_free(dyn->temp4x4n1);
     free(dyn);
 }
 
@@ -789,6 +834,9 @@ COSS_ODE_OUT *odeAlloc(){
     out->tempR6n1 = matrix_new(6,1);
     out->tempR6n2 = matrix_new(6,1);
     out->tempR6n3 = matrix_new(6,1);
+
+    out->f_t = matrix_new(6,1);
+    out->eta_t = matrix_new(6,1);
     return out;
 }
 void freeCOSS_ODE_OUT(COSS_ODE_OUT *out){
@@ -802,22 +850,15 @@ void freeCOSS_ODE_OUT(COSS_ODE_OUT *out){
         matrix_free(out->tempR6n1);
         matrix_free(out->tempR6n2);
         matrix_free(out->tempR6n3);
+        matrix_free(out->f_t);
+        matrix_free(out->eta_t);
+
         free(out);
     }
 }
 
 flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body, matrix *eta_base, double c0, double c1, double c2, flexDyn *result){
-//    printf("Eta_base");
-//    printMatrix(eta_base);
 
-    //matrix *eta = zeros(6, body->N);
-    //matrix *f = zeros(6, body->N);
-
-    zeroMatrix(result->eta);
-    zeroMatrix(result->f);
-    //result->eta = zeros(6, body->N);
-    //result->f = zeros(6, body->N);
-    //assert(hasNan(F_base) == 0);
     matrix **g = (matrix **)malloc(sizeof(matrix *) * body->N);
 
     matrix *temp6xNn1 = matrix_new(6, body->N);
@@ -833,17 +874,10 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
     //set g to <4, 4, numBodies>
     for(int i = 0; i < body->N; i++){
         g[i] = zeros(4,4);
+        //zeroMatrix(g[i]);
     }
 
-    matrix *tempR6n1 = matrix_new(6,1);
-    matrix *tempR6n2 = matrix_new(6,1);
-    matrix *tempR6n3 = matrix_new(6,1);
-    matrix *tempR6n4 = matrix_new(6,1);
-    matrix *tempR6n5 = matrix_new(6,1);
-
-    matrix *temp4x4n1 = matrix_new(4,4);
-    //assert(hasNan(result->f) == 0);
-    setSection(result->f, 0, 5, 0, 0, matrix_add(matrix_solve(body->stiff,F_base, tempR6n1), body->F_0, tempR6n1));
+    setSection(result->f, 0, 5, 0, 0, matrix_add(matrix_solve(body->stiff,F_base, result->tempR6n1), body->F_0, result->tempR6n1));
     //assert(hasNan(result->f) == 0);
 
     setSection(result->eta, 0, 5, 0, 0, eta_base);
@@ -859,46 +893,44 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
     //assert(hasNan(result->f) == 0);
     for(int i = 0; i < body->N-1; i++) {
 
-
-
-        matrix_scalar_mul(matrix_sub(getSection(body->f_prev, 0,5,i+1,i+1, tempR6n1), getSection(body->f_prev, 0,5,i,i, tempR6n2),tempR6n1),c1, tempR6n1);
-        matrix_scalar_mul(matrix_sub(getSection(body->f_pprev, 0,5,i+1,i+1, tempR6n2), getSection(body->f_pprev, 0,5,i,i, tempR6n3), tempR6n2),c2, tempR6n2);
-        matrix_add(tempR6n1,tempR6n2,tempR6n1);
-
-
+        matrix_scalar_mul(matrix_sub(getSection(body->f_prev, 0,5,i+1,i+1, result->tempR6n1), getSection(body->f_prev, 0,5,i,i, result->tempR6n2),result->tempR6n1),c1, result->tempR6n1);
+        matrix_scalar_mul(matrix_sub(getSection(body->f_pprev, 0,5,i+1,i+1, result->tempR6n2), getSection(body->f_pprev, 0,5,i,i, result->tempR6n3), result->tempR6n2),c2, result->tempR6n2);
+        matrix_add(result->tempR6n1,result->tempR6n2,result->tempR6n1);
 
         elemDiv(
-            tempR6n1,
+            result->tempR6n1,
                 ds,
                 f_sh
         );
         //[f_s,eta_s] = Coss_ODE(eta(:,i), f(:,i), eta_h(:,i), f_h(:,i), f_sh,BODY.Stiff,BODY.Damp,BODY.Mass,c0,BODY.F_0,F_dist(:,i));
 
-        COSS_ODE(getSection(result->eta,0,5,i,i, tempR6n1), getSection(result->f,0,5,i,i, tempR6n2),
-                        getSection(eta_h,0,5,i,i, tempR6n3), getSection(f_h, 0,5,i,i, tempR6n4),
+        COSS_ODE(getSection(result->eta,0,5,i,i, result->tempR6n1), getSection(result->f,0,5,i,i, result->tempR6n2),
+                        getSection(eta_h,0,5,i,i, result->tempR6n3), getSection(f_h, 0,5,i,i, result->tempR6n4),
                         f_sh, body->stiff, body->damping, body->mass, c0, body->F_0,
-                        getSection(F_dist, 0,5,i,i, tempR6n5), ode);
+                        getSection(F_dist, 0,5,i,i, result->tempR6n5), ode);
 
 
 
         //Euler integration todo add option for Rk2 and maybe RK4 (adaptive?)
 
         setSection(result->f,0,5,i+1,i+1,
-                   (matrix_add(getSection(result->f,0,5,i,i, tempR6n1), matrix_scalar_mul(ode->f_s,ds/2, tempR6n2), tempR6n1)));
+                   (matrix_add(getSection(result->f,0,5,i,i, result->tempR6n1), matrix_scalar_mul(ode->f_s,ds, result->tempR6n2), result->tempR6n1)));
 
 
         setSection(result->eta,0,5,i+1,i+1,
-                   (matrix_add(getSection(result->eta,0,5,i,i, tempR6n1), matrix_scalar_mul(ode->eta_s,ds/2, tempR6n2), tempR6n1))
+                   (matrix_add(getSection(result->eta,0,5,i,i, result->tempR6n1), matrix_scalar_mul(ode->eta_s,ds, result->tempR6n2), result->tempR6n1))
         );
 
 
 
+
+
         //Lie-Euler geometric integration
-        getSection(result->f,0,5,i,i, tempR6n1);
-        hat_R6(tempR6n1, temp4x4n1);
-        matrix_scalar_mul(temp4x4n1, ds, temp4x4n1);
-        expm(temp4x4n1, temp4x4n1);
-        matMult(g[i], temp4x4n1,g[i+1]);
+        getSection(result->f,0,5,i,i, result->tempR6n1);
+        hat_R6(result->tempR6n1, result->temp4x4n1);
+        matrix_scalar_mul(result->temp4x4n1, ds, result->temp4x4n1);
+        expm(result->temp4x4n1, result->temp4x4n1);
+        matMult(g[i], result->temp4x4n1,g[i+1]);
 
 
     }
@@ -910,8 +942,8 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
 
 
     matrix_add(
-            matrix_scalar_mul(getSection(result->eta, 0,5,result->eta->numCols - 1, result->eta->numCols -1, tempR6n1), c0, tempR6n1),
-            getSection(eta_h, 0,5,eta_h->numCols-1, eta_h->numCols-1, tempR6n2),
+            matrix_scalar_mul(getSection(result->eta, 0,5,result->eta->numCols - 1, result->eta->numCols -1, result->tempR6n1), c0, result->tempR6n1),
+            getSection(eta_h, 0,5,eta_h->numCols-1, eta_h->numCols-1, result->tempR6n2),
             result->d_eta_end);
     //matrix_free(result->f)
     //result->f = f;
@@ -924,17 +956,14 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
     for(int i = 0; i < body->N; i++){
         matrix_free(g[i]);
     }
-    matrix_free(temp6xNn1);
-    matrix_free(temp6xNn2);
-    matrix_free(tempR6n1);
-    matrix_free(tempR6n2);
-    matrix_free(tempR6n3);
-    matrix_free(tempR6n4);
-    matrix_free(tempR6n5);
-    matrix_free(temp4x4n1);
+
+    free(g);
     matrix_free(f_h);
     matrix_free(eta_h);
     matrix_free(f_sh);
+
+    matrix_free(temp6xNn1);//todo these should be added to the result struct
+    matrix_free(temp6xNn2);
 
     //matrix_free(eta);
     return result;

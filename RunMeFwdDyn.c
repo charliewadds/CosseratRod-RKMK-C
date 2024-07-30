@@ -10,9 +10,9 @@
 
 #include "RobotLib.h"
 #include <stdio.h>
-#include <math.h>
+
 //#include <float.h>
-#include <string.h>
+
 #include "Matrices.h"
 #include <assert.h>
 
@@ -41,29 +41,27 @@ int main() {
     matrix *tempBodiesx1 = matrix_new(5, 1);
 #ifdef SAMPLE2
     double dt = 0.025;
-    int timeStep = 100;//why does this effect convergence at 80?????
+    int timeStep = 100;
     int totTime = 100;
     //double restTime = 0;
 
-    matrix *t1 = matrix_new(1, timeStep);
-    t1->data[(0 * t1->numCols) + 0] = dt;
-    for (int i = 0; i < timeStep; i++) {
-        t1->data[(0 * t1->numCols) + i] = t1->data[(0 * t1->numCols) + (i-1)] + dt;
-
-    }
+    // matrix *t1 = matrix_new(1, timeStep);
+    // t1->data[(0 * t1->numCols) + 0] = dt;
+    // for (int i = 0; i < timeStep; i++) {
+    //     t1->data[(0 * t1->numCols) + i] = t1->data[(0 * t1->numCols) + (i-1)] + dt;
+    //
+    // }
 
 
     matrix *theta_ddot = zeros(5, 1);
     matrix *theta = zeros(5, 1);
     matrix *theta_dot = zeros(5, 1);
-    matrix *tempTStep = matrix_new(1, timeStep);
 
     matrix *InitGuess = zeros(5,1);
 
 
     Robot *robot = defPaperSample_2(theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, 0, 0, tempBodiesx1));//todo check -1
 
-    //matrix *temp1xRowsM1 = matrix_new(5, timeStep);
     matrix *C_des = matrix_new(robot->numBody,totTime);
     matrixFromFile("ControlSim2.csv", C_des);
 
@@ -118,10 +116,10 @@ int main() {
     matrix *C_des_1 = zeros(C_des->numRows,1);
 
     matrix *tempNumbodx1 = zeros(robot->numBody,1);
-    matrix *temp5xn = zeros(5,totTime);
+    //matrix *temp5xn = zeros(5,totTime);
     matrix *tempF = zeros(6,1);
 
-
+    matrix *tempT = matrix_new(1, robot->numBody);
     for(int i = 0; i < totTime; i++){
         #if VERBOSE > 0
         printf("\nTime Step: %d\n", i);
@@ -138,13 +136,13 @@ int main() {
         fdm = FDM_MB_RE(robot, theta, theta_dot, theta_ddot, F_ext, dt, C_des_1 ,F_0, InitGuess);//todo run in parallel with 1/2 dt for RK2 or RK4 (or initguess for next ts)
 
 
-        matrix *tempT6 = matrix_new(1, 6);
-        matrix *tempf = matrix_new(7, 6);
-        matrix *tempT = matrix_new(1, robot->numBody);
-        matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
+//        matrix *tempT6 = matrix_new(1, 6);
+//        matrix *tempf = matrix_new(7, 6);
+
+//        matrixToFile(matrix_transpose(fdm->C, tempT), "C.csv");
         matrixToFile(matrix_transpose(fdm->JointAcc, tempT), "jointAcc.csv");
-        matrixToFile(matrix_transpose(theta, tempT), "theta.csv");
-        matrixToFile(fdm->F, "F.csv");
+//        matrixToFile(matrix_transpose(theta, tempT), "theta.csv");
+//        matrixToFile(fdm->F, "F.csv");
 
 
 
@@ -180,7 +178,7 @@ int main() {
         assert(isnan(robot->objects[1]->object->joint->velocity)==0);
 
         int num = 0;
-        for(int j = 0; j < (robot->numObjects/2); j++){
+        for(int j = 0; j < (robot->numObjects/2)-1; j++){
             if(robot->objects[(2*j)+1]->type == 2){
                 robot->objects[(2*j)+1]->object->joint->position = theta->data[num];
                 robot->objects[(2*j)+1]->object->joint->velocity = theta_dot->data[num];
@@ -188,30 +186,25 @@ int main() {
                 num++;
             }
         }
-        int curr = 0;
-        for(int j = 0; j < robot->numObjects; j++){
-            if(robot->objects[j]->type == 2){
-                curr ++;
-                #if VERBOSE > 0
-                printf("Joint %d: %f\n", j, robot->objects[j]->object->joint->position);
-                #endif
-                angles->data[(curr * angles->numCols) + i] = robot->objects[j]->object->joint->position;
 
-            }
-        }
 
         assert(isnan(robot->objects[1]->object->joint->velocity)==0);
 
 #if VERBOSE > 0
         printf("step took: %f Seconds\n", ((double) (clock() - stepStart)) / CLOCKS_PER_SEC);
 #endif
-        matrixToFile(plotRobotConfig(robot, theta, 2), "RigidRandyPlot_fwd.csv");
+#if PLOT_OUT == 1
+        matrix *posOut = plotRobotConfig(robot, theta, 1);
+        matrixToFile(posOut, "ForwardDynPlot.csv");
+        matrix_free(posOut);
+#endif
         //saveTimeCSV(i, ((double) (clock() - stepStart)) / CLOCKS_PER_SEC, "time.csv");
     }
     printf("DONE");
-//    matrixToFile(angles, "RigidRandyAngles.csv");
-//    robotToFile(robot, "testRobotOut.json");
-    matrixToFile(angles, "RigidRandyAngles_fwd.csv");
+
+#if PLOT_OUT == 1
+    matrixToFile(angles, "ForwardDynAngles.csv");
+#endif
     matrix_free(tempBodiesx1);
     matrix_free(tempLinkx1);
     matrix_free(C);
@@ -224,12 +217,16 @@ int main() {
     matrix_free(fdm->JointAcc);
     free(fdm);
 
+    matrix_free(tempT);
     matrix_free(F_ext);
     matrix_free(F_0);
     robotFree(robot);
     matrix_free(theta);
     matrix_free(theta_dot);
     matrix_free(theta_ddot);
+    matrix_free(C_des);
+    matrix_free(angles);
+    matrix_free(InitGuess);
 
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
