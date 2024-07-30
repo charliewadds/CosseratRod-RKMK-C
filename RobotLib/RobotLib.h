@@ -15,7 +15,7 @@
 
 #define SAMPLE1
 
-#define NUMBODIES 2
+#define NUMBODIES 3
 
 #define HYBRID_DELTA 1
 

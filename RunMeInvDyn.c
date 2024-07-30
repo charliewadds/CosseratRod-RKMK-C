@@ -145,7 +145,7 @@ int main() {
         getSection(robot->objects[(2*robot->BC_Start)]->object->flex->f_prev, 0, robot->objects[(2*robot->BC_Start)]->object->flex->f_prev->numRows - 1, 0, 0, f);//todo
 
         idm = IDM_MB_RE(robot, theta, theta_dot, getSection(theta_ddot, 0, theta_ddot->numRows-1, i, i, tempLinkx1), F_ext, dt, F_0);
-        setSection(C, 0, C->numRows-1, i, i, idm->C);//todo, get rid of these and pass directly back in?
+        setSection(C, 0, C->numRows-1, i, i, idm->C);
         getSection(f, 0, 5, 0, 0, F_0);
 
 
