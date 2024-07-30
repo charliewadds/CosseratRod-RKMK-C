@@ -864,6 +864,8 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
     matrix *temp6xNn1 = matrix_new(6, body->N);
     matrix *temp6xNn2 = matrix_new(6, body->N);
 
+    matrix *tempR6n1 = matrix_new(6,1);
+    matrix *tempR6n2 = matrix_new(6,1);
 
     matrix *eta_h = matrix_new(6, body->N);
     matrix_add(matrix_scalar_mul(body->eta_prev, c1, temp6xNn1), matrix_scalar_mul(body->eta_pprev, c2, temp6xNn2), eta_h);
@@ -904,22 +906,32 @@ flexDyn *flex_dyn(matrix *g_base, matrix *F_dist, matrix *F_base, flexBody *body
         );
         //[f_s,eta_s] = Coss_ODE(eta(:,i), f(:,i), eta_h(:,i), f_h(:,i), f_sh,BODY.Stiff,BODY.Damp,BODY.Mass,c0,BODY.F_0,F_dist(:,i));
 
+        // First evaluation at the current step
         COSS_ODE(getSection(result->eta,0,5,i,i, result->tempR6n1), getSection(result->f,0,5,i,i, result->tempR6n2),
-                        getSection(eta_h,0,5,i,i, result->tempR6n3), getSection(f_h, 0,5,i,i, result->tempR6n4),
-                        f_sh, body->stiff, body->damping, body->mass, c0, body->F_0,
-                        getSection(F_dist, 0,5,i,i, result->tempR6n5), ode);
+                 getSection(eta_h,0,5,i,i, result->tempR6n3), getSection(f_h, 0,5,i,i, result->tempR6n4),
+                 f_sh, body->stiff, body->damping, body->mass, c0, body->F_0,
+                 getSection(F_dist, 0,5,i,i, result->tempR6n5), ode);
 
+// Store the first evaluation results
+        copyMatrix(ode->f_s, tempR6n1);
+        copyMatrix(ode->eta_s, tempR6n2);
 
+// Update the state with half-step using the first evaluation
+        matrix_add(getSection(result->f, 0, 5, i, i, result->tempR6n1), matrix_scalar_mul(tempR6n1, ds/2.0, result->tempR6n2), tempR6n1);
+        matrix_add(getSection(result->eta, 0, 5, i, i, result->tempR6n1), matrix_scalar_mul(tempR6n2, ds/2.0, result->tempR6n2), tempR6n2);
 
-        //Euler integration todo add option for Rk2 and maybe RK4 (adaptive?)
+// Second evaluation at the half-step
+        COSS_ODE(tempR6n2, tempR6n1,
+                 getSection(eta_h,0,5,i,i, result->tempR6n3), getSection(f_h, 0,5,i,i, result->tempR6n4),
+                 f_sh, body->stiff, body->damping, body->mass, c0, body->F_0,
+                 getSection(F_dist, 0,5,i,i, result->tempR6n5), ode);
 
-        setSection(result->f,0,5,i+1,i+1,
-                   (matrix_add(getSection(result->f,0,5,i,i, result->tempR6n1), matrix_scalar_mul(ode->f_s,ds, result->tempR6n2), result->tempR6n1)));
+// Update the state using RK2 method
+        setSection(result->f, 0, 5, i+1, i+1,
+                   matrix_add(getSection(result->f, 0, 5, i, i, result->tempR6n1), matrix_scalar_mul(ode->f_s, ds, result->tempR6n2), result->tempR6n1));
 
-
-        setSection(result->eta,0,5,i+1,i+1,
-                   (matrix_add(getSection(result->eta,0,5,i,i, result->tempR6n1), matrix_scalar_mul(ode->eta_s,ds, result->tempR6n2), result->tempR6n1))
-        );
+        setSection(result->eta, 0, 5, i+1, i+1,
+                   matrix_add(getSection(result->eta, 0, 5, i, i, result->tempR6n1), matrix_scalar_mul(ode->eta_s, ds, result->tempR6n2), result->tempR6n1));
 
 
 
