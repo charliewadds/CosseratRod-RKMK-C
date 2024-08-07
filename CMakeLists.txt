@@ -3,19 +3,23 @@ set(CMAKE_C_STANDARD 11)
 project(CosseratRod_RKMK_C C)
 cmake_policy(SET CMP0079 NEW)
 
+
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 set(ENV{OPENBLAS_NUM_THREADS} 0)
-
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
+#set(DCMAKE_TOOLCHAIN_FILE /cmake-build-win/cmake_cross.cmake)
+#set(CMAKE_C_COMPILER /opt/homebrew/bin/i686-w64-mingw32-gcc)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
 link_directories("/opt/homebrew/lib")
 include_directories("/opt/homebrew/include")
-#find_package(GSL REQUIRED)
+find_package(GSL REQUIRED)
 # Include directories
 include_directories(LieGroup)
 include_directories(MatrixLib)
 include_directories(RobotLib)
 include_directories(FDM)
 include_directories(Tests)
+set(LAPACKBLAS_DIR /Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/LAPACK.lib)
 #include_directories(gsl)
 
 
@@ -31,19 +35,26 @@ set(FDM_SOURCE FDM/Discretization.c FDM/FDM.c
 # Find BLAS and LAPACK
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
+#add_library(BLAS blas.lib)
 
 # Create libraries
 add_library(MatrixLib STATIC ${MATRIX_LIB_SOURCES})
 add_library(LieGroup STATIC ${LIE_GROUP_SOURCES})
 add_library(RobotLib STATIC ${ROBOT_LIB_SOURCES})
 
-
-
-
+#add_library(BLAS STATIC ${BLAS_DIR})
+#add_library(LAPACK STATIC ${LAPACK_DIR})
+#target_link_libraries(gsl ../gsl/libgsl.la)
+#add_subdirectory(gsl -DNO_AMPL_BINDINGS=1)
+include_directories(gsl)
 add_subdirectory(levmar-2.6)
+#find_library(GSL gsl /Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/gsl/libgsl.la)
+#find_path (GSL_INCLUDE ClassLibrary.h /Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/gsl/gsl)
+#add_library(gsllib STATIC IMPORTED)
+#set(NO_AMPL_BINDINGS=0)
 # Main executable
 message(STATUS "BLAS_LIBRARIES: ${BLAS_LIBRARIES}")
-
+#SET(CMAKE_C_COMPILER i686-w64-mingw32-gcc)
 add_executable(InvDyn RunMeInvDyn.c)
 
 add_executable(FwdDyn RunMeFwdDyn.c)

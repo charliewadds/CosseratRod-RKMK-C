@@ -4,10 +4,11 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(LEVMAR)
 SET(OPENBLAS_NUM_THREADS 5)
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 SET(HAVE_LAPACK 1 CACHE BOOL "Do we have LAPACK/BLAS?")
 # the directory where the lapack/blas/f2c libraries reside
-SET(LAPACKBLAS_DIR "/usr/lib/x86_64-linux-gnu" CACHE PATH "Path to lapack/blas libraries")
+#SET(LAPACKBLAS_DIR "/usr/lib/x86_64-linux-gnu" CACHE PATH "Path to lapack/blas libraries")
 SET(NEED_F2C 0 CACHE BOOL "Do we need either f2c or F77/I77?")
 SET(HAVE_PLASMA 0 CACHE BOOL "Do we have PLASMA parallel linear algebra library?")
 IF(HAVE_PLASMA)

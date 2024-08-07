@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <math.h>
-#include <printf.h>
+//#include <printf.h>
 #include "Matrices.h"
 #include <string.h>
 #include <gsl/gsl_linalg.h>

@@ -39,47 +39,31 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
     assert(childCoM->numCols == 1);
     assert(childCoM->numRows == 6);
 
-    //todo do I really need this many??
     matrix *temp4x4n1 = matrix_new(4,4);
     matrix *temp4x4n2 = matrix_new(4,4);
-    matrix *temp4x4n3 = matrix_new(4,4);
-    matrix *temp4x4n4 = matrix_new(4,4);
+
 
     matrix *tempR6n1 = matrix_new(6,1);
-    matrix *tempR6n2 = matrix_new(6,1);
-    matrix *tempR6n3 = matrix_new(6,1);
-    matrix *tempR6n4 = matrix_new(6,1);
+
 
     expm_SE3(hat_R6(matrix_sub(joint->parent->body->rigid->Transform, parentCoM, tempR6n1), temp4x4n1), temp4x4n1);
 
-    matrix_scalar_mul(joint->twistR6, joint->homepos, tempR6n2);
-    hat_R6(tempR6n2, temp4x4n2);
-    expm_SE3(temp4x4n2, temp4x4n3);
+    matrix_scalar_mul(joint->twistR6, joint->homepos, tempR6n1);
+    hat_R6(tempR6n1, temp4x4n2);
+    expm_SE3(temp4x4n2, temp4x4n2);
 
     matMult_4x4_4x4(
             temp4x4n1,
-            temp4x4n3,
-            temp4x4n3);
+            temp4x4n2,
+            temp4x4n2);
 
     zeroMatrix(CoM2CoM);
-    matMult_4x4_4x4(temp4x4n3,expm_SE3(hat_R6(childCoM, temp4x4n4), temp4x4n4 ), CoM2CoM);
-    //free(parentCoM);
-//    matMult(matMult(
-//                              //curr_obj
-//            expm_SE3(hat_R6(matrix_sub(joint->parent->body->rigid->Transform, parentCoM, tempR6n1), temp4x4n1), temp4x4n1),
-//            expm_SE3(hat_R6(matrix_scalar_mul(joint->twistR6, joint->homepos, tempR6n2), temp4x4n2), temp4x4n2), temp4x4n1),
-//                      expm_SE3(hat_R6(childCoM, temp4x4n3), temp4x4n3 ), CoM2CoM);
-//    //free(parentCoM);
-    //free(childCoM);
+    matMult_4x4_4x4(temp4x4n2,expm_SE3(hat_R6(childCoM, temp4x4n2), temp4x4n2 ), CoM2CoM);
+
 
     matrix_free(temp4x4n1);
     matrix_free(temp4x4n2);
-    matrix_free(temp4x4n3);
-    matrix_free(temp4x4n4);
     matrix_free(tempR6n1);
-    matrix_free(tempR6n2);
-    matrix_free(tempR6n3);
-    matrix_free(tempR6n4);
 
     return CoM2CoM;
 
