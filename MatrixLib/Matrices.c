@@ -5,6 +5,7 @@
 #include <string.h>
 #include <gsl/gsl_linalg.h>
 
+
 #ifdef NEON
 #include <arm_neon.h>
 #endif
@@ -268,12 +269,14 @@ matrix *matrix_inverse(matrix *m, matrix *result){
     gsl_permutation *p = gsl_permutation_alloc(m->numRows);
     //gsl_matrix_view m4 = gsl_matrix_vi
 
+    gsl_matrix *inv = gsl_matrix_alloc(m->numRows, m->numCols);
     int signum;
     gsl_linalg_LU_decomp(gsl_m, p, &signum);
     //gsl_linalg_LU_decomp (a, p, &s);
-    gsl_linalg_LU_invx(gsl_m, p);
-    gsl_to_matrix(gsl_m, result);
+    gsl_linalg_LU_invert(gsl_m, p, inv);
+    gsl_to_matrix(inv, result);
     gsl_matrix_free(gsl_m);
+    gsl_matrix_free(inv);
     gsl_permutation_free(p);
 
     return result;

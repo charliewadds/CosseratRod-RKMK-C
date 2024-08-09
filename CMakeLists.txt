@@ -9,6 +9,9 @@ set(ENV{OPENBLAS_NUM_THREADS} 0)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG")#remove asserts
 link_directories("/opt/homebrew/lib")
 include_directories("/opt/homebrew/include")
+
+link_directories("/usr/lib/")
+include_directories("/usr/include/")
 #find_package(GSL REQUIRED)
 # Include directories
 include_directories(LieGroup)
@@ -50,10 +53,10 @@ add_executable(FwdDyn RunMeFwdDyn.c)
 # Link libraries to the executable
 # Link GSL libraries with MatrixLib
 #target_link_libraries(levmar PRIVATE levmar-2.6/build/liblevmar.a)
-target_link_libraries(MatrixLib PRIVATE -lm -lgsl -lgslcblas)
-target_link_libraries(LieGroup PRIVATE MatrixLib gsl)
+target_link_libraries(MatrixLib PRIVATE -lm -lgsl -lgslcblas -llapack)
+target_link_libraries(LieGroup PRIVATE MatrixLib -lgsl -lgslcblas)
 
-target_link_libraries(RobotLib PRIVATE -lgsl levmar ${BLAS_LIBRARIES} MatrixLib LieGroup)#add -lnlopt to use nlopt solvers
+target_link_libraries(RobotLib PRIVATE -lgsl levmar ${BLAS_LIBRARIES}  ${LAPACK_LIBRARIES} MatrixLib LieGroup)#add -lnlopt to use nlopt solvers
 
 install(TARGETS MatrixLib LieGroup RobotLib
         LIBRARY DESTINATION /Users/charliewadds/CLionProjects/CosseratRod-RKMK-C/sharedLibs
