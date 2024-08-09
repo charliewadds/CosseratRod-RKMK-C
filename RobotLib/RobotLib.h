@@ -14,6 +14,7 @@
 
 #define SAMPLE2
 
+#define N_DISC  21
 #define NUMBODIES 5
 
 #define HYBRID_DELTA 1
