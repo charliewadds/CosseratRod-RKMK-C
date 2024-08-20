@@ -191,11 +191,7 @@ matrix *Flex_MB_BCS(matrix *InitGuess, Flex_MB_BCS_params *params){
             matMult(curr_body->object->rigid->mass, getSection(d_eta,0,5,i,i, tempR6n2), tempR6n3);
             matrix_sub(tempR6n1
                     ,tempR6n3, F_temp);
-//            F_temp = *matrix_sub(matrix_add(
-//                    getSection(F, 0,5,i,i),
-//                    matMult(matrix_transpose(adj_R6(getSection(eta,0,5,i,i))), matMult(curr_body->object->rigid->mass,getSection(eta,0,5,i,i)))
-//                    ),matMult(curr_body->object->rigid->mass,getSection(eta,0,5,i,i))
-//            );
+
         }
         //assert(hasNan(g_ref[i])==0);
 

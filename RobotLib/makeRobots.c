@@ -269,7 +269,7 @@ Robot *defPaperSample_2(matrix *theta, matrix *theta_dot, matrix *theta_ddot){
 
 Robot *defPaperSample_1(matrix *theta, matrix *theta_dot, matrix *theta_ddot) {
     double linkMass = 0.01;
-    double linkLen = 0.2;
+    double linkLen = 0.1;
 
     matrix *temp3x3n1 = matrix_new(3,3);
 

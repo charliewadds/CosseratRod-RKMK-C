@@ -61,14 +61,7 @@ matrix* getCoM2CoM(rigidJoint *joint, matrix *CoM2CoM){
 
     zeroMatrix(CoM2CoM);
     matMult(temp4x4n3,expm_SE3(hat_R6(childCoM, temp4x4n4), temp4x4n4 ), CoM2CoM);
-    //free(parentCoM);
-//    matMult(matMult(
-//                              //curr_obj
-//            expm_SE3(hat_R6(matrix_sub(joint->parent->body->rigid->Transform, parentCoM, tempR6n1), temp4x4n1), temp4x4n1),
-//            expm_SE3(hat_R6(matrix_scalar_mul(joint->twistR6, joint->homepos, tempR6n2), temp4x4n2), temp4x4n2), temp4x4n1),
-//                      expm_SE3(hat_R6(childCoM, temp4x4n3), temp4x4n3 ), CoM2CoM);
-//    //free(parentCoM);
-    //free(childCoM);
+
 
     matrix_free(temp4x4n1);
     matrix_free(temp4x4n2);
