@@ -86,7 +86,7 @@ int main() {
 
     Robot *robot = defPaperSample_1(theta, theta_dot, theta_ddot);
     matrix *C_des = matrix_new(robot->numBody,totTime);
-    matrixFromFile("../testData/C_DES_MATLAB/PaperSample1_mat.csv", C_des);
+    matrixFromFile("../testData/C_DES_MATLAB/PaperSample2_mat.csv", C_des);
 #endif
 
     int BC_Start = robot->BC_Start;//todo, this should be automated
